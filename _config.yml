@@ -1,0 +1,3 @@
+exclude:
+  - "games/**/*.md"
+  - ".DS_Store"
