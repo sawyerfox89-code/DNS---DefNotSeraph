@@ -1,6 +1,6 @@
 const CACHE_NAME = 'seraph-cache';
 const OFFLINE_URLS = [
-    '/offline.html',
+    '/DNS---DefNotSeraph/offline.html',
 ];
 
 self.addEventListener('install', function(event) {

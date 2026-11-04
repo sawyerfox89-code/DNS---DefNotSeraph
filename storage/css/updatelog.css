@@ -1,38 +1,38 @@
-@import url('/storage/css/themes.css');
+@import url('/DNS---DefNotSeraph/storage/css/themes.css');
 
 :root {
-    --background-image: url('/images/backgrounds/seraph/updatelogbg.jpg');
+    --background-image: url('/DNS---DefNotSeraph/images/backgrounds/seraph/updatelogbg.jpg');
     --hover-color: #a19b9b;
 }
 :root.theme-azurite {
-    --background-image: url('/images/backgrounds/azure/updatebg.jpg');
+    --background-image: url('/DNS---DefNotSeraph/images/backgrounds/azure/updatebg.jpg');
 }
 :root.theme-retro {
-    --background-image: url('/images/backgrounds/retro/updatebg.jpg');
+    --background-image: url('/DNS---DefNotSeraph/images/backgrounds/retro/updatebg.jpg');
 }
 :root.theme-cosmic {
-    --background-image: url('/images/backgrounds/cosmic/updatebg.jpg');
+    --background-image: url('/DNS---DefNotSeraph/images/backgrounds/cosmic/updatebg.jpg');
 }
 :root.theme-molten {
-    --background-image: url('/images/backgrounds/molten/updatebg.jpg');
+    --background-image: url('/DNS---DefNotSeraph/images/backgrounds/molten/updatebg.jpg');
 }
 :root.theme-amethyst {
-    --background-image: url('/images/backgrounds/amethyst/updatebg.jpg');
+    --background-image: url('/DNS---DefNotSeraph/images/backgrounds/amethyst/updatebg.jpg');
 }
 :root.theme-ethereal {
-    --background-image: url('/images/backgrounds/ethereal/updatebg.jpg');
+    --background-image: url('/DNS---DefNotSeraph/images/backgrounds/ethereal/updatebg.jpg');
 }
 :root.theme-misinformation {
-    --background-image: url('/images/backgrounds/misinformation/updatebg.gif');
+    --background-image: url('/DNS---DefNotSeraph/images/backgrounds/misinformation/updatebg.gif');
 }
 :root.theme-subzero {
-    --background-image: url('/images/backgrounds/subzero/updatebg.jpg');
+    --background-image: url('/DNS---DefNotSeraph/images/backgrounds/subzero/updatebg.jpg');
 }
 :root.theme-metro {
-    --background-image: url('/images/backgrounds/metro/updatebg.jpg');
+    --background-image: url('/DNS---DefNotSeraph/images/backgrounds/metro/updatebg.jpg');
 }
 :root.theme-ghostly {
-    --background-image: url('/images/backgrounds/ghostly/update.jpg');
+    --background-image: url('/DNS---DefNotSeraph/images/backgrounds/ghostly/update.jpg');
 }
 
 html, body {

@@ -24,7 +24,7 @@
         <script>
           if ('serviceWorker' in navigator) {
           window.addEventListener('load', function() {
-              navigator.serviceWorker.register('/offline-worker.js').then(function(registration) {
+              navigator.serviceWorker.register('/DNS---DefNotSeraph/offline-worker.js').then(function(registration) {
                   console.log('service worker initalised! scope:', registration.scope);
       
                   navigator.serviceWorker.addEventListener('message', function(event) {

@@ -1,7 +1,7 @@
 {
     "name": "seraphim",
     "short_name": "seraphim",
-    "start_url": "/",
+    "start_url": "/DNS---DefNotSeraph/seraphim/",
     "display": "standalone",
     "background_color": "#000000",
     "theme_color": "#000000",

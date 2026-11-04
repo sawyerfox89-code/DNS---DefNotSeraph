@@ -1,37 +1,37 @@
-@import url('/storage/css/themes.css');
+@import url('/DNS---DefNotSeraph/storage/css/themes.css');
 
 :root {
-    --background-image: url('/images/backgrounds/seraph/hostbg.jpg');
+    --background-image: url('/DNS---DefNotSeraph/images/backgrounds/seraph/hostbg.jpg');
 }
 :root.theme-azurite {
-    --background-image: url('/images/backgrounds/azure/hostbg.jpg');
+    --background-image: url('/DNS---DefNotSeraph/images/backgrounds/azure/hostbg.jpg');
 }
 :root.theme-retro {
-    --background-image: url('/images/backgrounds/retro/hostbg.jpg');
+    --background-image: url('/DNS---DefNotSeraph/images/backgrounds/retro/hostbg.jpg');
 }
 :root.theme-cosmic {
-    --background-image: url('/images/backgrounds/cosmic/hostbg.jpg');
+    --background-image: url('/DNS---DefNotSeraph/images/backgrounds/cosmic/hostbg.jpg');
 }
 :root.theme-molten {
-    --background-image: url('/images/backgrounds/molten/hostbg.jpg');
+    --background-image: url('/DNS---DefNotSeraph/images/backgrounds/molten/hostbg.jpg');
 }
 :root.theme-amethyst {
-    --background-image: url('/images/backgrounds/amethyst/hostbg.jpg');
+    --background-image: url('/DNS---DefNotSeraph/images/backgrounds/amethyst/hostbg.jpg');
 }
 :root.theme-ethereal {
-    --background-image: url('/images/backgrounds/ethereal/hostbg.jpg');
+    --background-image: url('/DNS---DefNotSeraph/images/backgrounds/ethereal/hostbg.jpg');
 }
 :root.theme-misinformation {
-    --background-image: url('/images/backgrounds/misinformation/hostbg.gif');
+    --background-image: url('/DNS---DefNotSeraph/images/backgrounds/misinformation/hostbg.gif');
 }
 :root.theme-subzero {
-    --background-image: url('/images/backgrounds/subzero/hostbg.jpg');
+    --background-image: url('/DNS---DefNotSeraph/images/backgrounds/subzero/hostbg.jpg');
 }
 :root.theme-metro {
-    --background-image: url('/images/backgrounds/metro/hostbg.jpg');
+    --background-image: url('/DNS---DefNotSeraph/images/backgrounds/metro/hostbg.jpg');
 }
 :root.theme-ghostly {
-    --background-image: url('/images/backgrounds/ghostly/hostbg.jpg');
+    --background-image: url('/DNS---DefNotSeraph/images/backgrounds/ghostly/hostbg.jpg');
 }
 
 body {

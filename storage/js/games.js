@@ -169,7 +169,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 pinButton.classList.add("pin-button");
 
                 const img = document.createElement("img");
-                img.src = "/images/other/cross.png";
+                img.src = "/DNS---DefNotSeraph/images/other/cross.png";
                 img.width = 25;
                 img.height = 25;
 
@@ -224,25 +224,25 @@ document.addEventListener("DOMContentLoaded", function () {
 
 const OFFLINE_MODE = [
     // offline mode page files
-    '/offline.html',
-    '/images/backgrounds/seraph/offlinebg.jpg',
-    '/images/ico.ico',
-    '/storage/fonts/ubuntu/Ubuntu.woff2',
-    '/storage/js/directories.json',
+    '/DNS---DefNotSeraph/offline.html',
+    '/DNS---DefNotSeraph/images/backgrounds/seraph/offlinebg.jpg',
+    '/DNS---DefNotSeraph/images/ico.ico',
+    '/DNS---DefNotSeraph/storage/fonts/ubuntu/Ubuntu.woff2',
+    '/DNS---DefNotSeraph/storage/js/directories.json',
 
     // download ruffle
-    '/storage/ruffle/a29c1b01570ffecf6fae.wasm',
-    '/storage/ruffle/core.ruffle.1caf8a7231ccf85abb1d.js',
-    '/storage/ruffle/core.ruffle.1caf8a7231ccf85abb1d.js.map',
-    '/storage/ruffle/core.ruffle.78cc902cbabd4bc44008.js',
-    '/storage/ruffle/core.ruffle.78cc902cbabd4bc44008.js.map',
-    '/storage/ruffle/d6c752be1c7e690bf226.wasm',
-    '/storage/ruffle/package.json',
-    '/storage/ruffle/ruffle.js',
-    '/storage/ruffle/ruffle.js.map',
+    '/DNS---DefNotSeraph/storage/ruffle/a29c1b01570ffecf6fae.wasm',
+    '/DNS---DefNotSeraph/storage/ruffle/core.ruffle.1caf8a7231ccf85abb1d.js',
+    '/DNS---DefNotSeraph/storage/ruffle/core.ruffle.1caf8a7231ccf85abb1d.js.map',
+    '/DNS---DefNotSeraph/storage/ruffle/core.ruffle.78cc902cbabd4bc44008.js',
+    '/DNS---DefNotSeraph/storage/ruffle/core.ruffle.78cc902cbabd4bc44008.js.map',
+    '/DNS---DefNotSeraph/storage/ruffle/d6c752be1c7e690bf226.wasm',
+    '/DNS---DefNotSeraph/storage/ruffle/package.json',
+    '/DNS---DefNotSeraph/storage/ruffle/ruffle.js',
+    '/DNS---DefNotSeraph/storage/ruffle/ruffle.js.map',
 
     // download cloaking
-    '/storage/js/cloak.js',
+    '/DNS---DefNotSeraph/storage/js/cloak.js',
     '/images/icons/google.ico',
     '/images/icons/bing.ico',
     '/images/icons/gmail.ico',
@@ -341,7 +341,7 @@ function centerDivOnScroll() {
   
 async function downloadGameFiles(gameName, gameDirectory, promptDiv, blackoutDiv) {
     try {
-        const response = await fetch('/storage/js/directories.json'); 
+        const response = await fetch('/DNS---DefNotSeraph/storage/js/directories.json'); 
         if (!response.ok) {
             throw new Error('failed to fetch list');
         }
