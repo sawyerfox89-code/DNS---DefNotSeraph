@@ -36,44 +36,83 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// search bar
-function filterGames() {
-    const searchInput = document.getElementById('search').value.toLowerCase();
-    const buttons = document.querySelectorAll('.button h2');
+// search, genre filter + sorting (combined so they work together)
+const genreDropdown = document.getElementById('genreDropdown');
+const sortDropdown = document.getElementById('sortDropdown');
+const gameContainer = document.querySelector('.button-container');
+const gameLinks = Array.from(gameContainer.querySelectorAll(':scope > a')).filter(a => a.querySelector('.button h2'));
+gameLinks.forEach((a, i) => { a.dataset.order = i; });
 
-    buttons.forEach(button => {
-        const gameName = button.textContent.toLowerCase();
-        const buttonContainer = button.parentElement.parentElement;
-
-        if (gameName.includes(searchInput)) {
-            buttonContainer.style.display = 'block'; 
-        } else {
-            buttonContainer.style.display = 'none';
-        }
-    });
+function getPlayStats() {
+    try { return JSON.parse(localStorage.getItem('gamePlayStats')) || {}; } catch (e) { return {}; }
 }
 
-document.getElementById('search').addEventListener('input', filterGames);
-
-// genre filtering
-const genreDropdown = document.getElementById('genreDropdown');
-
-genreDropdown.addEventListener('change', () => {
-    const selectedGenre = genreDropdown.value;
-    const buttons = document.querySelectorAll('.button');
-    
-    buttons.forEach(button => {
-        const dataGenre = button.getAttribute('data-genre');
-        
-        if (selectedGenre === 'all' || selectedGenre === dataGenre) {
-            button.style.display = 'block';
-        } else {
-            button.style.display = 'none';
-        }
+gameLinks.forEach(a => {
+    a.addEventListener('click', () => {
+        const stats = getPlayStats();
+        const key = a.getAttribute('href');
+        const entry = stats[key] || { count: 0, last: 0 };
+        entry.count += 1;
+        entry.last = Date.now();
+        stats[key] = entry;
+        try { localStorage.setItem('gamePlayStats', JSON.stringify(stats)); } catch (e) {}
     });
 });
 
+function gameName(a) { return a.querySelector('.button h2').textContent.trim().toLowerCase(); }
+function gameGenre(a) { return a.querySelector('.button').getAttribute('data-genre') || ''; }
+
+function filterGames() {
+    const search = document.getElementById('search').value.toLowerCase().trim();
+    const genre = genreDropdown.value;
+    const sort = sortDropdown ? sortDropdown.value : 'default';
+    const stats = getPlayStats();
+
+    const sorted = gameLinks.slice().sort((a, b) => {
+        const sa = stats[a.getAttribute('href')] || { count: 0, last: 0 };
+        const sb = stats[b.getAttribute('href')] || { count: 0, last: 0 };
+        switch (sort) {
+            case 'az': return gameName(a).localeCompare(gameName(b));
+            case 'za': return gameName(b).localeCompare(gameName(a));
+            case 'recent': return (sb.last - sa.last) || (a.dataset.order - b.dataset.order);
+            case 'most': return (sb.count - sa.count) || (a.dataset.order - b.dataset.order);
+            case 'genre': return gameGenre(a).localeCompare(gameGenre(b)) || gameName(a).localeCompare(gameName(b));
+            case 'newest': return b.dataset.order - a.dataset.order;
+            case 'random': return 0;
+            default: return a.dataset.order - b.dataset.order;
+        }
+    });
+    if (sort === 'random') {
+        for (let i = sorted.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [sorted[i], sorted[j]] = [sorted[j], sorted[i]];
+        }
+    }
+
+    let shown = 0;
+    sorted.forEach(a => {
+        const visible = gameName(a).includes(search) && (genre === 'all' || gameGenre(a) === genre);
+        a.style.display = visible ? '' : 'none';
+        a.querySelector('.button').style.display = '';
+        if (visible) shown++;
+        gameContainer.appendChild(a);
+    });
+
+    const counter = document.getElementById('gameCount');
+    if (counter) counter.textContent = shown === gameLinks.length ? `${shown} games` : `${shown} of ${gameLinks.length} games`;
+}
+
+document.getElementById('search').addEventListener('input', filterGames);
+genreDropdown.addEventListener('change', filterGames);
+if (sortDropdown) {
+    try { sortDropdown.value = localStorage.getItem('gameSort') || 'default'; } catch (e) {}
+    sortDropdown.addEventListener('change', () => {
+        try { localStorage.setItem('gameSort', sortDropdown.value); } catch (e) {}
+        filterGames();
+    });
+}
 genreDropdown.value = 'all';
+filterGames();
 
 // cool typing
 const text = "games";
