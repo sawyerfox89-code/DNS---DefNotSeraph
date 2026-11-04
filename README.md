@@ -47,7 +47,7 @@
 - geotobogaming: general support
 
 ## open source games
-62 free and open-source games were added to the games page (filter: "open source"). each is hosted under its own license, with the license file kept in its folder under `games/`. the full list of games, original authors and licenses is in [games/open-source-credits.html](games/open-source-credits.html).
+71 free and open-source games were added to the games page (filter: "open source"). each is hosted under its own license, with the license file kept in its folder under `games/`. the full list of games, original authors and licenses is in [games/open-source-credits.html](games/open-source-credits.html).
 
 ## repurposing
 seraph is completely open source which allows you to inspect any element of the site on github, as well as being able to download assets for yourself.
