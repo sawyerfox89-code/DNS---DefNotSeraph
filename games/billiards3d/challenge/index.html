@@ -1,0 +1,1653 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Korean is this page's only language, so the head carries the search
+         metadata the site's other pages have (see src/client/map/index.html),
+         written in Korean: the <html lang> above, a title, description,
+         keywords, a robots line, an og block with a social card image, and the
+         matching twitter card. Canonical, og:url and the VideoGame JSON-LD
+         claim the same host the lobby and reveal pages claim, even though the
+         page also ships from the Docker image and ../billiards/dist: the
+         canonical tells a crawler which of those copies counts. -->
+    <title>한국 음식 탐험｜사구(4구) 당구 게임 챌린지</title>
+    <meta
+      name="description"
+      content="사구 한 브레이크로 한국 음식 메뉴를 하나씩 열어보세요. 라면부터 닭발까지 32가지, 점수를 높일수록 새로운 메뉴가 열립니다."
+    />
+    <meta
+      name="keywords"
+      content="사구, 당구, 미니게임, 한국 음식, 맛집, 메뉴 도감, 라면, 떡볶이, 김치찌개, 삼겹살"
+    />
+    <meta name="robots" content="index, follow" />
+    <link
+      rel="canonical"
+      href="https://billiards.tailuge.workers.dev/challenge/"
+    />
+    <meta name="theme-color" content="#1a1a1a" />
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://billiards.tailuge.workers.dev/assets/sagu.png"
+    />
+    <meta
+      property="og:title"
+      content="한국 음식 탐험｜사구(4구) 당구 게임 챌린지"
+    />
+    <meta
+      property="og:description"
+      content="사구 한 브레이크로 한국 음식 메뉴를 하나씩 열어보세요. 라면부터 닭발까지 32가지, 점수를 높일수록 새로운 메뉴가 열립니다."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="ko_KR" />
+    <meta
+      property="og:url"
+      content="https://billiards.tailuge.workers.dev/challenge/"
+    />
+    <meta
+      property="og:image"
+      content="https://billiards.tailuge.workers.dev/images/sagucard.jpg"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="한국 음식 탐험 사구 챌린지" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="한국 음식 탐험｜사구(4구) 당구 게임 챌린지"
+    />
+    <meta
+      name="twitter:description"
+      content="사구 한 브레이크로 한국 음식 메뉴를 하나씩 열어보세요. 라면부터 닭발까지 32가지, 점수를 높일수록 새로운 메뉴가 열립니다."
+    />
+    <meta
+      name="twitter:image"
+      content="https://billiards.tailuge.workers.dev/images/sagucard.jpg"
+    />
+    <meta name="twitter:image:alt" content="한국 음식 탐험 사구 챌린지" />
+
+    <!-- The game, marked up for search engines the way the lobby and reveal
+         pages mark up theirs. `inLanguage` is ko alone: this page is Korean
+         only, unlike the lobby's bilingual head. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "VideoGame",
+        "name": "한국 음식 탐험",
+        "alternateName": ["사구 챌린지", "한국 음식 사구 게임"],
+        "url": "https://billiards.tailuge.workers.dev/challenge/",
+        "image": "https://billiards.tailuge.workers.dev/images/sagucard.jpg",
+        "description": "사구 한 브레이크로 높은 점수를 기록하면 한국 음식 메뉴가 하나씩 열리는 무료 미니게임. 라면부터 닭발까지 32가지 메뉴를 모아보세요.",
+        "inLanguage": "ko",
+        "applicationCategory": "GameApplication",
+        "operatingSystem": "Web",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "KRW"
+        },
+        "creator": {
+          "@type": "Person",
+          "name": "tailuge"
+        }
+      }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <style>
+      @font-face {
+        font-family: Exo;
+        font-style: normal;
+        font-weight: 200;
+        font-display: swap;
+        src: url("https://fonts.gstatic.com/s/exo/v25/4UaZrEtFpBI4f1ZSIK9d4LjJ4tM3CwM.ttf")
+          format("truetype");
+      }
+
+      @font-face {
+        font-family: Exo;
+        font-style: normal;
+        font-weight: 600;
+        font-display: swap;
+        src: url("https://fonts.gstatic.com/s/exo/v25/4UaZrEtFpBI4f1ZSIK9d4LjJ4o0wCwM.ttf")
+          format("truetype");
+      }
+
+      /* Palette, radii and spacing follow the map page (and the lobby's dark
+         theme): a #1a1a1a page, #2a2a2a surfaces outlined with a 1px #444
+         border, a 6px radius and 2px gutters between the panels. Exo carries
+         the Latin text; Hangul falls back to the system's Korean font. */
+      :root {
+        --bg: #1a1a1a;
+        --surface: #2a2a2a;
+        --border: #444;
+        --border-light: #333;
+        --hover: #444;
+        --text: #e0e0e0;
+        --muted: #aaa;
+        --accent: #6ba3f5;
+        --gold: #f5c451;
+
+        color-scheme: dark;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        height: 100%;
+      }
+
+      /* The panels plus the rail can outgrow a short viewport. Keep the
+         scrolling, drop the bar — the reveal page's treatment. */
+      html,
+      body {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+
+      html::-webkit-scrollbar,
+      body::-webkit-scrollbar {
+        display: none;
+      }
+
+      body {
+        min-height: 100%;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+
+        /* Gutter between the panels and the viewport, matching the map page's
+           inset content column. It narrows with the viewport so the panels keep
+           their room, without any breakpoint. */
+        padding: 0 clamp(0.5rem, 2vw, 1rem) 1rem;
+        background: var(--bg);
+        color: var(--text);
+        font-family: Exo, system-ui, sans-serif;
+        font-weight: 200;
+        font-size: 15px;
+      }
+
+      /* The site header, the page title and the panels share one centred,
+         width-capped block so the layout reads like the map page rather than
+         edge-to-edge. The block also holds the narrow side rail, so its cap is
+         the panels plus the rail. */
+      app-topbar,
+      header {
+        width: 100%;
+        max-width: min(60rem, 100%);
+        margin-inline: auto;
+      }
+
+      /* The top bar is a custom element, so it upgrades only when the deferred
+         challenge.js module runs — after the first paint on a slow load. Until
+         then it has no height, and when it renders it shoves the content down
+         by its own 40px (a 32px logo plus 0.25rem padding above and below).
+         Reserving that height here holds the layout still. */
+      app-topbar {
+        display: block;
+        min-height: 40px;
+      }
+
+      /* Title and tagline share one shallow row; the tagline stays quiet (and
+         wraps under the title on narrow screens) so it never crowds the
+         content. */
+      header {
+        flex: 0 0 auto;
+        display: flex;
+        justify-content: center;
+        align-items: baseline;
+        flex-wrap: wrap;
+        gap: 0 0.5rem;
+        padding: 0;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 1.15rem;
+        font-weight: 600;
+      }
+
+      header p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.72rem;
+      }
+
+      /* Panels down the first column, the narrow rail down the second — the
+         lobby's main layout, with its online list swapped for the breaks rail. */
+      main {
+        flex: 1 1 auto;
+        display: grid;
+
+        /* One layout at every width: the panels take the remaining space and the
+           rail keeps a wide slot beside them, scaling from 8rem up to 26rem, so
+           the hi-score rows have room for their emojis and never drop to the
+           foot of the page. */
+        grid-template-columns: minmax(0, 1fr) clamp(8rem, 44%, 26rem);
+        gap: 2px;
+
+        /* The rows hug their panels, so the only space between panels is the 2px
+           row gap. Without this the auto rows stretch to fill the viewport
+           height (`main` grows with it) and open up gaps around the card that
+           is the shortest. */
+        align-content: start;
+        align-items: start;
+        width: 100%;
+        max-width: min(60rem, 100%);
+        margin-inline: auto;
+        padding: 2px 0 0;
+      }
+
+      /* Every section is one of the map's rounded panels. */
+      .panel {
+        padding: 0.8rem 0.9rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+      }
+
+      main > .panel:not(.rail) {
+        grid-column: 1;
+      }
+
+      /* The collection and the guide under it sit below the rail, so they take
+         the whole width. */
+      main > .panel.gallery-panel,
+      main > .panel.guide-panel {
+        grid-column: 1 / -1;
+      }
+
+      .gallery-panel {
+        padding-block: 0.5rem;
+      }
+
+      /* Empty for now: it is where the players' breaks will be listed. It runs
+         alongside the top two panels only, matching their combined height, so
+         the collection below can use the full width. */
+      .rail {
+        display: flex;
+        flex-direction: column;
+        align-self: stretch;
+        gap: 0.4rem;
+        grid-column: 2;
+        grid-row: 1 / span 2;
+        min-height: 12rem;
+        padding: 0.6rem;
+        overflow-y: auto;
+
+        /* Its height comes from the two panels beside it, not its content, so
+           the rows keep their natural heights and no gap opens under the
+           dashboard. The list scrolls inside it with the scrollbar hidden. */
+        contain: size;
+        scrollbar-width: none;
+      }
+
+      .rail::-webkit-scrollbar {
+        display: none;
+      }
+
+      .rail-title {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        text-align: center;
+      }
+
+      /* One row per sagu HiScore: player, every dish the score unlocked, points. */
+      .break-list {
+        display: flex;
+        flex-direction: column;
+
+        /* The line box already separates the rows, so the gap only adds a
+           hairline instead of a visible band. */
+        gap: 0.05rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .break-list li {
+        font-size: 0.72rem;
+      }
+
+      /* The whole row is the replay link: one target the width of the rail,
+         instead of a bare two-digit score too small to tap. */
+      .break-row {
+        display: grid;
+
+        /* player, the dish emojis the score unlocked, points. The name keeps the
+           smaller share of the rail and truncates with an ellipsis; the emoji
+           block takes the rest, wrapping and overlapping its glyphs, and the
+           points stay a fixed column. */
+        grid-template-columns: minmax(0, 0.4fr) minmax(0, 1.6fr) auto;
+        align-items: baseline;
+        gap: 0.3rem;
+        color: inherit;
+        text-decoration: none;
+
+        /* The hit area reaches past the text without moving it: the padding is
+           cancelled by an equal negative margin, so the rows stay as close as
+           the list gap makes them. */
+        padding-block: 0.15rem;
+        margin-block: -0.15rem;
+      }
+
+      .break-score {
+        color: var(--accent);
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .break-row:hover .break-score {
+        text-decoration: underline;
+      }
+
+      /* The row an upload added this session, so the player can spot their own
+         record in a list the server's cached feed has not caught up with. A soft
+         accent wash that stays on for as long as the row is marked as new; the
+         padding is cancelled by the matching negative margin, so the tint has
+         room without the row moving. */
+      .break-list li.is-new .break-row {
+        padding-inline: 0.25rem;
+        margin-inline: -0.25rem;
+        border-radius: 3px;
+        background: rgb(107 163 245 / 18%);
+      }
+
+      /* Every dish the score unlocked, e.g. 🍜🍢. The glyphs wrap inside their
+         column when the rail is narrow, which is why the line box is a little
+         looser than a single glyph's. Negative tracking overlaps the emojis side
+         by side so more fit per row; the matching padding-inline gives the last
+         glyph its advance back, keeping it clear of the score. */
+      .break-emoji {
+        line-height: 1.25;
+        letter-spacing: -0.35em;
+        padding-inline-end: 0.35em;
+        overflow-wrap: anywhere;
+      }
+
+      .break-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .rail-status {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.68rem;
+      }
+
+      /* Score dashboard: the launch control takes the free space and the score
+         stays a fixed block on the right. */
+      .dashboard {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .launch {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .launch-head {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        font-size: 0.78rem;
+        font-weight: 600;
+      }
+
+      /* Korean wraps between any two syllables by default, which let the
+         heading shrink into a one-character-wide column of stacked glyphs on a
+         narrow screen. keep-all breaks at the spaces only, so the heading folds
+         at most once and never collapses to a vertical strip. */
+      .launch-head > span:first-child {
+        flex: 1 1 auto;
+        word-break: keep-all;
+      }
+
+      /* The panel's one call to action, so it takes the panel's full width and
+         the lobby's challenge-button bevel (see .btn-challenge in
+         ../styles.js): a #0d6efd fill under a light-to-dark gradient, an inset
+         highlight, a 1px drop shadow and a blue glow. Hover deepens the fill
+         and the glow; pressing inverts the bevel and nudges the button down a
+         pixel so the click feels physical. */
+      .play-btn {
+        width: 100%;
+        padding: 7px 10px;
+        border: none;
+        border-radius: 6px;
+        background-color: #0d6efd;
+        background-image: linear-gradient(
+          180deg,
+          rgb(255 255 255 / 12%),
+          rgb(0 0 0 / 6%)
+        );
+        color: #fff;
+        font-family: inherit;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow:
+          inset 0 1px 0 rgb(255 255 255 / 30%),
+          0 1px 2px rgb(0 0 0 / 20%),
+          0 2px 6px rgb(13 110 253 / 25%);
+        transition:
+          background-color 0.15s ease,
+          box-shadow 0.15s ease,
+          transform 0.05s ease;
+      }
+
+      .play-btn:hover {
+        background-color: #0b5ed7;
+        box-shadow:
+          inset 0 1px 0 rgb(255 255 255 / 30%),
+          0 2px 4px rgb(0 0 0 / 22%),
+          0 4px 10px rgb(13 110 253 / 30%);
+      }
+
+      .play-btn:active {
+        transform: translateY(1px);
+        box-shadow:
+          inset 0 1px 2px rgb(0 0 0 / 25%),
+          0 1px 1px rgb(0 0 0 / 15%);
+      }
+
+      .play-btn:focus-visible {
+        outline: 2px solid #007bff;
+        outline-offset: 2px;
+      }
+
+      .result {
+        min-height: 1rem;
+        margin: 0.35rem 0 0;
+        color: var(--muted);
+        font-size: 0.72rem;
+        text-align: center;
+      }
+
+      /* Popover shown when a finished run makes the hi-score rail: a small card
+         above the foot of the page with a confirmation button. It dismisses
+         itself after a couple of seconds, so it never covers the dishes. */
+      .toast {
+        position: fixed;
+        bottom: 1.5rem;
+        left: 50%;
+        z-index: 200;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        max-width: calc(100vw - 2rem);
+        padding: 0.55rem 0.6rem 0.55rem 0.9rem;
+        border: 1px solid var(--accent);
+        border-radius: 6px;
+        background: var(--surface);
+        color: var(--text);
+        box-shadow: 0 4px 16px rgb(0 0 0 / 45%);
+        opacity: 0;
+        visibility: hidden;
+        transform: translate(-50%, 0.5rem);
+        transition:
+          opacity 0.2s ease,
+          transform 0.2s ease,
+          visibility 0.2s;
+      }
+
+      .toast.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translate(-50%, 0);
+      }
+
+      .toast-text {
+        font-size: 0.82rem;
+        font-weight: 600;
+      }
+
+      .toast-btn {
+        flex: 0 0 auto;
+        padding: 2px 10px;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: var(--bg);
+        color: var(--accent);
+        font-family: inherit;
+        font-size: 0.72rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .toast-btn:hover {
+        background: var(--hover);
+      }
+
+      .toast-btn:focus-visible {
+        outline: 2px solid #007bff;
+        outline-offset: 2px;
+      }
+
+      .score {
+        flex-shrink: 0;
+        text-align: right;
+        line-height: 1.1;
+      }
+
+      .score-label {
+        display: block;
+        color: var(--muted);
+        font-size: 0.68rem;
+      }
+
+      .score-num {
+        color: var(--accent);
+        font-size: 2rem;
+        font-weight: 600;
+      }
+
+      .score-max {
+        color: var(--muted);
+        font-size: 0.78rem;
+      }
+
+      /* Unlocked food card. It stretches to fill its grid row, which the rail
+         sets, and keeps its content centred within that height. */
+      .food-card {
+        display: flex;
+        align-items: center;
+        align-self: stretch;
+        gap: 1rem;
+      }
+
+      .food-emoji {
+        display: flex;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: center;
+        width: 76px;
+        height: 76px;
+        border: 1px solid var(--border-light);
+        border-radius: 4px;
+        background: var(--bg);
+        font-size: 2.4rem;
+        overflow: hidden;
+      }
+
+      /* The card previews the dish's emoji, then shows its photo once the dish
+         is obtained. */
+      .food-emoji img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border-radius: 3px;
+        object-fit: cover;
+      }
+
+      .food-details {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* The hall's-goal pill from the map page, here carrying the score needed
+         to unlock the dish: gold on the page background. */
+      .req {
+        display: inline-block;
+        margin-bottom: 0.3rem;
+        padding: 1px 8px;
+        border: 1px solid var(--gold);
+        border-radius: 999px;
+        background: var(--bg);
+        color: var(--gold);
+        font-size: 0.7rem;
+        font-weight: 600;
+      }
+
+      .food-title {
+        margin: 0 0 0.2rem;
+        color: var(--accent);
+        font-size: 0.95rem;
+        font-weight: 600;
+      }
+
+      .food-desc {
+        margin: 0 0 0.55rem;
+        color: var(--text);
+        font-size: 0.78rem;
+        line-height: 1.4;
+      }
+
+      .wiki-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 3px 8px;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: var(--bg);
+        color: var(--accent);
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-decoration: none;
+      }
+
+      .wiki-btn:hover {
+        background: var(--hover);
+      }
+
+      .gallery-title,
+      .guide-title {
+        margin: 0 0 0.15rem;
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      /* The guide's prose, one paragraph per idea: what 사구 is, how this page
+         turns a break into dishes, and how to start one. */
+      .guide-text {
+        margin: 0.4rem 0 0;
+        color: var(--text);
+        font-size: 0.78rem;
+        line-height: 1.5;
+      }
+
+      .guide-text:first-of-type {
+        margin-top: 0.3rem;
+      }
+
+      .gallery-grid {
+        display: grid;
+
+        /* Eight dishes per row; the wall wraps onto as many rows as the deck
+           needs. */
+        grid-template-columns: repeat(8, 1fr);
+        gap: 2px;
+      }
+
+      .gallery-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        aspect-ratio: 1;
+        border: 1px solid var(--border-light);
+        border-radius: 4px;
+        padding: 0;
+        background: var(--bg);
+        color: inherit;
+        font-family: inherit;
+        font-size: 1.15rem;
+        cursor: pointer;
+        opacity: 0.3;
+        filter: grayscale(100%);
+        transition:
+          opacity 0.2s ease,
+          border-color 0.2s ease,
+          filter 0.2s ease;
+      }
+
+      .gallery-item.unlocked {
+        border-color: var(--accent);
+        opacity: 1;
+        filter: grayscale(0%);
+      }
+
+      .gallery-item:focus-visible {
+        outline: 2px solid #007bff;
+        outline-offset: 2px;
+      }
+
+      /* The dish currently shown in the card above. The dimming of a locked
+         tile is lifted here, or the gold highlight would be faded with it. */
+      .gallery-item.selected {
+        border-color: var(--gold);
+        opacity: 1;
+        filter: grayscale(0%);
+      }
+
+      /* A locked dish keeps its emoji; its photo only appears once the dish
+         has been obtained. */
+      .gallery-img {
+        display: none;
+        width: 100%;
+        height: 100%;
+        border-radius: 3px;
+        object-fit: cover;
+      }
+
+      .gallery-item.unlocked .gallery-img {
+        display: block;
+      }
+
+      .gallery-item.unlocked .gallery-emoji {
+        display: none;
+      }
+
+      /* Pop animation when the unlocked card changes. */
+      @keyframes pop {
+        0% {
+          transform: scale(0.98);
+        }
+
+        50% {
+          transform: scale(1.01);
+        }
+
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .animate-pop {
+        animation: pop 0.3s ease-out;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .animate-pop {
+          animation: none;
+        }
+
+        .toast {
+          transition: none;
+        }
+      }
+
+      /* Sagu game overlay. */
+      .overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        background: rgb(26 26 26 / 95%);
+      }
+
+      .overlay.active {
+        display: flex;
+      }
+
+      .overlay-close {
+        position: absolute;
+        top: 0.75rem;
+        right: 0.75rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        border: 1px solid var(--border);
+        border-radius: 50%;
+        background: var(--surface);
+        color: var(--text);
+        font-family: inherit;
+        font-size: 1rem;
+        cursor: pointer;
+      }
+
+      .overlay-close:hover {
+        background: var(--hover);
+      }
+
+      .overlay-close:focus-visible {
+        outline: 2px solid #007bff;
+        outline-offset: 2px;
+      }
+
+      #sagu-frame {
+        width: 100%;
+        height: 100%;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: #000;
+      }
+
+      /* Footer fold-down, carried over from the reveal page: one collapsed
+         line at the foot of the page. Opening it reveals — in this order — a
+         Korean description of the page, the site's other Korean pages, and the
+         food deck challenge.js reads (names, photos and credits). */
+      .site-links {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 0.2rem;
+        width: 100%;
+        max-width: min(40rem, 100%);
+        margin-inline: auto;
+        padding: 0.35rem 0.5rem;
+        font-size: 0.7rem;
+        line-height: 1.35;
+        text-align: center;
+      }
+
+      /* Underlined by default: a link inside a block of text must not rely on
+         colour alone to be distinguishable (WCAG 1.4.1). */
+      .site-links a {
+        color: var(--accent);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+
+      .site-links-more {
+        width: 100%;
+        max-width: min(40rem, calc(100vw - 2rem));
+      }
+
+      .site-links-more summary {
+        cursor: pointer;
+        list-style: none;
+        color: var(--muted);
+        opacity: 0.85;
+      }
+
+      .site-links-more summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .site-links-more summary::after {
+        content: " ▾";
+      }
+
+      .site-links-more[open] summary::after {
+        content: " ▴";
+      }
+
+      .site-links-panel {
+        column-count: 2;
+        text-align: left;
+        white-space: normal;
+        padding: 0.75rem;
+      }
+
+      /* The page's own description, read by search engines as the footer's
+         prose. It spans the panel's columns so it reads as a paragraph rather
+         than a two-column fragment. */
+      .site-links-intro {
+        column-span: all;
+        margin: 0 0 0.6rem;
+        color: var(--muted);
+        font-size: 0.72rem;
+        line-height: 1.45;
+      }
+
+      /* Image credit line under the dish deck's heading. */
+      .site-links-credit {
+        margin: 0 0 0.35rem;
+        color: var(--muted);
+        font-size: 0.7rem;
+        line-height: 1.4;
+        break-after: avoid;
+      }
+
+      .site-links-panel h2 {
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin: 0 0 0.25rem;
+        color: var(--muted);
+        break-after: avoid;
+      }
+
+      .site-links-panel ul {
+        margin: 0;
+        padding-left: 1rem;
+        list-style: none;
+      }
+
+      .site-links-panel li {
+        margin-bottom: 0.45rem;
+        break-inside: avoid;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Declares the page as the food challenge, so lobby users see a 🍜 beside
+         this page's presence instead of the bare sagu ④. The `eat` suffix is
+         what getEmoji spots (../utils.js), the way the map uses `-map`/`-club`. -->
+    <app-topbar rule-type="eat"></app-topbar>
+
+    <header>
+      <h1>한국 음식 탐험 🍜</h1>
+      <p>사구 게임으로 높은 점수를 기록하고 한국의 다양한 음식을 만나보세요!</p>
+    </header>
+
+    <!-- Popover for a run that made the hi-score rail. `role="status"` reads
+         the line to a screen reader without interrupting, and the button is a
+         plain dismissal: the timer closes it anyway after two seconds. -->
+    <div id="hiscore-toast" class="toast" role="status" aria-live="polite">
+      <span class="toast-text">신기록! 잘 먹겠습니다 🍜</span>
+      <button type="button" id="hiscore-toast-ok" class="toast-btn">
+        확인
+      </button>
+    </div>
+
+    <main>
+      <!-- Dashboard -->
+      <section class="panel dashboard" aria-label="사구 챌린지">
+        <div class="launch">
+          <div class="launch-head">
+            <span>사구 한 판 치고, 맛있는 한 끼 먹자!</span>
+          </div>
+          <button type="button" id="play-sagu" class="play-btn">
+            ▶ 사구 치고 음식 주문하기
+          </button>
+          <p id="sagu-result" class="result" aria-live="polite"></p>
+        </div>
+        <div class="score">
+          <span class="score-label">현재 점수</span>
+          <span id="score-display" class="score-num">0</span>
+          <span id="score-max" class="score-max">/ 32</span>
+        </div>
+      </section>
+
+      <!-- Unlocked food card -->
+      <section id="food-card" class="panel food-card" aria-live="polite">
+        <div id="food-emoji" class="food-emoji">🍜</div>
+        <div class="food-details">
+          <span class="req"><span id="required-score">1</span>점부터</span>
+          <h2 id="food-name-kr" class="food-title">라면 (Instant Ramyeon)</h2>
+          <p id="food-desc" class="food-desc">
+            출출할 때 생각나는 얼큰하고 간편한 한 그릇.
+          </p>
+          <a
+            id="wiki-link"
+            href="#"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="wiki-btn"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 15h-2v-6h2zm0-8h-2V7h2z"
+              />
+            </svg>
+            위키백과 정보 보기
+          </a>
+        </div>
+      </section>
+
+      <!-- Unlocked gallery -->
+      <section class="panel gallery-panel" aria-label="메뉴 도감">
+        <h2 class="gallery-title">메뉴 도감</h2>
+        <div id="gallery-grid" class="gallery-grid"></div>
+      </section>
+
+      <!-- What the game is, in the page's own words rather than folded away in
+           the footer: 사구 (4구) explained, how a run works, and how to start
+           one. A break is one turn at the table — no timer, shots taken until a
+           miss ends it — so the copy says that rather than describing a mode or
+           a time limit. -->
+      <section class="panel guide-panel" aria-labelledby="guide-title">
+        <h2 id="guide-title" class="guide-title">사구(4구) 당구 게임 안내</h2>
+        <p class="guide-text">
+          사구는 4구 당구의 우리말 이름으로, 수구 두 개와 빨간 공 두 개, 모두 네
+          개의 공으로 즐기는 당구 종목입니다. 내 수구로 두 개의 공을 연속해서
+          맞히면 득점하는 방식이라 한 번 익혀 두면 오래 즐길 수 있습니다.
+        </p>
+        <p class="guide-text">
+          한국 음식 탐험은 그 4구 당구를 한 번의 브레이크로 즐기는 무료
+          미니게임입니다. 시간 제한은 없고, 공을 맞히지 못해 차례가 끝날 때까지
+          계속해서 칠 수 있습니다. 수구를 쿠션 가까이에 붙여 두고 다음 공을
+          맞히기 좋은 자리를 만들어 가며, 실수 없이 오래 이어가는 것이 이 게임의
+          목표입니다.
+        </p>
+        <p class="guide-text">
+          브레이크가 끝나면 그동안 쌓은 점수만큼 한국 음식 메뉴가 하나씩
+          열립니다. 32점을 채우면 라면부터 떡꼬치까지 32가지가 모두 메뉴 도감에
+          모이고, 기록은 옆의 하이런 뷔페에 올라가 다른 플레이어와 견줄 수
+          있습니다.
+        </p>
+        <p class="guide-text">
+          설치나 회원 가입은 필요 없습니다. 사구 치고 음식 주문하기를 누르고
+          수구의 방향과 파워를 정해 치면 되고, 브레이크가 끝난 순간 결과가 점수와
+          메뉴 도감에 바로 반영됩니다. 잠깐의 시간으로도 4구 당구게임을 한 판
+          즐길 수 있습니다.
+        </p>
+      </section>
+
+      <!-- Side rail, in the slot the lobby gives its online list. It will list
+           the players' breaks; for now it is an empty panel. -->
+      <aside class="panel rail" aria-label="하이런 뷔페">
+        <h2 class="rail-title">하이런 뷔페</h2>
+        <ol id="break-list" class="break-list"></ol>
+        <p id="break-status" class="rail-status">불러오는 중…</p>
+      </aside>
+    </main>
+
+    <!-- One folded footer panel, the reveal page's treatment: a short Korean
+         description of the page (also the footer's crawlable prose), then the
+         site's other Korean pages, then the dish deck itself — the metadata
+         list challenge.js reads for names, photos, credits and wiki links. -->
+    <nav class="site-links" aria-label="한국 음식 정보">
+      <details class="site-links-more">
+        <summary>한국 음식 32가지 메뉴와 함께 보기</summary>
+        <div class="site-links-panel">
+          <!-- Description first: search engines read the panel top-down, and a
+               reader opening the fold gets the page explained before the
+               links. -->
+          <!-- The wording leans on the Korean search terms people use for the
+               game — 4구 당구 게임 (4-ball, the same game as 사구) and
+               당구게임/당구 게임 — rather than 사구 alone, since 사구 is what
+               the UI calls it and almost nobody searches for it. -->
+          <p class="site-links-intro">
+            한국 음식 탐험은 4구 당구 게임(사구) 한 브레이크 점수로 한국 음식
+            32가지를 하나씩 여는 무료 웹 미니게임입니다. 라면과 떡볶이,
+            김치찌개처럼 익숙한 메뉴부터 닭발과 곱창 같은 야식까지 점수를
+            높일수록 새로운 메뉴가 열리고, 모은 메뉴는 메뉴 도감에 차곡차곡
+            쌓입니다. 설치나 회원 가입 없이 브라우저에서 바로 시작하는 무료
+            온라인 당구게임이고, 당구를 처음 접해도 한 번의 브레이크에서
+            시작하는 방식이라 금방 익힐 수 있습니다.
+          </p>
+          <!-- The site's other Korean pages. Full absolute URLs rather than
+               relative ones: the page ships from more than one host. -->
+          <h2>함께 보기</h2>
+          <ul>
+            <li>
+              <a href="https://billiards.tailuge.workers.dev/korean.html"
+                >무료 온라인 당구 (한국어)</a
+              >
+            </li>
+            <li>
+              <a href="https://billiards.tailuge.workers.dev/exam/sagu"
+                >사구 시험 훈련</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://billiards.tailuge.workers.dev/fit/research-korean"
+                >사구 물리 연구와 샷 분석</a
+              >
+            </li>
+            <li>
+              <a href="https://news11213.tistory.com/1"
+                >인터랙티브 3쿠션 샷 분석과 연습 (티스토리)</a
+              >
+            </li>
+            <li>
+              <a href="https://blog.naver.com/jasuil/224416229214"
+                >네이버 블로그</a
+              >
+            </li>
+          </ul>
+          <h2>야식 대잔치</h2>
+          <p class="site-links-credit">
+            이미지 출처:
+            <a href="https://commons.wikimedia.org/">Wikimedia Commons</a>와
+            위키백과 문서, 개별 저작자 표시.
+          </p>
+          <ul id="kfood-data">
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EB%9D%BC%EB%A9%B4"
+                data-emoji="🍜"
+                data-desc="출출할 때 생각나는 얼큰하고 간편한 한 그릇."
+                data-image="https://thumb.wikimedia.org/wikipedia/commons/thumb/7/73/Mama_instant_noodle_block.jpg/1280px-Mama_instant_noodle_block.jpg"
+                data-bytes="25554"
+                data-views="1959"
+                data-rating="0.0313"
+                data-created="2026-11-02"
+                data-image-license="CC BY-SA 3.0"
+                data-image-license-url="https://creativecommons.org/licenses/by-sa/3.0"
+                data-image-author="Takeaway"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Mama_instant_noodle_block.jpg"
+                >라면 (Ramyeon)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EB%96%A1%EB%B3%B6%EC%9D%B4"
+                data-emoji="🍢"
+                data-desc="매콤달콤한 양념에 쫄깃한 떡을 넣어 만든 국민 간식."
+                data-image="https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4d/Tteokbokki.JPG/1280px-Tteokbokki.JPG"
+                data-bytes="13247"
+                data-views="1767"
+                data-rating="0.0625"
+                data-created="2026-11-02"
+                data-image-license="CC0"
+                data-image-license-url="http://creativecommons.org/publicdomain/zero/1.0/deed.en"
+                data-image-author="Popo le Chien"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Tteokbokki.JPG"
+                >떡볶이 (Tteokbokki)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EA%B9%80%EB%B0%A5"
+                data-emoji="🍙"
+                data-desc="한입에 쏙! 밥과 다양한 재료를 김으로 감싼 든든한 간식."
+                data-image="https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0e/Gimbap_%28pixabay%29.jpg/1280px-Gimbap_%28pixabay%29.jpg"
+                data-bytes="23372"
+                data-views="2139"
+                data-rating="0.0938"
+                data-created="2026-11-02"
+                data-image-license="CC0"
+                data-image-license-url="http://creativecommons.org/publicdomain/zero/1.0/deed.en"
+                data-image-author="changupn"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Gimbap_(pixabay).jpg"
+                >김밥 (Gimbap)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EC%96%91%EB%85%90%EC%B9%98%ED%82%A8"
+                data-emoji="🍗"
+                data-desc="바삭한 치킨에 매콤달콤한 특제 양념 소스를 버무린 인기 메뉴입니다."
+                data-image="https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1e/Korean.cuisine-Yangnyeom_chicken-01.jpg/1280px-Korean.cuisine-Yangnyeom_chicken-01.jpg"
+                data-bytes="5923"
+                data-views="317"
+                data-rating="0.125"
+                data-created="2026-11-02"
+                data-image-license="CC BY-SA 2.0"
+                data-image-license-url="https://creativecommons.org/licenses/by-sa/2.0"
+                data-image-author="by ayustety (flickr)"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Korean.cuisine-Yangnyeom_chicken-01.jpg"
+                >양념치킨 (Yangnyeom Chicken)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EC%88%9C%EB%8C%80"
+                data-emoji="🌭"
+                data-desc="찰밥과 당면을 채워 만든 순대를 소금이나 양념에 찍어 먹습니다."
+                data-image="https://thumb.wikimedia.org/wikipedia/commons/thumb/4/42/Korean.food-Sundae-01.jpg/1280px-Korean.food-Sundae-01.jpg"
+                data-bytes="19495"
+                data-views="1928"
+                data-rating="0.1563"
+                data-created="2026-11-02"
+                data-image-license="CC BY-SA 2.0"
+                data-image-license-url="https://creativecommons.org/licenses/by-sa/2.0"
+                data-image-author="ayustety (a flickr user)"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Korean.food-Sundae-01.jpg"
+                >순대 (Sundae)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EC%A7%9C%EC%9E%A5%EB%A9%B4"
+                data-emoji="🍝"
+                data-desc="춘장을 볶아 만든 검은 소스에 면을 비벼 먹는 중화풍 국수입니다."
+                data-image="https://thumb.wikimedia.org/wikipedia/commons/thumb/7/78/Jajangmyeon.jpg/1280px-Jajangmyeon.jpg"
+                data-bytes="16537"
+                data-views="1952"
+                data-rating="0.1875"
+                data-created="2026-11-02"
+                data-image-license="CC BY-SA 2.0 kr"
+                data-image-license-url="https://creativecommons.org/licenses/by-sa/2.0/kr/deed.en"
+                data-image-author="국립국어원"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Jajangmyeon.jpg"
+                >짜장면 (Jajangmyeon)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EB%A7%8C%EB%91%90"
+                data-emoji="🥟"
+                data-desc="속이 꽉 찬 만두. 찌거나 굽거나, 어떻게 먹어도 맛있죠."
+                data-image="https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0c/%EB%A7%8C%EB%91%90.jpg/1280px-%EB%A7%8C%EB%91%90.jpg"
+                data-bytes="26462"
+                data-views="1113"
+                data-rating="0.2188"
+                data-created="2026-11-02"
+                data-image-license="CC0"
+                data-image-license-url="http://creativecommons.org/publicdomain/zero/1.0/deed.en"
+                data-image-author="Raven9722"
+                data-image-page="https://commons.wikimedia.org/wiki/File:%EB%A7%8C%EB%91%90.jpg"
+                >만두 (Mandu)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EB%B6%80%EB%8C%80%EC%B0%8C%EA%B0%9C"
+                data-emoji="🍲"
+                data-desc="햄과 소시지, 라면 사리를 넣고 얼큰하게 끓인 찌개입니다."
+                data-image="https://thumb.wikimedia.org/wikipedia/commons/thumb/8/82/Budae_jjigae_%2828587380901%29.jpg/1280px-Budae_jjigae_%2828587380901%29.jpg"
+                data-bytes="26010"
+                data-views="849"
+                data-rating="0.25"
+                data-created="2026-11-02"
+                data-image-license="CC BY 2.0"
+                data-image-license-url="https://creativecommons.org/licenses/by/2.0"
+                data-image-author="T.Tseng"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Budae_jjigae_(28587380901).jpg"
+                >부대찌개 (Budae Jjigae)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%ED%8C%8C%EC%A0%84"
+                data-emoji="🥞"
+                data-desc="쪽파를 듬뿍 넣어 바삭하게 부쳐 낸 부침개입니다."
+                data-image="https://thumb.wikimedia.org/wikipedia/commons/thumb/5/54/Korean_pancake-Pajeon-06.jpg/1280px-Korean_pancake-Pajeon-06.jpg"
+                data-bytes="3862"
+                data-views="164"
+                data-rating="0.2813"
+                data-created="2026-11-02"
+                data-image-license="CC BY 2.0"
+                data-image-license-url="https://creativecommons.org/licenses/by/2.0"
+                data-image-author="Maggie"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Korean_pancake-Pajeon-06.jpg"
+                >파전 (Pajeon)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EA%B3%B1%EC%B0%BD"
+                data-emoji="🥘"
+                data-desc="소의 곱창을 매콤한 양념에 볶아 술안주로 즐기는 요리입니다."
+                data-image="https://thumb.wikimedia.org/wikipedia/commons/thumb/5/56/Korean.food-Gobchang.bokkem-01.jpg/1280px-Korean.food-Gobchang.bokkem-01.jpg"
+                data-bytes="1910"
+                data-views="1040"
+                data-rating="0.3125"
+                data-created="2026-11-02"
+                data-image-license="CC BY 2.0"
+                data-image-license-url="https://creativecommons.org/licenses/by/2.0"
+                data-image-author="keizie"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Korean.food-Gobchang.bokkem-01.jpg"
+                >곱창 (Gopchang)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EB%8B%AD%EB%B0%9C"
+                data-emoji="🐔"
+                data-desc="매운 양념에 졸인 닭발로, 쫄깃한 식감이 매력인 야식입니다."
+                data-image="https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d1/Chicken_feet_2.jpg/1280px-Chicken_feet_2.jpg"
+                data-bytes="3989"
+                data-views="182"
+                data-rating="0.3438"
+                data-created="2026-11-02"
+                data-image-license="CC0"
+                data-image-license-url="http://creativecommons.org/publicdomain/zero/1.0/deed.en"
+                data-image-author="ไทย"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Chicken_feet_2.jpg"
+                >닭발 (Dakbal)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%ED%83%95%EC%88%98%EC%9C%A1"
+                data-emoji="🍖"
+                data-desc="튀긴 돼지고기에 새콤달콤한 소스를 부어 먹는 요리입니다."
+                data-image="https://upload.wikimedia.org/wikipedia/commons/4/4d/Tangsuyuk_%28Korean_Chinese_sweet_and_sour_pork%29.jpg"
+                data-bytes="8399"
+                data-views="683"
+                data-rating="0.375"
+                data-created="2026-11-02"
+                data-image-license="CC BY 4.0"
+                data-image-license-url="https://creativecommons.org/licenses/by/4.0"
+                data-image-author="용스토리"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Tangsuyuk_(Korean_Chinese_sweet_and_sour_pork).jpg"
+                >탕수육 (Tangsuyuk)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EC%A7%AC%EB%BD%95"
+                data-emoji="🦐"
+                data-desc="해물과 채소를 넣고 얼큰하게 끓인 중화풍 해물 국수입니다."
+                data-image="https://upload.wikimedia.org/wikipedia/commons/4/44/Jjampong.JPG"
+                data-bytes="5138"
+                data-views="1330"
+                data-rating="0.4063"
+                data-created="2026-11-02"
+                data-image-license="Public domain"
+                data-image-author="Alfpooh"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Jjampong.JPG"
+                >짬뽕 (Jjamppong)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EA%B9%80%EC%B9%98%EC%B0%8C%EA%B0%9C"
+                data-emoji="🥬"
+                data-desc="잘 익은 신김치와 돼지고기를 푹 끓여 낸 대표 한식 찌개입니다."
+                data-image="https://thumb.wikimedia.org/wikipedia/commons/thumb/d/db/Korean_stew_dish_-_Kimchi-jjigae_Kimchi_Stew_2019_%2801%29.jpg/1280px-Korean_stew_dish_-_Kimchi-jjigae_Kimchi_Stew_2019_%2801%29.jpg"
+                data-bytes="3656"
+                data-views="981"
+                data-rating="0.4375"
+                data-created="2026-11-02"
+                data-image-license="KOGL Type 1"
+                data-image-license-url="http://www.kogl.or.kr/info/licenseType1.do"
+                data-image-author="한국농수산식품유통공사"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Korean_stew_dish_-_Kimchi-jjigae_Kimchi_Stew_2019_(01).jpg"
+                >김치찌개 (Kimchi Jjigae)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EA%B0%90%EC%9E%90%ED%83%95"
+                data-emoji="🥔"
+                data-desc="돼지 등뼈와 감자를 푹 고아 낸 진한 국물 요리입니다."
+                data-image="https://thumb.wikimedia.org/wikipedia/commons/thumb/6/68/Gamja-tang_5.jpg/1280px-Gamja-tang_5.jpg"
+                data-bytes="23271"
+                data-views="1812"
+                data-rating="0.4688"
+                data-created="2026-11-02"
+                data-image-license="CC BY-SA 2.0"
+                data-image-license-url="https://creativecommons.org/licenses/by-sa/2.0"
+                data-image-author="travel oriented"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Gamja-tang_5.jpg"
+                >감자탕 (Gamjatang)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EC%88%9C%EB%8C%80%EA%B5%AD%EB%B0%A5"
+                data-emoji="🍚"
+                data-desc="순대와 머릿고기를 넣은 국물에 밥을 말아 먹는 국밥입니다."
+                data-image="https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2d/Sundae-guk.jpg/1280px-Sundae-guk.jpg"
+                data-bytes="2302"
+                data-views="272"
+                data-rating="0.5"
+                data-created="2026-11-02"
+                data-image-license="CC BY-SA 2.0 kr"
+                data-image-license-url="https://creativecommons.org/licenses/by-sa/2.0/kr/deed.en"
+                data-image-author="국립국어원"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Sundae-guk.jpg"
+                >순대국밥 (Sundae Gukbap)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EB%8B%AD%EA%B0%88%EB%B9%84"
+                data-emoji="🐓"
+                data-desc="닭고기와 채소를 고추장 양념에 볶아 먹는 철판 요리입니다."
+                data-image="https://thumb.wikimedia.org/wikipedia/commons/thumb/3/32/Korean_cuisine-Dakgalbi-01.jpg/1280px-Korean_cuisine-Dakgalbi-01.jpg"
+                data-bytes="4017"
+                data-views="487"
+                data-rating="0.5313"
+                data-created="2026-11-02"
+                data-image-license="CC BY-SA 2.0"
+                data-image-license-url="https://creativecommons.org/licenses/by-sa/2.0"
+                data-image-author="by shizu k (shezzz) at Flickr"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Korean_cuisine-Dakgalbi-01.jpg"
+                >닭갈비 (Dakgalbi)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EB%8B%AD%EA%B0%95%EC%A0%95"
+                data-emoji="🍗"
+                data-desc="닭고기를 바삭하게 튀겨 달콤한 양념에 버무린 간식입니다."
+                data-image="https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6e/Dak-gangjeong_3.jpg/1280px-Dak-gangjeong_3.jpg"
+                data-bytes="3399"
+                data-views="440"
+                data-rating="0.5625"
+                data-created="2026-11-02"
+                data-image-license="CC0"
+                data-image-license-url="http://creativecommons.org/publicdomain/zero/1.0/deed.en"
+                data-image-author="hyun chun kim"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Dak-gangjeong_3.jpg"
+                >닭강정 (Dakgangjeong)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EC%AB%84%EB%A9%B4"
+                data-emoji="🌶️"
+                data-desc="쫄깃한 면에 매콤새콤한 양념을 비벼 먹는 분식입니다."
+                data-image="https://upload.wikimedia.org/wikipedia/commons/e/ef/Jjolmyeon_2.jpg"
+                data-bytes="2797"
+                data-views="345"
+                data-rating="0.5938"
+                data-created="2026-11-02"
+                data-image-license="CC BY-SA 2.0 kr"
+                data-image-license-url="https://creativecommons.org/licenses/by-sa/2.0/kr/deed.en"
+                data-image-author="국립국어원"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Jjolmyeon_2.jpg"
+                >쫄면 (Jjolmyeon)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EB%9D%BC%EB%B3%B6%EC%9D%B4"
+                data-emoji="🥡"
+                data-desc="라면 사리와 떡을 함께 끓인 매콤한 분식입니다."
+                data-image="https://upload.wikimedia.org/wikipedia/commons/5/5b/Ra-bokki.jpg"
+                data-bytes="1280"
+                data-views="173"
+                data-rating="0.625"
+                data-created="2026-11-02"
+                data-image-license="CC BY 4.0"
+                data-image-license-url="https://creativecommons.org/licenses/by/4.0"
+                data-image-author="farmtv"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Ra-bokki.jpg"
+                >라볶이 (Rabokki)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EA%B9%80%EC%B9%98%EB%B3%B6%EC%9D%8C%EB%B0%A5"
+                data-emoji="🍳"
+                data-desc="잘게 썬 김치와 밥을 볶아 계란을 올린 한 그릇 요리입니다."
+                data-image="https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cd/Kimchi-bokkeum-bap.jpg/1280px-Kimchi-bokkeum-bap.jpg"
+                data-bytes="5528"
+                data-views="375"
+                data-rating="0.6563"
+                data-created="2026-11-02"
+                data-image-license="CC BY-SA 2.0 kr"
+                data-image-license-url="https://creativecommons.org/licenses/by-sa/2.0/kr/deed.en"
+                data-image-author="국립국어원"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Kimchi-bokkeum-bap.jpg"
+                >김치볶음밥 (Kimchi Bokkeumbap)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EA%B3%84%EB%9E%80%EB%A7%90%EC%9D%B4"
+                data-emoji="🥚"
+                data-desc="계란을 얇게 부쳐 돌돌 말아 도시락 반찬으로 즐깁니다."
+                data-image="https://thumb.wikimedia.org/wikipedia/commons/thumb/2/23/Gyeran-mari.jpg/1280px-Gyeran-mari.jpg"
+                data-bytes="1526"
+                data-views="166"
+                data-rating="0.6875"
+                data-created="2026-11-02"
+                data-image-license="CC BY 2.0"
+                data-image-license-url="https://creativecommons.org/licenses/by/2.0"
+                data-image-author="Hyeon-Jeong Suk"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Gyeran-mari.jpg"
+                >계란말이 (Gyeran Mari)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EB%91%90%EB%B6%80%EA%B9%80%EC%B9%98"
+                data-emoji="🥢"
+                data-desc="데친 두부에 볶은 김치를 곁들여 먹는 술안주입니다."
+                data-image="https://thumb.wikimedia.org/wikipedia/commons/thumb/2/22/Korean.food-Dubukimchi-01.jpg/1280px-Korean.food-Dubukimchi-01.jpg"
+                data-bytes="974"
+                data-views="43"
+                data-rating="0.7188"
+                data-created="2026-11-02"
+                data-image-license="CC BY-SA 2.0"
+                data-image-license-url="https://creativecommons.org/licenses/by-sa/2.0"
+                data-image-author="stuart_spivack (a flickr user)"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Korean.food-Dubukimchi-01.jpg"
+                >두부김치 (Dubu Kimchi)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EA%B3%A8%EB%B1%85%EC%9D%B4%EB%AC%B4%EC%B9%A8"
+                data-emoji="🐚"
+                data-desc="골뱅이를 매콤새콤한 양념에 무쳐 소면과 함께 먹습니다."
+                data-image="https://upload.wikimedia.org/wikipedia/commons/6/63/Golbaengi-muchim_2.jpg"
+                data-bytes="1070"
+                data-views="478"
+                data-rating="0.75"
+                data-created="2026-11-02"
+                data-image-license="CC BY 2.0 kr"
+                data-image-license-url="https://creativecommons.org/licenses/by/2.0/kr/deed.en"
+                data-image-author="맘앤쿡"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Golbaengi-muchim_2.jpg"
+                >골뱅이무침 (Golbaengi Muchim)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EC%96%B4%EB%AC%B5"
+                data-emoji="🍥"
+                data-desc="길거리 국물에 꼬치로 담아 먹는 어묵입니다."
+                data-image="https://upload.wikimedia.org/wikipedia/commons/8/81/Assorted_Eomuk.jpg"
+                data-bytes="11898"
+                data-views="570"
+                data-rating="0.7813"
+                data-created="2026-11-02"
+                data-image-license="CC BY-SA 4.0"
+                data-image-license-url="https://creativecommons.org/licenses/by-sa/4.0"
+                data-image-author="Pibiy"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Assorted_Eomuk.jpg"
+                >어묵 (Eomuk)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EB%B6%95%EC%96%B4%EB%B9%B5"
+                data-emoji="🐟"
+                data-desc="붕어 모양 틀에 반죽과 팥소를 넣어 구운 겨울 간식입니다."
+                data-image="https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ad/Boong_o_bbang.jpg/1280px-Boong_o_bbang.jpg"
+                data-bytes="10458"
+                data-views="889"
+                data-rating="0.8125"
+                data-created="2026-11-02"
+                data-image-license="CC BY-SA 4.0"
+                data-image-license-url="https://creativecommons.org/licenses/by-sa/4.0"
+                data-image-author="Penny Richards"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Boong_o_bbang.jpg"
+                >붕어빵 (Bungeoppang)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%ED%98%B8%EB%96%A1"
+                data-emoji="🍩"
+                data-desc="설탕과 견과 소를 넣은 반죽을 노릇하게 구운 간식입니다."
+                data-image="https://upload.wikimedia.org/wikipedia/commons/9/97/Hotteok.jpg"
+                data-bytes="4031"
+                data-views="536"
+                data-rating="0.8438"
+                data-created="2026-11-02"
+                data-image-license="CC BY-SA 2.0"
+                data-image-license-url="https://creativecommons.org/licenses/by-sa/2.0"
+                data-image-author="Korea.net / Korean Culture and Information Service"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Hotteok.jpg"
+                >호떡 (Hotteok)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EA%B3%84%EB%9E%80%EB%B9%B5"
+                data-emoji="🧁"
+                data-desc="빵 속에 통계란을 넣어 찐 달콤한 길거리 간식입니다."
+                data-image="https://thumb.wikimedia.org/wikipedia/commons/thumb/6/61/Gyeranppang_by_travel_oriented.jpg/1280px-Gyeranppang_by_travel_oriented.jpg"
+                data-bytes="3607"
+                data-views="273"
+                data-rating="0.875"
+                data-created="2026-11-02"
+                data-image-license="CC BY-SA 2.0"
+                data-image-license-url="https://creativecommons.org/licenses/by-sa/2.0"
+                data-image-author="travel oriented from Seoul, South Korea"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Gyeranppang_by_travel_oriented.jpg"
+                >계란빵 (Gyeranppang)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EB%8B%AD%EA%BC%AC%EC%B9%98"
+                data-emoji="🍡"
+                data-desc="닭고기를 꼬치에 꿰어 구운 뒤 양념을 입힌 간식입니다."
+                data-image="https://upload.wikimedia.org/wikipedia/commons/e/ee/Dak-kkochi.jpg"
+                data-bytes="4329"
+                data-views="115"
+                data-rating="0.9063"
+                data-created="2026-11-02"
+                data-image-license="CC BY 4.0"
+                data-image-license-url="https://creativecommons.org/licenses/by/4.0"
+                data-image-author="부스트 Bost"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Dak-kkochi.jpg"
+                >닭꼬치 (Dak Kkochi)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EB%96%A1%EA%BC%AC%EC%B9%98"
+                data-emoji="🍢"
+                data-desc="떡을 꼬치에 꿰어 튀긴 뒤 달콤한 양념을 바르는 간식입니다."
+                data-image="https://upload.wikimedia.org/wikipedia/commons/f/fd/Tteok-kkochi.jpg"
+                data-bytes="1946"
+                data-views="58"
+                data-rating="0.9375"
+                data-created="2026-11-02"
+                data-image-license="CC BY 2.0"
+                data-image-license-url="https://creativecommons.org/licenses/by/2.0"
+                data-image-author="Chloe Lim"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Tteok-kkochi.jpg"
+                >떡꼬치 (Tteok Kkochi)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EC%86%8C%EB%96%A1%EC%86%8C%EB%96%A1"
+                data-emoji="🌭"
+                data-desc="소시지와 떡을 번갈아 꿰어 구운 길거리 간식입니다."
+                data-image="https://thumb.wikimedia.org/wikipedia/commons/thumb/7/73/Sotteok-sotteok.jpg/1280px-Sotteok-sotteok.jpg"
+                data-bytes="2374"
+                data-views="296"
+                data-rating="0.9688"
+                data-created="2026-11-02"
+                data-image-license="CC0"
+                data-image-license-url="http://creativecommons.org/publicdomain/zero/1.0/deed.en"
+                data-image-author="Ajumeoni"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Sotteok-sotteok.jpg"
+                >소떡소떡 (Sotteok Sotteok)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://ko.wikipedia.org/wiki/%EA%B9%80%EB%A7%90%EC%9D%B4"
+                data-emoji="🍤"
+                data-desc="김에 밥과 당면을 말아 튀긴 바삭한 분식입니다."
+                data-image="https://upload.wikimedia.org/wikipedia/commons/f/f9/Gim-mari-twigim_2.jpg"
+                data-bytes="1766"
+                data-views="138"
+                data-rating="1"
+                data-created="2026-11-02"
+                data-image-license="CC BY 2.0 kr"
+                data-image-license-url="https://creativecommons.org/licenses/by/2.0/kr/deed.en"
+                data-image-author="경빈마마"
+                data-image-page="https://commons.wikimedia.org/wiki/File:Gim-mari-twigim_2.jpg"
+                >김말이 (Gimmari)</a
+              >
+            </li>
+          </ul>
+        </div>
+      </details>
+    </nav>
+
+    <div id="sagu-overlay" class="overlay">
+      <button
+        type="button"
+        id="close-sagu"
+        class="overlay-close"
+        aria-label="닫기"
+      >
+        ✕
+      </button>
+      <iframe id="sagu-frame" title="사구 게임" allow="fullscreen"></iframe>
+    </div>
+
+    <script type="module" src="challenge.js"></script>
+  </body>
+</html>

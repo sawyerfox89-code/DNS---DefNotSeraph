@@ -1,0 +1,150 @@
+/* FONT FACE */
+@font-face {
+	font-family: "PatrickHand";
+	font-style: normal;
+	font-weight: 400;
+	src: url(../../css/PatrickHand-Regular.ttf) format('truetype');
+}
+
+body{
+	margin: 0;
+	font-family: "PatrickHand", Helvetica, Arial;
+	color: #000;
+	padding: 0 10px;
+	background: #fff;
+	letter-spacing: 1px;
+}
+
+#content{
+	background: #fff;
+	width: 600px;
+	overflow: hidden;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+#container{
+	width: 500px;
+    margin: 30px auto;
+}
+
+
+#graph{
+	border-left: 2px solid black;
+	border-bottom: 2px solid black;
+}
+#y_axis, #x_axis{
+	font-size: 18px;
+	position: absolute;
+	color: #000;
+}
+#y_axis{
+	position: absolute;
+	transform: rotate(-90deg);
+	left: -67px;
+    top: 114px;
+    text-align: right;
+    width: 200px;
+}
+#x_axis{
+	width: 200px;
+    left: 358px;
+    top: 282px;
+    text-align: right;
+}
+
+#ui{
+    margin-top: 25px;
+    font-size: 25px;
+    line-height: 1em;
+}
+input[fullw]{
+	width:100%;
+}
+
+#default_labels{
+	display:none;
+}
+
+
+.timing_slider, .decay_slider, .sweet_slider{
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+	height: 2px;
+    border-radius: 5px;   
+    background: #d3d3d3;
+    outline: none;
+}
+.timing_slider{
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+
+.timing_slider::-webkit-slider-thumb{
+    -webkit-appearance: none;
+    appearance: none;
+    width: 15px;
+    height: 35px;
+    border-radius: 8px; 
+    background: #ff4040;
+    cursor: pointer;
+    border:none;
+}
+.timing_slider::-moz-range-thumb{
+	width: 15px;
+    height: 35px;
+    border-radius: 8px; 
+    background: #ff4040;
+    cursor: pointer;
+    border:none;
+}
+
+
+.decay_slider::-webkit-slider-thumb{
+    -webkit-appearance: none;
+    appearance: none;
+     width: 15px;
+    height: 35px;
+    border-radius: 8px; 
+    background: #333;
+    cursor: pointer;
+    border:none;
+}
+.decay_slider::-moz-range-thumb{
+	 width: 15px;
+    height: 35px;
+    border-radius: 8px; 
+    background: #333;
+    cursor: pointer;
+    border:none;
+}
+
+
+
+.sweet_slider::-webkit-slider-thumb{
+    -webkit-appearance: none;
+    appearance: none;
+    width: 15px;
+    height: 35px;
+    border-radius: 8px; 
+    background: #ffDD00;
+    cursor: pointer;
+    border:none;
+}
+.sweet_slider::-moz-range-thumb{
+	width: 15px;
+    height: 35px;
+    border-radius: 8px; 
+    background: #ffDD00;
+    cursor: pointer;
+    border:none;
+}
+
+.auto_optimize{
+    background: #e6e6e6;
+    padding: 0 5px;
+    border-radius: 10px;
+    cursor: pointer;
+}

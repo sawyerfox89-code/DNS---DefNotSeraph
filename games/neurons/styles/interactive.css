@@ -1,0 +1,180 @@
+body {
+	margin: 0;
+	background: #fff;
+}
+
+div, canvas{
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
+#container{
+	background:#000;
+	position: relative;
+	
+	width: 960px;
+	height: 540px;
+	/*width: 100%;
+	max-height: 100%;*/
+}
+
+#canvas{
+	background-color:#000;
+	display:block;
+
+	width: 960px;
+	height: 540px;
+
+	position: absolute;
+	top:0; bottom:0; left:0; right:0;
+	margin: auto;
+}
+
+#canvas[loading=yes]{
+	display: none;
+}
+
+#preloader{
+	width: 100%;
+	height: 100%;
+	background-color: #000;
+}
+#loading_bar{
+	width:360px; height:90px;
+	position: absolute;
+	margin: auto;
+	top:0; left:0; right:0; bottom: 0;
+	overflow: hidden;
+}
+#loading_bar_connection{
+	position: absolute;
+	top:0; left:-225px;
+	width:360px; height:90px;
+	background-image: url(../assets/ui/loading2.png);
+	-webkit-transition: left 0.5s;
+	-moz-transition: left 0.5s;
+	-ms-transition: left 0.5s;
+    transition: left 0.5s;
+}
+#loading_bar_graphic{
+	position: absolute;
+	top:0; left:0;
+	width:360px; height:90px;
+	background-image: url(../assets/ui/loading.png);
+}
+
+#ui{
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+	height: 40px;
+}
+
+/** CAPTIONS **/
+
+#captions{
+	cursor: default;
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    bottom: 50px;
+    display: none;
+}
+#captions > span{
+    font-size: 20px;
+    font-family: Helvetica, Arial, sans-serif;
+    font-weight: 200;
+    background-color: rgba(0,0,0,0.5);
+    color:#fff;
+    padding: 2px 5px;
+    border-radius: 5px;
+}
+
+/** RESUME **/
+
+#resume{	
+	position: absolute;
+	top:0; left:0;
+	display: none;
+	width: 100%; height: 100%;
+	background: rgba(0,0,0,0.75);
+}
+#resume > #resume_button{	
+	position: absolute;
+	margin: auto;
+	top:0; left:0; right:0; bottom: 0;
+	width:200px; height: 200px;
+	background: url(../assets/ui/resume.png); 
+	background-position: 0px 0px;
+	cursor: pointer;
+
+	-webkit-transform: scale(0.9);
+	-moz-transform: scale(0.9);
+	-ms-transform: scale(0.9);
+    transform: scale(0.9);
+
+	-webkit-transition: -webkit-transform 0.2s;
+	-moz-transition: -moz-transform 0.2s;
+	-ms-transition: -ms-transform 0.2s;
+    transition: transform 0.2s;
+
+}
+#resume > #resume_button:hover{
+	background-position: -200px 0px;
+	
+	-webkit-transform: scale(1.0);
+	-moz-transform: scale(1.0);
+	-ms-transform: scale(1.0);
+	transform: scale(1.0);
+}
+
+/** CONTROLS **/
+
+#controls{
+	width: 100%;
+	height: 40px;
+	background: rgba(0,0,0,0.5);
+}
+#controls > div:hover{
+	background-color: rgba(0,0,0,0.8);
+}
+#control_play{
+	float: left;
+	width: 59px;
+	height: 40px;
+	background-image: url(../assets/ui/play.png);
+	cursor: pointer;
+}
+#control_play[playing=true]{
+	background-position: 0px 40px;
+}
+#control_play[playing=false]{
+	background-position: 0px 0px;
+}
+#control_volume{
+	float: left;
+	width: 47px;
+	height: 40px;
+	background-image: url(../assets/ui/volume.png);
+	cursor: pointer;
+}
+#control_volume_slider{
+	float: left;
+	width: 50px;
+    margin-top: 13px;
+}
+#control_captions{
+	float: right;
+	width: 47px;
+	height: 40px;
+	background-image: url(../assets/ui/captions.png);
+	cursor: pointer;
+}
+#control_captions_select{
+	float:right;
+	width: 100px;
+	margin-top: 12px;
+	margin-right: 10px;
+}

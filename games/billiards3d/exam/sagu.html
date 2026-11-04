@@ -1,0 +1,821 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>4구(사구) 시험 - 채점되는 모아치기·배치 연습 무료 당구 테스트</title>
+    <meta
+      name="description"
+      content="브라우저에서 바로 치는 무료 4구(사구) 시험. 모아치기와 배치 중심의 샷 11개를 실제 물리 엔진 위에서 직접 쳐 보고, 캐롬과 공의 위치를 즉시 채점받습니다. 채점이 끝나도 같은 시험지를 반복하면 사구 포지션 플레이 연습이 됩니다. 회원가입 없이 시작하세요."
+    />
+    <meta
+      name="keywords"
+      content="4구 시험, 사구 시험, 4구 배치, 4구배치, 모아치기, 당구 배치, 사구, 4구, 당구 시험, 사구 연습, 4구 연습, 포지션 플레이, 온라인 당구, 무료 당구, 4구 규칙, 사구 규칙, 캐롬, 수구, 적구, 당점, 두께, 반두께, 세기 조절, 끌어치기, 밀어치기, 마세, 세워치기, 하프 볼, sagu exam, sagu training, korean four-ball"
+    />
+    <meta name="robots" content="index,follow" />
+    <link
+      rel="canonical"
+      href="https://billiards.tailuge.workers.dev/exam/sagu"
+    />
+    <meta
+      property="og:title"
+      content="4구(사구) 시험 - 채점되는 모아치기·배치 연습 무료 당구 테스트"
+    />
+    <meta
+      property="og:description"
+      content="브라우저에서 바로 치는 무료 4구(사구) 시험. 모아치기와 배치 중심의 샷 11개를 실제 물리 엔진 위에서 직접 쳐 보고, 캐롬과 공의 위치를 즉시 채점받습니다. 채점이 끝나도 같은 시험지를 반복하면 사구 포지션 플레이 연습이 됩니다. 회원가입 없이 시작하세요."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="ko_KR" />
+    <meta property="og:site_name" content="Tailuge Billiards" />
+    <meta
+      property="og:url"
+      content="https://billiards.tailuge.workers.dev/exam/sagu"
+    />
+    <meta
+      property="og:image"
+      content="https://billiards.tailuge.workers.dev/images/sagucard.jpg"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="사구(4구) 시험 — 모아치기와 배치 연습 배치도가 그려진 당구장면"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="4구(사구) 시험 - 채점되는 모아치기·배치 연습 무료 당구 테스트"
+    />
+    <meta
+      name="twitter:description"
+      content="브라우저에서 바로 치는 무료 4구(사구) 시험. 모아치기와 배치 중심의 샷 11개를 실제 물리 엔진 위에서 직접 쳐 보고, 캐롬과 공의 위치를 즉시 채점받습니다. 채점이 끝나도 같은 시험지를 반복하면 사구 포지션 플레이 연습이 됩니다. 회원가입 없이 시작하세요."
+    />
+    <meta
+      name="twitter:image"
+      content="https://billiards.tailuge.workers.dev/images/sagucard.jpg"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/ball-colors.css" />
+    <link rel="stylesheet" href="exam.css" />
+    <style>
+      /*
+       * exam.css reserves room for the 20 shot rows of threecushion.html so
+       * buildSummaryList() cannot shift the page after first paint. This paper
+       * has two shots, so reserve their two rows instead of twenty.
+       */
+      #shotList {
+        min-height: 3.6rem;
+      }
+
+      /*
+       * Korean-first paper. exam.css is written for the English papers, so the
+       * Hangul font stack and the leading are set here rather than there, and
+       * only on this page. `word-break: keep-all` matters: the default `normal`
+       * lets Korean break between any two syllables, splitting words mid-word.
+       */
+      body {
+        font-family:
+          "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui,
+          sans-serif;
+        line-height: 1.75;
+      }
+
+      h1,
+      h2,
+      h3,
+      .question-text p,
+      .guide-panel p {
+        word-break: keep-all;
+      }
+    </style>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📜</text></svg>"
+    />
+  </head>
+
+  <body>
+    <header>
+      <h1 data-en="Sagu Exam">
+        <a href="https://billiards.tailuge.workers.dev/lobby">4구(사구) 시험</a>
+      </h1>
+    </header>
+
+    <main>
+      <div class="assessment-line">
+        <span id="assessmentLevel" class="assessment-item assessment unknown"
+          >Assessment: Unknown</span
+        >
+        <span id="completionPct" class="assessment-item">—</span>
+        <span id="scorePct" class="assessment-item">—</span>
+        <div>
+          <details class="guide" id="guide">
+            <summary>Guide</summary>
+            <div class="guide-panel">
+              <h2 data-en="What sagu is">4구(사구)란?</h2>
+              <p
+                data-en="Sagu (사구), or four-ball, is the Korean carom game played on a pocketless table with four balls: two cue balls, one for each player, and two red object balls. A point is a carom - the cue ball has to reach both reds. Touching your opponent's cue ball is a foul and costs a point; in the diagrams on this page the opponent's cue ball is the yellow one."
+              >
+                4구(사구)는 쿠션 없는 당구대에서 공 네 개로 치는 한국의 대표
+                캐롬 경기입니다. 수구 두 개 중 하나가 내 공, 나머지가 상대
+                공이고, 나머지 두 개는 빨간 적구입니다. 내 수구로 빨간 공 두
+                개를 모두 맞히면 1점입니다. 상대 수구에 닿으면 파울로 1점을
+                잃습니다. 이 페이지의 그림에서는 상대 수구가 노란 공으로
+                그려집니다.
+              </p>
+              <h2 data-en="Gathering and position">모아치기와 배치</h2>
+              <p
+                data-en="Most four-ball points come from gathering shots. Bringing the balls back together instead of scattering them leaves the next carom easy; scatter them and you hand the table over. Position play is the same idea in miniature - the ellipse in each diagram marks where the cue ball and both reds should finish."
+              >
+                4구의 득점은 대부분 모아치기에서 나옵니다. 공을 흩어 놓지 않고
+                다시 모아 주면 다음 캐롬이 쉬워지고, 흩어 버리면 상대에게
+                테이블을 넘기게 됩니다. 배치도 같은 개념입니다. 그림에 그려진
+                타원은 수구와 빨간 공 두 개가 어디에 멈춰야 하는지를 표시한
+                것입니다.
+              </p>
+              <h2 data-en="How this paper is graded">채점 방식</h2>
+              <p
+                data-en="Every diagram has a faint ellipse drawn on the cloth. That is the position zone, and it is what the paper is really about. A shot scores three points for the carom and one point for each ball - the cue ball and both reds - that comes to rest inside the ellipse, so six points are on offer in each position. Play Shot opens the position on the table, you play it, and the simulation scores it straight away. Your best attempt on a shot is the one that counts."
+              >
+                모든 그림에는 천 위에 흐린 타원이 그려져 있습니다. 이 타원이
+                바로 포지션 영역이고, 이 시험의 핵심입니다. 캐롬을 성공시키면
+                3점, 수구와 빨간 공 두 개 가운데 타원 안에 멈춘 공마다 1점이
+                붙어 한 샷에 최대 6점을 얻을 수 있습니다. 'Play Shot'을 누르면
+                그 배치가 테이블에 열리고, 샷을 마치면 시뮬레이션이 바로
+                채점합니다. 샷마다 가장 좋은 시도 하나가 기록됩니다.
+              </p>
+              <h2 data-en="Reading the assessment">평가 읽는 법</h2>
+              <p
+                data-en="The strip at the top shows how many shots you have completed and your percentage of the points available, with an assessment band that climbs from Beginner to Master as the score improves. Reset clears the paper and starts you again."
+              >
+                화면 위쪽 띠에는 몇 개의 샷을 마쳤는지와 얻을 수 있는 점수 중 몇
+                퍼센트를 얻었는지가 표시됩니다. 점수가 오를수록 평가 등급이
+                Beginner에서 Master까지 올라갑니다. 'Reset'은 시험지를 지우고
+                처음부터 다시 시작합니다.
+              </p>
+              <h2 data-en="Using this paper as training">
+                사구 연습 자료로 쓰기
+              </h2>
+              <p
+                data-en="This paper is more than something to be marked: it is the basis of a sagu training course. The eleven positions are the ones that come up most in a game, so playing the paper again and again trains exactly the gathering and position play that score points in sagu. Work through it once in order, then run it again - the percentage at the top of the page is your training progress."
+              >
+                이 시험지는 채점만 하고 끝나는 자료가 아닙니다. 사구 연습 코스의
+                기본 자료로, 게임에서 자주 나오는 배치 열한 개를 그대로 담고
+                있습니다. 그래서 이 시험지를 반복해서 치는 것만으로도 사구에서
+                점수를 만드는 모아치기와 포지션 플레이를 그대로 훈련할 수
+                있습니다. 순서대로 한 번 돌린 뒤 다시 돌려 보세요. 화면 위쪽에
+                표시되는 점수 퍼센트가 곧 연습의 진행 상황입니다.
+              </p>
+              <p
+                data-en="Prefer to just play? Open a full game of sagu, or compare this paper with the three-cushion and libre exams. All four papers are free and need no account."
+              >
+                그냥 한 판 치고 싶다면
+                <a href="../?ruletype=sagu">사구(4구) 게임</a>을 열어 보세요.
+                <a href="threecushion.html">3쿠션 시험</a>,
+                <a href="libre.html">리브르 시험</a>,
+                <a href="index.html">네 종목 시험지 전체</a>도 무료이고 가입이
+                필요 없습니다.
+              </p>
+              <h2 data-en="Helping improve this paper">
+                이 시험지 함께 다듬기
+              </h2>
+              <p
+                data-en="Are you a developer or a skilled player interested in improving this material? Adding new questions is easy: edit the HTML page on GitHub (sagu.html). Set up new positions with the table tools and refine the diagrams in the export tool. Contributions are welcome."
+              >
+                개발자이거나 실력 있는 선수라면 이 자료를 더 좋게 만드는 데
+                함께할 수 있습니다. 새 문제를 추가하는 일은 어렵지 않습니다.
+                <a
+                  href="https://github.com/tailuge/billiards/blob/master/dist/exam/sagu.html"
+                  >GitHub의 HTML 페이지</a
+                >를 고치면 됩니다. 새 배치를 만들 때는
+                <a href="https://billiards.tailuge.workers.dev/diagrams/three"
+                  >배치 도구</a
+                >로 포지션을 세우고, 그림을 다듬을 때는
+                <a
+                  href="https://billiards.tailuge.workers.dev/diagrams/export.html"
+                  >다이어그램 내보내기 도구</a
+                >를 쓰세요. 기여는 언제나 환영합니다.
+              </p>
+            </div>
+          </details>
+          <a
+            href="https://billiards.tailuge.workers.dev/lobby"
+            class="lobby-btn"
+            >Lobby</a
+          >
+          <button id="resetExam" class="reset-btn" type="button">Reset</button>
+        </div>
+      </div>
+
+      <section class="summary">
+        <h2 data-en="Shot List">샷 목록</h2>
+        <ul id="shotList"></ul>
+      </section>
+
+      <h2 data-en="Basic">초급</h2>
+      <div class="question-block">
+        <div class="question-text">
+          <h3 data-en="Half ball gathering">하프 볼 모아치기</h3>
+          <p
+            data-en="Half ball is the easiest thickness to aim here, so the shot is really a test of pace. Play it as gently as the carom allows and both reds gather back near where the cue ball started, ready for the next point."
+          >
+            하프 볼은 여기서 가장 맞히기 쉬운 두께입니다. 1/2 두께, 곧
+            반두께라고도 부릅니다. 그래서 이 샷은 결국 세기 조절 싸움입니다.
+            캐롬이 성립할 만큼만 부드럽게 치면 두 빨간 공이 수구가 있던 자리
+            근처로 다시 모여 다음 샷을 준비할 수 있습니다.
+          </p>
+          <button class="play-btn" type="button">Play Shot</button>
+        </div>
+        <div class="question-diagram">
+          <svg
+            class="billiards-table"
+            data-json-shots='[{"balls":[{"id":0,"pos":{"x":-1.127761,"y":-0.623153,"z":0}},{"id":1,"pos":{"x":0,"y":0,"z":0}},{"id":3,"pos":{"x":-0.959021,"y":0.637775,"z":0}},{"id":2,"pos":{"x":-1.324066,"y":-0.188937,"z":0}}],"cushionModel":"mathavan","ruleType":"sagu","shot":{"cueBallId":0,"angle":1.92773,"power":0.8384,"offset":{"x":0.023988,"y":0.308646,"z":0},"elevation":0},"params":{"tableSize":10,"mu":0.0055,"muS":0.126,"μs":0.2,"μw":0.175,"ee":0.85,"stronge_omega_ratio":1.76,"stronge_e_n":0.77,"stronge_μ":0.25}}]'
+            data-figure="0.84 m/s"
+            viewBox="-1.792395 -1.036198 3.584790 2.172395"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <ellipse
+              cx="-1.0045686066150665"
+              cy="-0.5008526667952538"
+              rx="0.4149305522441864"
+              ry="0.35669467598199844"
+              class="fine-stroke"
+            ></ellipse>
+          </svg>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-text">
+          <h3 data-en="Long corner gathering">코너로 길게 모아치기</h3>
+          <p
+            data-en="A long trip for the red, so the power has to do two jobs: bring it back across the table and still leave the cue ball short enough to stay in the zone."
+          >
+            빨간 공이 테이블을 가로질러 멀리 다녀와야 합니다. 공을 되돌려 오는
+            세기와, 수구를 타원 안에 남겨 둘 만큼만 굴리는 세기를 동시에 맞춰야
+            하는 샷입니다.
+          </p>
+          <button class="play-btn" type="button">Play Shot</button>
+        </div>
+        <div class="question-diagram">
+          <svg
+            class="billiards-table"
+            data-json-shots='[{"balls":[{"id":0,"pos":{"x":-1.306299,"y":0.683724,"z":0}},{"id":1,"pos":{"x":0,"y":0,"z":0}},{"id":3,"pos":{"x":1.326888,"y":0.701196,"z":0}},{"id":2,"pos":{"x":-0.75657,"y":0.371834,"z":0}}],"cushionModel":"mathavan","ruleType":"sagu","shot":{"cueBallId":0,"angle":5.811027,"power":1.2052,"offset":{"x":0.009743,"y":0.449895,"z":0},"elevation":0},"params":{"tableSize":10,"mu":0.0055,"muS":0.126,"μs":0.2,"μw":0.175,"ee":0.85,"stronge_omega_ratio":1.76,"stronge_e_n":0.77,"stronge_μ":0.25}}]'
+            data-figure="1.21 m/s"
+            viewBox="-1.792395 -1.036198 3.584790 2.172395"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <ellipse
+              cx="1.2035413682460785"
+              cy="-0.556662067770958"
+              rx="0.4489014446735382"
+              ry="0.2960323244333267"
+              class="fine-stroke"
+            ></ellipse>
+          </svg>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-text">
+          <h3 data-en="Short angle draw">짧은 각 끌어치기</h3>
+          <p
+            data-en="Small angles are sensitive here. Draw takes the red around the corner while the cue ball holds on the contact, and the yellow cue ball has to be played around rather than into - touching it is a foul."
+          >
+            각이 짧을수록 예민합니다. 끌어치기로 빨간 공을 코너 쪽으로 돌리고,
+            수구는 맞은 자리에 붙여 둡니다. 노란 공은 상대 수구이므로 맞히지
+            말고 피해서 돌아가야 합니다. 닿는 순간 파울입니다.
+          </p>
+          <button class="play-btn" type="button">Play Shot</button>
+        </div>
+        <div class="question-diagram">
+          <svg
+            class="billiards-table"
+            data-json-shots='[{"balls":[{"id":0,"pos":{"x":-1.13118,"y":-0.010097,"z":0}},{"id":1,"pos":{"x":0,"y":0,"z":0}},{"id":3,"pos":{"x":-1.206174,"y":0.062102,"z":0}},{"id":2,"pos":{"x":-1.201424,"y":-0.302296,"z":0}}],"cushionModel":"mathavan","ruleType":"sagu","shot":{"cueBallId":0,"angle":4.459013,"power":1.7292,"offset":{"x":0.270857,"y":-0.359355,"z":0},"elevation":0},"params":{"tableSize":10}}]'
+            data-figure="1.73 m/s"
+            viewBox="-1.792395 -1.036198 3.584790 2.172395"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <ellipse
+              cx="-1.2302325963974"
+              cy="-0.36254249792546034"
+              rx="0.24750244617462158"
+              ry="0.3785331370308995"
+              class="fine-stroke"
+            ></ellipse>
+          </svg>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-text">
+          <h3 data-en="Long recovery">길게 되돌려 모아치기</h3>
+          <p
+            data-en="A position that comes up constantly: the red has to come back round to the same side of the table as the cue ball. Play it with a tip less than full draw, so you can hit it firmly without the cue ball running away after the contact."
+          >
+            아주 자주 나오는 배치입니다. 빨간 공을 수구와 같은 쪽으로 다시 돌려
+            놓는 것이 핵심입니다. 끌어치기를 최대로 주지 말고 한 팁 덜 준 채
+            세게 쳐서, 맞은 뒤에 수구가 흘러나가지 않게 합니다.
+          </p>
+          <button class="play-btn" type="button">Play Shot</button>
+        </div>
+        <div class="question-diagram">
+          <svg
+            class="billiards-table"
+            data-json-shots='[{"balls":[{"id":0,"pos":{"x":-0.944099,"y":0.108502,"z":0}},{"id":1,"pos":{"x":0,"y":0,"z":0}},{"id":3,"pos":{"x":-1.417647,"y":-0.356793,"z":0}},{"id":2,"pos":{"x":-0.758899,"y":0.191972,"z":0}}],"cushionModel":"mathavan","ruleType":"sagu","shot":{"cueBallId":0,"angle":0.41353,"power":2.096,"offset":{"x":-0.110787,"y":-0.334832,"z":0},"elevation":0},"params":{"tableSize":10}}]'
+            data-figure="2.10 m/s"
+            viewBox="-1.792395 -1.036198 3.584790 2.172395"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <ellipse
+              cx="-1.1744231879711151"
+              cy="0.40180326625704765"
+              rx="0.4828723967075348"
+              ry="0.453754473477602"
+              class="fine-stroke"
+            ></ellipse>
+          </svg>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-text">
+          <h3 data-en="Full ball">풀 볼(가득 두께)</h3>
+          <p
+            data-en="A fine cut can reach both reds, but full-ball contact with follow or natural roll is the reliable way to hold the cue ball and gather the reds together."
+          >
+            얇게 잘라서 두 빨간 공을 노리는 방법도 있지만, 가득 두께로 맞히고
+            밀어치기나 자연스러운 굴림을 주는 편이 수구를 붙잡고 빨간 공을
+            모으는 데 훨씬 안정적입니다.
+          </p>
+          <button class="play-btn" type="button">Play Shot</button>
+        </div>
+        <div class="question-diagram">
+          <svg
+            class="billiards-table"
+            data-json-shots='[{"balls":[{"id":0,"pos":{"x":-0.7616,"y":0.129743,"z":0}},{"id":1,"pos":{"x":0,"y":0,"z":0}},{"id":3,"pos":{"x":0.374769,"y":0.411047,"z":0}},{"id":2,"pos":{"x":0.000894,"y":0.260375,"z":0}}],"cushionModel":"mathavan","ruleType":"sagu","shot":{"cueBallId":0,"angle":0.174109,"power":1.1528,"offset":{"x":-0.041476,"y":0.171948,"z":0},"elevation":0},"params":{"tableSize":10}}]'
+            data-figure="1.15 m/s"
+            viewBox="-1.792395 -1.036198 3.584790 2.172395"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <ellipse
+              cx="0.3785332553088665"
+              cy="-0.39893990382552147"
+              rx="0.478019405156374"
+              ry="0.47316640987992287"
+              class="fine-stroke"
+            ></ellipse>
+          </svg>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-text">
+          <h3 data-en="Double the red across">빨간 공을 가로질러 보내기</h3>
+          <p
+            data-en="Double the red across the table to get a good next position"
+          >
+            빨간 공을 두 쿠션을 맞고 테이블 반대편으로 길게 보내는 샷입니다.
+            공을 가로질러 보내야 다음 샷을 칠 자리가 생기므로, 쿠션을 타고
+            돌아오는 길이 나오도록 두께와 세기를 함께 맞춥니다. 세게 치면 빨간
+            공이 목표 지점을 지나쳐 흘러가고, 약하면 쿠션을 넘지 못합니다.
+          </p>
+          <button class="play-btn" type="button">Play Shot</button>
+        </div>
+        <div class="question-diagram">
+          <svg
+            class="billiards-table"
+            data-json-shots='[{"balls":[{"id":0,"pos":{"x":-1.396658,"y":-0.031854,"z":0}},{"id":1,"pos":{"x":1.270495,"y":-0.488528,"z":0}},{"id":2,"pos":{"x":0.757535,"y":0.654474,"z":0}},{"id":3,"pos":{"x":-0.7624,"y":-0.368583,"z":0}}],"cushionModel":"mathavan","ruleType":"sagu","shot":{"cueBallId":0,"angle":5.841387,"power":1.5196,"offset":{"x":0.355588,"y":0.275785,"z":0},"elevation":0},"params":{"tableSize":10}}]'
+            data-figure="1.52 m/s"
+            viewBox="-1.792395 -1.036198 3.584790 2.172395"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <ellipse
+              cx="0.5732994824647903"
+              cy="-0.4356962274760008"
+              rx="0.6809392422437668"
+              ry="0.4937394428998232"
+              class="fine-stroke"
+            ></ellipse>
+          </svg>
+        </div>
+      </div>
+
+      <h2 data-en="Intermediate">중급</h2>
+
+      <div class="question-block">
+        <div class="question-text">
+          <h3 data-en="Drive the red around the table">
+            빨간 공을 테이블 주위로 돌리기
+          </h3>
+          <p
+            data-en="Drive the red around the table, controlling pace of white to keep balls in control"
+          >
+            빨간 공을 테이블 둘레로 크게 돌려 다시 왼쪽으로 데려오는 샷입니다.
+            빨간 공을 보내는 힘과 수구를 붙잡아 두는 힘을 동시에 맞춰야 하므로
+            결국 세기 조절이 관건입니다. 세게 치면 수구가 함께 흘러나가고,
+            약하면 빨간 공이 돌아 나오지 못합니다. 상대 수구인 노란 공은 테이블
+            오른쪽에 있으므로 수구가 그쪽으로 길게 흘러가면 파울입니다.
+          </p>
+          <button class="play-btn" type="button">Play Shot</button>
+        </div>
+        <div class="question-diagram">
+          <svg
+            class="billiards-table"
+            data-json-shots='[{"balls":[{"id":0,"pos":{"x":-1.313264,"y":-0.001631,"z":0}},{"id":1,"pos":{"x":0.939111,"y":-0.468544,"z":0}},{"id":2,"pos":{"x":-1.4044,"y":-0.674703,"z":0}},{"id":3,"pos":{"x":-0.955663,"y":0.397252,"z":0}}],"cushionModel":"mathavan","ruleType":"sagu","shot":{"cueBallId":0,"angle":0.900514,"power":2.2532,"offset":{"x":0.189894,"y":0.244829,"z":0},"elevation":0},"params":{"tableSize":10}}]'
+            data-figure="2.25 m/s"
+            viewBox="-1.792395 -1.036198 3.584790 2.172395"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <ellipse
+              cx="-1.1830221116542816"
+              cy="0.4070507069118321"
+              rx="0.49164560437202454"
+              ry="0.3994620661251247"
+              class="fine-stroke"
+            ></ellipse>
+          </svg>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-text">
+          <h3 data-en="Playing a thicker ball">두껍게 맞혀 돌려 붙이기</h3>
+          <p
+            data-en="Playing a thicker ball brings it around to the second ball, control pace as always"
+          >
+            빨간 공을 두껍게 맞히면 얇게 맞힐 때보다 훨씬 크게, 멀리 돌아
+            나옵니다. 그 힘을 빌려 빨간 공을 쿠션 너머로 보낸 뒤 두 번째 빨간 공
+            옆으로 데려오는 샷입니다. 세기가 남으면 빨간 공이 그 자리를 지나쳐
+            흘러가고, 모자라면 돌아 나오지 못합니다. 수구도 함께 흘러가지 않도록
+            끝까지 세기를 조절하는 것이 관건입니다. 상대 수구인 노란 공은 왼쪽
+            아래에 있으므로 수구가 되돌아가 닿으면 파울입니다.
+          </p>
+          <button class="play-btn" type="button">Play Shot</button>
+        </div>
+        <div class="question-diagram">
+          <svg
+            class="billiards-table"
+            data-json-shots='[{"balls":[{"id":0,"pos":{"x":-0.752303,"y":0.183498,"z":0}},{"id":1,"pos":{"x":-1.389895,"y":-0.644568,"z":0}},{"id":2,"pos":{"x":0.384663,"y":-0.562184,"z":0}},{"id":3,"pos":{"x":0.739689,"y":0.566112,"z":0}}],"cushionModel":"mathavan","ruleType":"sagu","shot":{"cueBallId":0,"angle":0.235192,"power":1.5196,"offset":{"x":-0.280262,"y":0.345178,"z":0},"elevation":0},"params":{"tableSize":10}}]'
+            data-figure="1.52 m/s"
+            viewBox="-1.792395 -1.036198 3.584790 2.172395"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <ellipse
+              cx="0.3508097305893898"
+              cy="0.5043555609881878"
+              rx="0.5351767167448997"
+              ry="0.42506860569119453"
+              class="fine-stroke"
+            ></ellipse>
+          </svg>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-text">
+          <h3 data-en="Playing outside the ball">바깥쪽을 맞혀 함께 돌리기</h3>
+          <p
+            data-en="Unlike three cushion billiards sometimes it is better to play outside the ball and drive it around with you"
+          >
+            3쿠션과 달리 4구에서는 공의 바깥쪽을 맞혀 빨간 공과 수구를 함께 끌고
+            다니는 편이 더 나을 때가 많습니다. 이 배치가 바로 그런 경우입니다.
+            빨간 공의 옆을 감아 두껍게 맞히면 수구가 빨간 공 옆에 붙은 채로 함께
+            테이블을 돌아 왼쪽 아래로 돌아옵니다. 세기가 모자라면 두 공이 돌아
+            나오지 못하고, 남으면 상대 수구인 노란 공 쪽으로 흘러가 파울이
+            됩니다. 두 공이 나란히 붙어 오는지 확인하며 세기를 맞춰 보세요.
+          </p>
+          <button class="play-btn" type="button">Play Shot</button>
+        </div>
+        <div class="question-diagram">
+          <svg
+            class="billiards-table"
+            data-json-shots='[{"balls":[{"id":0,"pos":{"x":-0.752303,"y":0.183498,"z":0}},{"id":1,"pos":{"x":1.291676,"y":-0.53112,"z":0}},{"id":2,"pos":{"x":-1.358319,"y":0.566282,"z":0}},{"id":3,"pos":{"x":0.739689,"y":0.566112,"z":0}}],"cushionModel":"mathavan","ruleType":"sagu","shot":{"cueBallId":0,"angle":0.235192,"power":2.4104,"offset":{"x":-0.326476,"y":0.309699,"z":0},"elevation":0},"params":{"tableSize":10}}]'
+            data-figure="2.41 m/s"
+            viewBox="-1.792395 -1.036198 3.584790 2.172395"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <ellipse
+              cx="-1.0268222242593765"
+              cy="-0.44308650959283113"
+              rx="0.6068750470876694"
+              ry="0.4609177662059665"
+              class="fine-stroke"
+            ></ellipse>
+          </svg>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-text">
+          <h3 data-en="Half ball">하프 볼(반두께)로 나란히 보내기</h3>
+          <p
+            data-en="Playing half ball softly can bring both balls the same distance to the target."
+          >
+            수구와 빨간 공 두 개가 일직선으로 놓여 있습니다. 앞의 빨간 공을
+            반두께로 살살 맞히면 맞은 공과 수구가 거의 같은 거리만큼 굴러 나가
+            뒤쪽 목표 지점에 나란히 서게 됩니다. 세게 치면 두 공 모두 목표를
+            지나쳐 흩어지고, 약하면 목표에 닿기 전에 멈춥니다. 두 공이 같은
+            거리만큼 움직이는지 보며 세기를 맞춰 보세요.
+          </p>
+          <button class="play-btn" type="button">Play Shot</button>
+        </div>
+        <div class="question-diagram">
+          <svg
+            class="billiards-table"
+            data-json-shots='[{"balls":[{"id":0,"pos":{"x":-1.134074,"y":-0.000272,"z":0}},{"id":1,"pos":{"x":0.380265,"y":0.000394,"z":0}},{"id":2,"pos":{"x":1.378199,"y":0.002977,"z":0}},{"id":3,"pos":{"x":-0.756334,"y":-0.00015,"z":0}}],"cushionModel":"mathavan","ruleType":"sagu","shot":{"cueBallId":0,"angle":0.120324,"power":1.31,"offset":{"x":-0.088263,"y":0.148326,"z":0},"elevation":0},"params":{"tableSize":10}}]'
+            data-figure="1.31 m/s"
+            viewBox="-1.792395 -1.036198 3.584790 2.172395"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <ellipse
+              cx="1.1442587673664093"
+              cy="0.2265230268239975"
+              rx="0.4750194251537323"
+              ry="0.641159251332283"
+              class="fine-stroke"
+            ></ellipse>
+          </svg>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-text">
+          <h3 data-en="Cut the red ball back">빨간 공을 당겨 되돌리기</h3>
+          <p
+            data-en="Cut the red ball back to the correct side of the table, the draw and spin will kill the pace on the white"
+          >
+            빨간 공을 얇게 잘라 테이블 반대쪽으로 보내면서, 수구에는 당겨치기와
+            사이드 스핀을 함께 줍니다. 맞히는 순간의 속도는 세게 잡아도 당겨지는
+            회전이 그 힘을 빨아들여 수구는 앞으로 흘러가지 않고 짧게 죽습니다.
+            세게 치면 빨간 공이 목표 지점을 지나쳐 흘러가고, 약하면 당김이
+            모자라 수구가 따라 나갑니다. 상대 수구인 노란 공에 닿으면 파울이므로
+            수구가 튀어 나가지 않는지 확인하며 세기를 맞춰 보세요.
+          </p>
+          <button class="play-btn" type="button">Play Shot</button>
+        </div>
+        <div class="question-diagram">
+          <svg
+            class="billiards-table"
+            data-json-shots='[{"balls":[{"id":0,"pos":{"x":-1.171862,"y":0.240424,"z":0}},{"id":1,"pos":{"x":-1.434758,"y":0.601475,"z":0}},{"id":2,"pos":{"x":-1.328019,"y":-0.353096,"z":0}},{"id":3,"pos":{"x":-0.764406,"y":0.369247,"z":0}}],"cushionModel":"mathavan","ruleType":"sagu","shot":{"cueBallId":0,"angle":0.399047,"power":2.1484,"offset":{"x":0.16618,"y":-0.306998,"z":0},"elevation":0},"params":{"tableSize":10}}]'
+            data-figure="2.15 m/s"
+            viewBox="-1.792395 -1.036198 3.584790 2.172395"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <ellipse
+              cx="-1.216798484325409"
+              cy="0.42776278406381607"
+              rx="0.46331948041915894"
+              ry="0.4586394652724266"
+              class="fine-stroke"
+            ></ellipse>
+          </svg>
+        </div>
+      </div>
+
+      <h2 data-en="Advanced">고급</h2>
+
+      <div class="question-block">
+        <div class="question-text">
+          <h3 data-en="Masse">마세(찍어치기)</h3>
+          <p
+            data-en="The dark arts. An elevated cue is a last resort in most games, and four-ball players reach for it far more often. Bend the cue ball around the yellow without touching it - contact is a foul - to glance the red at very low pace and leave both balls nursed in the corner."
+          >
+            흔히 사술이라고 부르는 영역입니다. 큐대를 세워 위에서 내리찍는
+            세워치기는 대부분의 경기에서 최후의 수단이지만, 4구에서는 훨씬 자주
+            쓰입니다. 노란 공은 상대 수구이므로 닿으면 파울입니다. 그 위를
+            돌아가며 아주 약한 세기로 빨간 공을 스치듯 맞혀 두 공을 코너에 붙여
+            둡니다.
+          </p>
+          <button class="play-btn" type="button">Play Shot</button>
+        </div>
+        <div class="question-diagram">
+          <svg
+            class="billiards-table"
+            data-json-shots='[{"balls":[{"id":0,"pos":{"x":-1.119886,"y":0.553942,"z":0}},{"id":1,"pos":{"x":0,"y":0,"z":0}},{"id":3,"pos":{"x":-1.191936,"y":0.579229,"z":0}},{"id":2,"pos":{"x":-1.285096,"y":0.607118,"z":0}}],"cushionModel":"mathavan","ruleType":"sagu","shot":{"cueBallId":0,"angle":3.951941,"power":0.6812,"offset":{"x":-0.366027,"y":-0.261772,"z":0},"elevation":1.003543},"params":{"tableSize":10}}]'
+            data-figure="0.68 m/s"
+            viewBox="-1.792395 -1.036198 3.584790 2.172395"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <ellipse
+              cx="-1.3057183921337128"
+              cy="-0.6065160036087036"
+              rx="0.30887964367866516"
+              ry="0.2667596936225891"
+              class="fine-stroke"
+            ></ellipse>
+          </svg>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-text">
+          <h3 data-en="Gentle masse keeping the balls close">
+            살살 마세로 붙여 두기
+          </h3>
+          <p
+            data-en="The three balls already sit in a small area, so this one is decided by touch rather than by line. Firm and the gathering is scattered; too soft and the red is never reached. With the cue held high and just enough side, the cue ball bends into both reds in turn and all three settle inside the zone. The opponent's yellow sits further up the table, so any long roll is a foul - the power has to run out just after the contact."
+          >
+            공 세 개가 이미 좁은 구역에 뭉쳐 있는 배치입니다. 세게 치면 모아 둔
+            공이 다 흩어지고, 약하게 치면 빨간 공에 닿지도 못합니다. 큐대를 세워
+            살살 감아 치면 수구가 휘어 들어가며 빨간 공 두 개를 차례로 맞히고,
+            세 공 모두 타원 안에 그대로 남습니다. 위쪽에는 상대 수구인 노란 공이
+            있으므로 수구가 길게 흘러가면 파울입니다. 세기를 끝까지 줄여 치는
+            샷입니다.
+          </p>
+          <button class="play-btn" type="button">Play Shot</button>
+        </div>
+        <div class="question-diagram">
+          <svg
+            class="billiards-table"
+            data-json-shots='[{"balls":[{"id":0,"pos":{"x":-1.305026,"y":-0.634005,"z":0}},{"id":1,"pos":{"x":-1.434758,"y":0.601475,"z":0}},{"id":2,"pos":{"x":-1.327925,"y":-0.547403,"z":0}},{"id":3,"pos":{"x":-1.382055,"y":-0.40025,"z":0}}],"cushionModel":"mathavan","ruleType":"sagu","shot":{"cueBallId":0,"angle":0.905123,"power":0.7336,"offset":{"x":0.376505,"y":-0.246464,"z":0},"elevation":0.92085},"params":{"tableSize":10}}]'
+            data-figure="0.73 m/s"
+            viewBox="-1.792395 -1.036198 3.584790 2.172395"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <ellipse
+              cx="-1.3174183368682861"
+              cy="0.4628627561032772"
+              rx="0.3065396547317505"
+              ry="0.40013954415917397"
+              class="fine-stroke"
+            ></ellipse>
+          </svg>
+        </div>
+      </div>
+      <div class="question-block">
+        <div class="question-text">
+          <h3 data-en="Masse to the cushion">쿠션 마세로 세기 죽이기</h3>
+          <p
+            data-en="Masse to the cushion helps kill the speed of the first cannon"
+          >
+            공 네 개가 좁은 구역에 몰려 있습니다. 큐를 눕혀 그대로 치면 첫
+            캐롬에서 수구가 튕겨 나가 공들이 다 흩어지기 쉽습니다. 큐대를 세워
+            마세를 주면 수구가 제1적구를 맞힌 뒤 쿠션에 닿으면서 세기를 잃고,
+            남은 힘만으로 제2적구를 살짝 맞히며 위쪽 타원으로 올라갑니다. 세게
+            치면 모아 둔 공이 흩어지고, 약하게 치면 제2적구에 닿지 못합니다.
+          </p>
+          <button class="play-btn" type="button">Play Shot</button>
+        </div>
+        <div class="question-diagram">
+          <svg
+            class="billiards-table"
+            data-json-shots='[{"balls":[{"id":0,"pos":{"x":-1.236772,"y":-0.568538,"z":0}},{"id":1,"pos":{"x":-1.377425,"y":-0.667361,"z":0}},{"id":2,"pos":{"x":-1.422981,"y":-0.593132,"z":0}},{"id":3,"pos":{"x":-1.323216,"y":-0.589111,"z":0}}],"cushionModel":"mathavan","ruleType":"sagu","shot":{"cueBallId":0,"angle":2.096633,"power":1.9388,"offset":{"x":0.137339,"y":-0.137339,"z":0},"elevation":1.256637},"params":{"tableSize":10}}]'
+            data-figure="1.94 m/s"
+            viewBox="-1.792395 -1.036198 3.584790 2.172395"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <ellipse
+              cx="-1.2777663171291351"
+              cy="0.5171588286757469"
+              rx="0.3252030909061432"
+              ry="0.30983916670084"
+              class="fine-stroke"
+            ></ellipse>
+          </svg>
+        </div>
+      </div>
+      <div class="question-block">
+        <div class="question-text">
+          <h3 data-en="Break shot">브레이크 샷</h3>
+          <p
+            data-en="The break shot is played more slowly than three cushion, but still firm enough to reach the side cushion with the cue ball. Bringing both balls to top of table is the goal."
+          >
+            브레이크 샷은 3쿠션보다 느리게 치지만, 수구가 쿠션에 닿을 만큼은
+            단단하게 칩니다. 두 공을 모두 테이블 위쪽으로 데려오는 것이
+            목표입니다.
+          </p>
+          <button class="play-btn" type="button">Play Shot</button>
+        </div>
+        <div class="question-diagram">
+          <svg
+            class="billiards-table"
+            data-json-shots='[{"balls":[{"id":0,"pos":{"x":-0.756,"y":-0.189,"z":0}},{"id":1,"pos":{"x":1.133942,"y":0.000394,"z":0}},{"id":2,"pos":{"x":0.756,"y":0,"z":0}},{"id":3,"pos":{"x":-0.756334,"y":-0.00015,"z":0}}],"cushionModel":"mathavan","ruleType":"sagu","shot":{"cueBallId":0,"angle":0.147099,"power":2.4628,"offset":{"x":-0.252932,"y":0.161324,"z":0},"elevation":0},"params":{"tableSize":10}}]'
+            data-figure="2.46 m/s"
+            viewBox="-1.792395 -1.036198 3.584790 2.172395"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <ellipse
+              cx="-1.1582985520362854"
+              cy="-0.22041647136211395"
+              rx="0.5358594059944153"
+              ry="0.70901919901371"
+              class="fine-stroke"
+            ></ellipse>
+          </svg>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-text">
+          <h3 data-en="Close balls">가까운 공들 쿠션 옆에 모으기</h3>
+          <p
+            data-en="When the balls are close we can target precise position gathering balls near the cushion"
+          >
+            공들이 서로 가까이 있을 때는 정확한 위치를 노려 쿠션 근처에 모아 둘
+            수 있습니다. 맞히는 두께가 조금만 어긋나도 공이 쿠션에서 떨어져
+            나오므로, 살살 치면서 두 공이 모두 쿠션에 붙는지 확인하는 샷입니다.
+          </p>
+          <button class="play-btn" type="button">Play Shot</button>
+        </div>
+        <div class="question-diagram">
+          <svg
+            class="billiards-table"
+            data-json-shots='[{"balls":[{"id":0,"pos":{"x":-1.315895,"y":-0.606894,"z":0}},{"id":1,"pos":{"x":1.270495,"y":-0.488528,"z":0}},{"id":2,"pos":{"x":-1.31857,"y":0.177589,"z":0}},{"id":3,"pos":{"x":-1.39175,"y":-0.325168,"z":0}}],"cushionModel":"mathavan","ruleType":"sagu","shot":{"cueBallId":0,"angle":1.866219,"power":0.8384,"offset":{"x":-0.332909,"y":0.280171,"z":0},"elevation":0},"params":{"tableSize":10}}]'
+            data-figure="0.84 m/s"
+            viewBox="-1.792395 -1.036198 3.584790 2.172395"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <ellipse
+              cx="-1.3384783267974854"
+              cy="-0.19935648143291473"
+              rx="0.2901597023010254"
+              ry="0.24803970754146576"
+              class="fine-stroke"
+            ></ellipse>
+          </svg>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-text">
+          <h3 data-en="Extreme masse around the yellow">
+            노란 공을 돌아가는 극단적인 마세
+          </h3>
+          <p
+            data-en="Snookered on the reds, you might be able to play off a cushion, but if not, its time for extreme masse to curve around the yellow"
+          >
+            빨간 공들이 노란 공에 가려 곧바로 맞힐 수 없는 스누커 상황입니다.
+            쿠션을 이용해 돌아가는 길이 보이면 그쪽이 훨씬 안전하지만, 그마저도
+            막혔다면 큐대를 세워 크게 감아 치는 극단적인 마세가 남습니다. 노란
+            공은 상대 수구이므로 스치기만 해도 파울입니다. 큐를 높이 세우고
+            충분한 좌우 회전을 주면 수구가 노란 공 바깥으로 크게 휘어 돌아
+            들어가고, 곡선이 끝나는 지점에서 빨간 공을 맞힙니다. 회전이 모자라면
+            노란 공에 그대로 걸리고, 넘치면 빨간 공을 지나쳐 흘러가므로 감아
+            도는 양을 정확히 맞추는 샷입니다.
+          </p>
+          <button class="play-btn" type="button">Play Shot</button>
+        </div>
+        <div class="question-diagram">
+          <svg
+            class="billiards-table"
+            data-json-shots='[{"balls":[{"id":0,"pos":{"x":-1.149416,"y":-0.669762,"z":0}},{"id":1,"pos":{"x":-1.223957,"y":-0.626429,"z":0}},{"id":2,"pos":{"x":-1.4132,"y":-0.571142,"z":0}},{"id":3,"pos":{"x":-1.31567,"y":-0.619363,"z":0}}],"cushionModel":"mathavan","ruleType":"sagu","shot":{"cueBallId":0,"angle":1.481511,"power":1.572,"offset":{"x":0.16618,"y":-0.306998,"z":0},"elevation":1.179592},"params":{"tableSize":10}}]'
+            data-figure="1.57 m/s"
+            viewBox="-1.792395 -1.036198 3.584790 2.172395"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <ellipse
+              cx="-1.3267783522605896"
+              cy="0.5634826421737671"
+              rx="0.30185967683792114"
+              ry="0.2995196580886841"
+              class="fine-stroke"
+            ></ellipse>
+          </svg>
+        </div>
+      </div>
+
+      <section class="summary">
+        <h2 data-en="Finishing up">마무리</h2>
+        <p
+          data-en="Have you completed the exam? If you have a weak shot practice that shot over and over again. Come back tomorrow, reset the exam and take on every question again."
+        >
+          시험을 다 보셨나요? 약한 샷이 있다면 그 샷만 반복해서 연습해 보세요.
+          내일 다시 와서 시험을 초기화하고 모든 문제에 도전해 보세요.
+        </p>
+        <p
+          data-en="Practice to build your own shot repertoire. When a similar layout comes up in a game you can put the shots you have practiced to use."
+        >
+          연습을 통해 자신만의 샷 레퍼토리를 쌓아 보세요. 경기 중 비슷한 배치가
+          나오면 연습했던 샷을 활용할 수 있을 거예요.
+        </p>
+        <p
+          data-en="Now take it to the table! Set a nickname in the lobby, find an online opponent and test your skill. Have fun!"
+        >
+          <strong>이제 실전에서 도전해 보세요!</strong>
+          <a href="https://billiards.tailuge.workers.dev/lobby">대기실</a>에서
+          닉네임을 정하고, 온라인 상대를 찾아 실력을 겨뤄 보세요. 즐거운 당구
+          되세요!
+        </p>
+      </section>
+    </main>
+
+    <div id="gameOverlay">
+      <button class="close-btn" id="closeGame" type="button">Quit</button>
+      <div class="iframe-container">
+        <iframe id="gameIframe" title="사구 시험"></iframe>
+      </div>
+    </div>
+
+    <script type="module">
+      import { initExam } from "./exam.js"
+      initExam()
+    </script>
+  </body>
+</html>

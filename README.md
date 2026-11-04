@@ -47,7 +47,7 @@
 - geotobogaming: general support
 
 ## open source games
-71 free and open-source games were added to the games page (filter: "open source"). each is hosted under its own license, with the license file kept in its folder under `games/`. the full list of games, original authors and licenses is in [games/open-source-credits.html](games/open-source-credits.html).
+171 free and open-source games were added to the games page (filter: "open source"). each is hosted under its own license, with the license file kept in its folder under `games/`. the full list of games, original authors and licenses is in [games/open-source-credits.html](games/open-source-credits.html).
 
 ## retro homebrew
 42 freely licensed homebrew games for nes, game boy, gba, snes and genesis are in `games/homebrew/` (filter: "retro homebrew"). they are original indie games, each included only under its author's redistribution license (kept in its folder); full list in [games/open-source-credits.html](games/open-source-credits.html).

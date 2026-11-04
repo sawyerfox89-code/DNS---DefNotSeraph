@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Billiards Lobby</title>
+    <meta
+      name="description"
+      content="Free multiplayer lobby for Billiards. Find matches, challenge players, and play realistic pool online with accurate physics."
+    />
+    <meta
+      name="keywords"
+      content="billiards lobby, multiplayer pool, online billiards, snooker, 9-ball, 8-ball, pool, carom, three-cushion, free, open source, driebanden, ビリヤード, 9ボール, 3クッション, 無料, オンラインビリヤード, ビリヤードロビー, 당구, 스누커, 3쿠션, 온라인 당구, 당구 로비, 무료 당구, Bida 3 băng, bi-a trực tuyến, sảnh bi-a, chơi bi-a miễn phí, Biliar 3 bantalan, Üç bant, free game, open source"
+    />
+    <meta name="robots" content="index,follow" />
+    <link rel="canonical" href="https://billiards.tailuge.workers.dev/lobby" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+
+    <meta property="og:title" content="Tailuge Billiards" />
+    <meta
+      property="og:description"
+      content="Free multiplayer billiards — 무료 온라인 당구 게임. 3쿠션, 9볼, 스누커를 실제 물리 엔진으로 즐기고 다른 플레이어에게 도전하세요."
+    />
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:url"
+      content="https://billiards.tailuge.workers.dev/lobby"
+    />
+    <meta
+      property="og:image"
+      content="https://billiards.tailuge.workers.dev/images/billiards.png"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:video" content="https://youtu.be/bAeiRQcQuyg" />
+    <meta property="og:video:type" content="text/html" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Multiplayer Billiards - Free" />
+    <meta
+      name="twitter:description"
+      content="Free multiplayer billiards — 무료 온라인 당구 게임. 3쿠션, 9볼, 스누커를 실제 물리 엔진으로 즐기고 다른 플레이어에게 도전하세요."
+    />
+    <meta
+      name="twitter:image"
+      content="https://billiards.tailuge.workers.dev/images/billiards.png"
+    />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "VideoGame",
+        "name": "Billiards Pool Game",
+        "alternateName": ["온라인 당구 - 무료 멀티플레이어", "당구 로비"],
+        "url": "https://billiards.tailuge.workers.dev/lobby.html",
+        "image": "https://billiards.tailuge.workers.dev/images/billiards.png",
+        "description": "Multiplayer lobby for the open source pool and billiards by tailuge",
+        "inLanguage": ["en", "ko"],
+        "applicationCategory": "GameApplication",
+        "operatingSystem": "Web",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "creator": {
+          "@type": "Person",
+          "name": "tailuge"
+        }
+      }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="icon" type="image/png" href="assets/threecushion.png" />
+    <link rel="manifest" href="manifest.json" />
+    <meta
+      name="ocs-site-verification"
+      content="7e2c8724a132bd19fa2cac60ae730ba5"
+    />
+    <meta name="theme-color" content="#1a1a1a" />
+    <style>
+      @font-face {
+        font-family: Exo;
+        font-style: normal;
+        font-weight: 200;
+        font-display: swap;
+        src: url("https://fonts.gstatic.com/s/exo/v25/4UaZrEtFpBI4f1ZSIK9d4LjJ4tM3CwM.ttf")
+          format("truetype");
+      }
+
+      @font-face {
+        font-family: Exo;
+        font-style: normal;
+        font-weight: 600;
+        font-display: swap;
+        src: url("https://fonts.gstatic.com/s/exo/v25/4UaZrEtFpBI4f1ZSIK9d4LjJ4o0wCwM.ttf")
+          format("truetype");
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: auto;
+        scrollbar-width: none;
+        background: #f5f5f5;
+
+        /* Opt out of mobile text autosizing (Chrome's font boosting, iOS text
+           inflation). It inflates font sizes inside text blocks, which widens
+           the HiScore tables enough to wrap the third one onto its own row. */
+        text-size-adjust: 100%;
+      }
+
+      html::-webkit-scrollbar,
+      body::-webkit-scrollbar {
+        display: none;
+      }
+
+      html[theme="dark"],
+      html[theme="dark"] body {
+        background: #1a1a1a;
+      }
+
+      /* Site index. Static light-DOM markup, so crawlers see every link at
+         load; the <details> is collapsed only for layout, not for indexing.
+         Lives outside <lobby-app>, whose shadow root has no <slot>. */
+      .site-links {
+        display: flex;
+        justify-content: center;
+        gap: 0.75rem;
+        padding: 0.35rem 0.5rem;
+        font-family: Exo, sans-serif;
+        font-weight: 200;
+        font-size: 0.7rem;
+        line-height: 1.35;
+        text-align: center;
+      }
+
+      .site-links a {
+        color: #05c;
+        text-decoration: none;
+      }
+
+      .site-links a:hover {
+        text-decoration: underline;
+      }
+
+      html[theme="dark"] .site-links a {
+        color: #6ba3f5;
+      }
+
+      .site-links-more summary {
+        cursor: pointer;
+        list-style: none;
+        color: #757575;
+        opacity: 0.85;
+      }
+
+      html[theme="dark"] .site-links-more summary {
+        color: #aaa;
+      }
+
+      .site-links-more summary::-webkit-details-marker {
+        display: none;
+      }
+
+      /* Keep an affordance once the default triangle is removed */
+      .site-links-more summary::after {
+        content: " ▾";
+      }
+
+      .site-links-more[open] summary::after {
+        content: " ▴";
+      }
+
+      /* Panel spreads sideways so it never becomes a tall wall. Pinned to two
+         columns: entries carry descriptive copy, and narrower columns would
+         wrap it into a ragged stack. */
+      .site-links-more {
+        width: 100%;
+        max-width: min(52rem, calc(100vw - 2rem));
+      }
+
+      .site-links-panel {
+        column-count: 2;
+        text-align: left;
+        white-space: normal;
+        padding: 0.75rem;
+      }
+
+      @media (width <= 30rem) {
+        .site-links-panel {
+          column-count: 1;
+        }
+      }
+
+      /* Spans both columns so the intro reads as an opening paragraph rather
+         than as the first item of the first column. */
+      .site-links-intro {
+        column-span: all;
+        margin: 0 0 0.6rem;
+        color: #757575;
+        font-size: 0.75rem;
+        line-height: 1.4;
+      }
+
+      html[theme="dark"] .site-links-intro {
+        color: #999;
+      }
+
+      .site-links-panel h2 {
+        font-size: 0.75rem;
+        margin: 0 0 0.25rem;
+        color: #757575;
+        break-after: avoid;
+      }
+
+      html[theme="dark"] .site-links-panel h2 {
+        color: #999;
+      }
+
+      .site-links-panel ul {
+        margin: 0 0 0.75rem;
+        padding-left: 1rem;
+        list-style: none;
+      }
+
+      /* One entry per link: the anchor, then its descriptive copy as a block
+         beneath it, so entries stay separable as the copy grows. The desc block
+         is what puts the copy on its own line, so the anchor needs no
+         display:block of its own (which stylelint flagged as descending
+         specificity against `.site-links a`). */
+      .site-links-panel li {
+        margin-bottom: 0.45rem;
+        break-inside: avoid;
+      }
+
+      .site-links-desc {
+        display: block;
+        margin-left: 0.7rem;
+        color: #757575;
+      }
+
+      html[theme="dark"] .site-links-desc {
+        color: #999;
+      }
+    </style>
+    <script>
+      try {
+        const _t = localStorage.getItem("theme") || "dark"
+        document.documentElement.setAttribute("theme", _t)
+      } catch (_e) {
+        document.documentElement.setAttribute("theme", "dark")
+      }
+    </script>
+  </head>
+  <body>
+    <lobby-app></lobby-app>
+
+    <h1 hidden>Billiards Lobby — free online pool, snooker and carom</h1>
+
+    <noscript>
+      <h1>Billiards Lobby — free online pool, snooker and carom</h1>
+      <p>
+        A free multiplayer lobby for an open source billiards game built on a
+        real physics engine — three-cushion carom, 9-ball, 8-ball and snooker,
+        played against opponents around the world on desktop or mobile.
+      </p>
+      <p>
+        The live player list and challenges need JavaScript, so they are not
+        available in this view. The games themselves run entirely in the browser
+        with nothing to download, install or sign up for.
+      </p>
+    </noscript>
+
+    <nav class="site-links" aria-label="Billiards pages">
+      <details class="site-links-more">
+        <summary>
+          Thanks for playing at tailuge/billiards. Stick around and challenge
+          online for a free game or two.
+        </summary>
+
+        <div class="site-links-panel">
+          <p class="site-links-intro">
+            Play free online billiards, pool, snooker and carom in a realistic
+            3D browser simulator. Play snooker, 9-ball, 8-ball, three-cushion
+            billiards and Korean four-ball (sagu) with realistic ball physics,
+            spin, collisions and cushion behaviour. Practice solo, play against
+            computer opponents, play two players on one device, or play live
+            online multiplayer. Runs directly in your browser with no download
+            or installation required.Free and open source, built with
+            TypeScript, Three.js and WebGL. The physics engine is designed to
+            reproduce real billiard-ball and cushion behaviour, including spin
+            and collision throw. Guides are also available in eight other
+            languages.
+          </p>
+
+          <h2>About</h2>
+          <ul>
+            <li>
+              <a href="./about.html">About this project</a>
+              <span class="site-links-desc">
+                What the simulator is, the rule sets it plays and the published
+                physics behind the shot, plus where to read and contribute to
+                the code.
+              </span>
+            </li>
+            <li>
+              <a href="./nineball.html">Free 9-ball pool</a>
+              <span class="site-links-desc">
+                Nine-ball in the browser: rotation rules, practice mode and
+                shareable replay links, with no download or sign-up.
+              </span>
+            </li>
+            <li>
+              <a href="./eightball.html">Free 8-ball pool</a>
+              <span class="site-links-desc">
+                Solids and stripes on the same table, with AI bots, free
+                multiplayer and a Hi-Res rendering mode.
+              </span>
+            </li>
+            <li>
+              <a href="./snooker.html">Free online snooker</a>
+              <span class="site-links-desc">
+                Full-size 12-foot snooker and shorter 6-foot games, with
+                realistic cushion physics and free online play.
+              </span>
+            </li>
+            <li>
+              <a href="./diagrams/three.html">Three-cushion physics</a>
+              <span class="site-links-desc">
+                Inspect and re-tune the ball and cushion constants yourself, and
+                plot the shot lines that result.
+              </span>
+            </li>
+            <li>
+              <a
+                href="https://github.com/tailuge/billiards"
+                target="_blank"
+                rel="noopener"
+                >Open source on GitHub</a
+              >
+              <span class="site-links-desc">
+                TypeScript and Three.js source under the GNU General Public
+                License, with contributions welcome.
+              </span>
+            </li>
+          </ul>
+
+          <h2>Play</h2>
+          <ul>
+            <li>
+              <a href="./snooker.html">Free online snooker</a>
+              <span class="site-links-desc">
+                Play snooker online for free, a nice open source alternative to
+                <a
+                  href="https://www.shooterspool.net/"
+                  target="_blank"
+                  rel="noopener"
+                  >ShootersPool</a
+                >,
+                <a
+                  href="https://www.flashsnooker.com/"
+                  target="_blank"
+                  rel="noopener"
+                  >Flash Snooker</a
+                >
+                and
+                <a
+                  href="https://realsnooker.club/"
+                  target="_blank"
+                  rel="noopener"
+                  >RealSnooker.Club</a
+                >. Aim for the maximum 147 break!
+              </span>
+            </li>
+            <li>
+              <a href="./practice.html"
+                >Free 9-ball practice &amp; trick shots</a
+              >
+              <span class="site-links-desc">
+                Drag balls to build your own layouts, set up trick shots, pick a
+                drill preset, then shoot — free 9-ball practice with shareable
+                replay links in the browser, no download or sign-up.
+              </span>
+            </li>
+            <li>
+              <a href="./?bot=TheFarJaw">Play against AI bots</a>
+              <span class="site-links-desc">
+                Challenge computer AI opponents online: play 9-ball and
+                three-cushion against TheFarJaw or ClawBreak directly in your
+                browser.
+              </span>
+            </li>
+            <li>
+              <a href="./exam/snooker.html">Snooker training course</a>
+              <span class="site-links-desc">
+                A graded snooker course with automatic scoring, so break
+                building and pot accuracy can be measured — a free alternative
+                to paid coaching apps and academy subscriptions.
+              </span>
+            </li>
+            <li>
+              <a href="./exam/threecushion.html">Three-cushion exam</a>
+              <span class="site-links-desc">
+                An automatic-marked three-cushion exam: cue-ball control, the
+                five-and-half and diamond systems, and Korean patterns like
+                뒤돌리기 and 옆돌리기.
+              </span>
+            </li>
+            <li>
+              <a href="./index.html">Aiming, spin, and cue guide</a>
+              <span class="site-links-desc">
+                How cue control and aiming work: fine versus coarse aim, shot
+                power, topspin, backspin, sidespin (English), and massé angle
+                shots. Press H or tap 𝑖 in the game to open the guide.
+              </span>
+            </li>
+          </ul>
+
+          <h2>Read</h2>
+          <ul>
+            <li>
+              <a href="./blog1.html">Why most pool games feel wrong</a>
+              <span class="site-links-desc">
+                Why cushion behaviour and spin decide whether a pool game feels
+                real, and where most browser billiards fake it.
+              </span>
+            </li>
+            <li>
+              <a href="./blog2.html">Clearing the line-up</a>
+              <span class="site-links-desc">
+                A line-up drill finally cleared: cue-ball control, shot
+                selection and patience, with the layout linked so you can replay
+                it.
+              </span>
+            </li>
+            <li>
+              <a href="./blog3.html">Implementing Mathavan physics</a>
+              <span class="site-links-desc">
+                How the Mathavan (2010) paper became a working numerical model —
+                restitution, energy loss and the code behind the bounce.
+              </span>
+            </li>
+            <li>
+              <a href="./blog4.html">High run, high break, clearances</a>
+              <span class="site-links-desc">
+                Achieve breaks you can only dream of in real life.
+              </span>
+            </li>
+          </ul>
+
+          <h2>Physics and maths</h2>
+          <ul>
+            <li>
+              <a href="./diagrams/three.html">Three-cushion physics diagrams</a>
+              <span class="site-links-desc"
+                >Shot lines plotted from the published ball–cushion research —
+                the Mathavan study of real snooker impacts.</span
+              >
+            </li>
+            <li>
+              <a href="./diagrams/mathavan.html"
+                >Mathavan cushion model &amp; ball throw</a
+              >
+              <span class="site-links-desc">
+                Interactive graphs from the Mathavan high-speed-imaging study of
+                real snooker ball-cushion impacts, plus Alciatore cut-induced
+                ball-on-ball friction and throw effect.
+              </span>
+            </li>
+            <li>
+              <a href="./diagrams/diamond.html">Three-cushion diamond system</a>
+              <span class="site-links-desc">
+                The diamond system with shot lines drawn out: cue-ball paths for
+                two and three cushions — free, where other sites sell
+                diamond-system books and calculators.
+              </span>
+            </li>
+            <li>
+              <a href="./diagrams/stronge.html">Stronge ball-cushion model</a>
+              <span class="site-links-desc">
+                The Stronge inelastic impact model for compliant cushion
+                collisions resolving slip-stick-slip regimes.
+              </span>
+            </li>
+            <li>
+              <a href="./ww.html">Web Workers physics tuning</a>
+              <span class="site-links-desc">
+                Off-thread parallel physics parameter optimization and
+                trajectory calculations running in background Web Workers.
+              </span>
+            </li>
+          </ul>
+
+          <h2>Other ways to play</h2>
+          <ul>
+            <li>
+              <a href="/lobby.html">Online Lobby</a>
+              <span class="site-links-desc">
+                Central multiplayer hub featuring active arena tournaments, live
+                high breaks, online players to challenge, recent match history,
+                lobby chat, and game options.
+              </span>
+            </li>
+            <li>
+              <a href="./arena.html">Billiards arena and tournaments</a>
+              <span class="site-links-desc">
+                Hourly mini arenas for nine-ball, eight-ball and snooker: join,
+                play under the clock and compare scores — free online
+                tournaments, no account needed.
+              </span>
+            </li>
+            <li>
+              <a href="https://tailuge.itch.io/pool-speedrun"
+                >Speedrun challenge</a
+              >
+              <span class="site-links-desc">
+                Clear the table against the clock in this fast, browser-based
+                speedrun challenge.
+              </span>
+            </li>
+            <li>
+              <a href="./itch/itch-pool.html">Pool and 8-ball</a>
+              <span class="site-links-desc">
+                8-ball and 9-ball with realistic physics, multiplayer and
+                practice modes.
+              </span>
+            </li>
+            <li>
+              <a href="./itch/itch-three.html">Three-cushion carom</a>
+              <span class="site-links-desc">
+                Three-cushion billiards on a table that plays long a free,
+                no-install alternative to
+                <a href="https://3ball.app/" target="_blank" rel="noopener"
+                  >3ball.app</a
+                >,
+                <a
+                  href="https://www.casualarena.com/french-billiards"
+                  target="_blank"
+                  rel="noopener"
+                  >Casual Arena</a
+                >
+                and
+                <a
+                  href="https://billiards-arena.org/en/"
+                  target="_blank"
+                  rel="noopener"
+                  >Billiards Arena</a
+                >
+                in the browser,
+                <a href="https://www.carom3d.es/" target="_blank" rel="noopener"
+                  >Carom3D</a
+                >
+                on the desktop, and
+                <a
+                  href="https://store.steampowered.com/app/1657880/3Cushion_Masters/"
+                  target="_blank"
+                  rel="noopener"
+                  >3Cushion Masters</a
+                >
+                on Steam.
+              </span>
+            </li>
+            <li>
+              <a href="./itch/itch-sagu.html">Korean four-ball (sagu)</a>
+              <span class="site-links-desc">
+                Korean four-ball — 사구 / 4구 — racing to 30, 50 or 100 points.
+              </span>
+            </li>
+            <li>
+              <a href="./itch/itch-speedrun.html">Speedrun billiards</a>
+              <span class="site-links-desc">
+                Race the clock across snooker and 9-ball positions — the
+                fast-paced variant that rewards quick position play.
+              </span>
+            </li>
+            <li>
+              <a
+                href="https://github.com/tailuge/tbilliards/releases/latest"
+                target="_blank"
+                rel="noopener"
+                >Desktop thin client — Windows, macOS, Linux</a
+              >
+              <span class="site-links-desc">
+                Download a lightweight desktop app wrapper for standalone play
+                on Windows, macOS, and Linux.
+              </span>
+            </li>
+            <li>
+              <a
+                href="https://github.com/tailuge/wbilliards/releases/latest"
+                target="_blank"
+                rel="noopener"
+                >Android app (APK)</a
+              >
+              <span class="site-links-desc">
+                Install on Android via direct
+                <a
+                  href="https://github.com/tailuge/wbilliards/releases/latest"
+                  target="_blank"
+                  rel="noopener"
+                  >APK download</a
+                >, or get updates through
+                <a
+                  href="https://apkpure.com/billiards/dev.tailuge.billiards"
+                  target="_blank"
+                  rel="noopener"
+                  >APKPure</a
+                >
+                or
+                <a
+                  href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/tailuge/wbilliards"
+                  target="_blank"
+                  rel="noopener"
+                  >Obtainium</a
+                >.
+              </span>
+            </li>
+          </ul>
+
+          <h2>Other languages</h2>
+          <ul>
+            <li>
+              <a href="./korean.html" lang="ko">무료 온라인 당구</a>
+              <span class="site-links-desc">
+                설치나 가입 없이 브라우저에서 바로 즐기는 무료 온라인 당구게임 —
+                3쿠션과 사구(4구), 온라인 대전까지.
+                <a
+                  href="https://blog.naver.com/jasuil/224416229214"
+                  target="_blank"
+                  >Naver</a
+                >
+                , <a href="https://news11213.tistory.com/1">티스토리 블로그</a>
+		, <a href="https://news11213.tistory.com/2">사구 한 판, 밥값은 해야지!</a>
+              </span>
+            </li>
+            <li>
+              <a href="./japanese.html" lang="ja">無料オンラインビリヤード</a>
+              <span class="site-links-desc">
+                3クッションと9ボールを登録不要で。無料オンラインビリヤード、スマホ対応、ブラウザで今すぐ。
+                <a
+                  href="https://ameblo.jp/tailuge/entry-12981511558.html"
+                  lang="ja"
+                  >日本でのビリヤードの思い出</a
+                >
+              </span>
+            </li>
+            <li>
+              <a href="./chinese.html" lang="zh">免費線上斯諾克</a>
+              <span class="site-links-desc">
+                免安裝、免註冊的免費線上斯諾克：標準12呎賽桌與6呎模式，手機可玩，還能線上真人對戰。
+              </span>
+            </li>
+            <li>
+              <a href="./turkish.html" lang="tr">Ücretsiz online bilardo</a>
+              <span class="site-links-desc">
+                Kurulum ve üyelik gerektirmeyen ücretsiz online bilardo:
+                gerçekçi fizikle 3 bant, PC ve mobilde.
+              </span>
+            </li>
+            <li>
+              <a href="./german.html" lang="de">Kostenloses 3-Band-Billard</a>
+              <span class="site-links-desc">
+                Kostenloses 3-Band-Billard ohne Download und Anmeldung —
+                realistische Physik für PC und Handy.
+              </span>
+            </li>
+            <li>
+              <a href="./spanish.html" lang="es">Billar a tres bandas gratis</a>
+              <span class="site-links-desc">
+                Billar a tres bandas y carambola gratis en el navegador, sin
+                descargas ni registro, también en el móvil.
+              </span>
+            </li>
+            <li>
+              <a href="./dutch.html" lang="nl">Online driebanden spelen</a>
+              <span class="site-links-desc">
+                Gratis online driebanden en carambole spelen, zonder download of
+                registratie — met oefenpartijen.
+              </span>
+            </li>
+            <li>
+              <a href="./vietnamese.html" lang="vi">Game bi-a 3 băng</a>
+              <span class="site-links-desc">
+                Chơi bi-a 3 băng miễn phí trên trình duyệt, không cần cài đặt
+                hay đăng ký; hỗ trợ cả PC và điện thoại.
+              </span>
+            </li>
+          </ul>
+
+          <h2>Mentions</h2>
+          <p>
+            <a href="https://pbc-molbergen.de/Simulator.html">Molbergen</a>,
+            <a href="https://www.bored.com/link/tailuge-github-io-billiards/"
+              >Bored</a
+            >,
+            <a
+              href="https://forums.azbilliards.com/threads/open-source-three-cushion-simulator.587516/"
+              >AZBilliards</a
+            >, <a href="https://tailuge.itch.io/">itch.io</a>,
+            <a
+              href="https://www.thesnookerforum.co.uk/board/forum/other-cuesports/billiards/1045334-3-cushion-billiards"
+              >SnookerForum</a
+            >,
+            <a href="https://gamejolt.com/games/billiards/1083832">GameJolt</a>,
+            <a href="https://billard-aktuell.de/forum/viewtopic.php?t=59609"
+              >Billard-aktuell</a
+            >, <a href="https://blog.naver.com/jasuil/224416229214">Naver</a>,
+            <a href="https://news11213.tistory.com/1">Tistory</a>,
+	    <a href="https://news11213.tistory.com/2">Tistory2</a>,
+            <a href="https://ameblo.jp/tailuge/entry-12981511558.html">Ameblo</a
+            >,
+            <a
+              href="https://www.reddit.com/r/billiards/comments/1upm8vu/speedrun/"
+              >r/billiards</a
+            >, <a href="https://github.com/fmhy/FMHY/wiki/Gaming">FMHY</a>,
+            <a href="https://www.appimagehub.com/p/2365428/">AppImageHub</a>,
+            <a href="https://webgames.me/play/billards-by-tailuge">WebGames</a>,
+            <a href="https://iogame.io/games/billards-by-tailuge">IOGame</a>,
+            <a
+              href="https://reporank.net/en/repo/tailuge-billiards.html#repo-feedback"
+              >RepoRank</a
+            >, <a href="https://indexpage.org/search?q=billiards">IndexPage</a>,
+            <a href="https://slowden.com/games/tailuge-billiards/">Slowden</a>,
+            <a href="https://foundplay.io/games/billiards?utm_source=creator"
+              >Foundplay</a
+            >,
+            <a href="https://playpixelsprout.com/games/billiards.html"
+              >Pixelsprout</a
+            >, <a href="https://4388.fun/g/631">4388</a>,
+            <a href="https://4388.fun/g/2294">Idol</a>,
+            <a href="https://4388.fun/g/2295">Tokyo</a>,
+            <a href="https://popshof.com/practice">Popshof</a>
+          </p>
+
+          <h2>Try</h2>
+          <p>
+            <a href="./?ruletype=eightball">8-ball</a>,
+            <a href="./?ruletype=nineball">9-ball</a>,
+            <a href="./?ruletype=threecushion">threecushion</a>,
+            <a href="./?ruletype=sagu">sagu</a>,
+            <a href="./?ruletype=snooker">snooker</a>,
+            <a href="/speedrun/">speedrun</a>,
+            <a href="/exam/">exam</a>,
+	    <a href="/reveal/">cards</a>,
+            <a href="/map/">map</a>,
+            <a href="/challenge/">eat</a>
+          </p>
+        </div>
+      </details>
+    </nav>
+
+    <script src="lobby.js" type="module"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("sw.js")
+        })
+      }
+    </script>
+  </body>
+</html>

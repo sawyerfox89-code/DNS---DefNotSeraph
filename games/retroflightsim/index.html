@@ -1,0 +1,126 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro Flight Sim</title>
+    <link rel="stylesheet" href="./style.css">
+    <script src="./bundle.js"></script>
+</head>
+
+<body>
+    <div id="container"></div>
+    <div id="panel">
+        <nav>
+            <div id="help-button">?</div>
+            <div id="settings-button">⋮</div>
+        </nav>
+        <section id="help">
+            <h1>Help</h1>
+
+            <h2>Controls</h2>
+
+            <div>
+                <h3>Keyboard</h3>
+                <ul>
+                    <li><span id="key-pitch-neg">W</span>/<span id="key-pitch-pos">S</span>: Pitch</li>
+                    <li><span id="key-roll-neg">A</span>/<span id="key-roll-pos">D</span>: Roll</li>
+                    <li><span id="key-yaw-neg">Q</span>/<span id="key-yaw-pos">E</span>: Yaw</li>
+                    <li><span id="key-throttle-pos">Z</span>/<span id="key-throttle-neg">X</span>: Throttle</li>
+                </ul>
+            </div>
+
+            <div>
+                <h3>Joystick</h3>
+                <div id="joystick-id">No device detected</div>
+                <ul id="joystick" class="hidden">
+                    <li id="axis-pitch"><span>Axis 1</span>: Pitch</li>
+                    <li id="axis-roll"><span>Axis 0</span>: Roll</li>
+                    <li id="axis-yaw"><span>Axis 3</span>: Yaw</li>
+                    <li id="axis-throttle"><span>Axis 2</span>: Throttle</li>
+                </ul>
+            </div>
+
+            <h2>Systems</h2>
+            <ul>
+                <li><span>G</span>: Landing gear</li>
+                <li><span>F</span>: Flaps</li>
+                <li><span>T</span>: Select target</li>
+                <li><span>I</span>: Target night view</li>
+                <li><span>H</span>: Cycle HUD focus</li>
+            </ul>
+
+            <h2>Views</h2>
+            <ul>
+                <li><span>N</span>: Day/night</li>
+                <li><span>1</span>: Cockpit</li>
+                <li><span>2</span>: Exterior back/front</li>
+                <li><span>3</span>: Exterior left/right</li>
+                <li><span>4</span>: To/from target</li>
+            </ul>
+        </section>
+        <section id="settings">
+            <h1>Settings</h1>
+
+            <h2>Generation</h2>
+            <ul>
+                <li>
+                    <input type="radio" id="gen-cga" name="gen" value="CGA">
+                    <label for="gen-cga">286 / CGA</label>
+                </li>
+                <li>
+                    <input type="radio" id="gen-ega" name="gen" value="EGA">
+                    <label for="gen-ega">286 / EGA</label>
+                </li>
+                <li>
+                    <input type="radio" id="gen-vga" name="gen" value="VGA" checked>
+                    <label for="gen-vga">386 / VGA</label>
+                </li>
+                <li>
+                    <input type="radio" id="gen-svga" name="gen" value="SVGA">
+                    <label for="gen-svga">486 / SVGA</label>
+                </li>
+            </ul>
+
+            <h2>Flight model</h2>
+            <ul>
+                <li>
+                    <input type="radio" id="flightmodel-debug" name="flightmodel" value="debug">
+                    <label for="flightmodel-debug">Debug</label>
+                </li>
+                <li>
+                    <input type="radio" id="flightmodel-arcade" name="flightmodel" value="arcade" checked>
+                    <label for="flightmodel-arcade">Arcade</label>
+                </li>
+                <li>
+                    <input type="radio" id="flightmodel-realistic" name="flightmodel" value="realistic" disabled>
+                    <label for="flightmodel-realistic">Realistic</label>
+                </li>
+            </ul>
+
+            <h2>Keyboard layout</h2>
+            <ul>
+                <li>
+                    <input type="radio" id="layout-qwerty" name="layout" value="qwerty" checked>
+                    <label for="layout-qwerty">QWERTY</label>
+                </li>
+                <li>
+                    <input type="radio" id="layout-azerty" name="layout" value="azerty">
+                    <label for="layout-azerty">AZERTY</label>
+                </li>
+                <li>
+                    <input type="radio" id="layout-dvorak" name="layout" value="dvorak">
+                    <label for="layout-dvorak">Dvorak</label>
+                </li>
+            </ul>
+        </section>
+    </div>
+    <div id="credits">
+        By Ruben Moreno<br>
+        <a href="https://github.com/ruben3d">GitHub</a> | <a href="https://twitter.com/ruben3d">Twitter</a>
+    </div>
+</body>
+
+</html>

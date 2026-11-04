@@ -1,0 +1,35 @@
+{
+  "extends": ["@balsamic"],
+  "root": true,
+  "rules": {
+    "@typescript-eslint/no-explicit-any": 0
+  },
+  "plugins": ["eslint-plugin-prefer-arrow"],
+  "overrides": [
+    {
+      "files": "server/**/*",
+      "rules": {
+        "no-console": 0,
+        "no-process-exit": 0,
+        "global-require": 0,
+        "node/no-unpublished-require": 0,
+        "node/no-extraneous-import": 0,
+        "node/no-extraneous-require": 0
+      }
+    },
+    {
+      "files": ["app/**/*", "packages/**/*"],
+      "rules": {
+        "prefer-template": 0,
+        "prefer-arrow/prefer-arrow-functions": [
+          0,
+          {
+            "disallowPrototype": false,
+            "singleReturnOnly": false,
+            "classPropertiesAllowed": true
+          }
+        ]
+      }
+    }
+  ]
+}

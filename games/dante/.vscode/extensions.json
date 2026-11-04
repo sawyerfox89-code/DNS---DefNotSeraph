@@ -1,0 +1,13 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "donjayamanne.githistory",
+    "eamodio.gitlens",
+    "esbenp.prettier-vscode",
+    "pflannery.vscode-versionlens",
+    "visualstudioexptteam.vscodeintellicode",
+    "raczzalan.webgl-glsl-editor",
+    "dtoplak.vscode-glsllint",
+    "xaver.clang-format"
+  ]
+}

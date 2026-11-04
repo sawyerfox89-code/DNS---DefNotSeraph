@@ -91,7 +91,7 @@ function filterGames() {
 
     let shown = 0;
     sorted.forEach(a => {
-        const visible = gameName(a).includes(search) && (genre === 'all' || gameGenre(a) === genre || (genre === 'opensource' && a.querySelector('.button').dataset.oss === 'true') || (genre === 'homebrew' && a.querySelector('.button').dataset.homebrew === 'true'));
+        const visible = gameName(a).includes(search) && (genre === 'all' || gameGenre(a) === genre || (genre === 'opensource' && a.querySelector('.button').dataset.oss === 'true') || (genre === 'homebrew' && a.querySelector('.button').dataset.homebrew === 'true') || (genre === '3d' && a.querySelector('.button').dataset['3d'] === 'true'));
         a.style.display = visible ? '' : 'none';
         a.querySelector('.button').style.display = '';
         if (visible) shown++;

@@ -1,0 +1,10 @@
+{
+  "name": "voxlords-server",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Test webserver",
+  "author": "Magnus Persson <nergal@nergal.se>",
+  "dependencies": {
+    "socket.io": "1.0.6"
+  }
+}

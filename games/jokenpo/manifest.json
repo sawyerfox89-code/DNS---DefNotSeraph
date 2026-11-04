@@ -1,0 +1,24 @@
+{
+  "name": "JoKenPo",
+  "short_name": "JoKenPo",
+  "description": "Can a neural network predict your next move on rock, paper and scissors?",
+  "start_url": "index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFF",
+  "theme_color": "#FFF",
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "density": 1
+    },
+    {
+      "src": "favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "density": 1
+    }
+  ]
+}

@@ -1,0 +1,159 @@
+// Finally, add your translation here so the code "knows" your page exists!
+// Copy and paste the "Example Language" paragraph into a new section,
+// (make sure there's two newlines between yours and the other sections)
+// and translate that. Here's what the lines in each section means
+//
+// 1： your language 2-letter code： https：//en.wikipedia.org/wiki/List_of_ISO_639-1_codes
+// 2： your language's name, in its native language
+// 3： the URL of your page. in most cases it'll be ./[2-letter code].html,
+//    but if for whatever reason your translation exists on a different domain altogether,
+//    (say, you need to make significant changes to the code for your translation to work)
+//    you can also link to an absolute URL elsewhere
+// 4： the prompt to ask to switch to your language
+//    (shows if the user's browser's language is set to yours and they're not already there)
+// 5： a *casual* yes
+// 6： a *casual* no
+// 7： where you can credit yourself!
+// 8： the link to the original English version
+
+en
+English
+./
+Would you like to switch to English?
+Sure!
+Nah
+
+ex
+Example Language
+./ex.html
+Would you like to switch to Example Language?
+Sure!
+Nah
+translated by Your Name
+original in english
+
+zh
+简体中文
+./zh.html
+想要切换成简体中文吗？
+好的!
+算了
+由<a target="_blank" href="https://snie2012.github.io/">Shaoliang Nie</a>翻译 Chih-Yu Chin校对
+原文为英语
+
+fr
+Français
+./fr.html
+Voulez-vous voir la version française ?
+Ouais !
+Nan
+traduit par <a href="https://github.com/azarz">azarz</a> et relu par <a href="https://github.com/arnaudgregoire">arnaudgregoire</a>
+original en anglais
+
+ru
+Русский
+./ru.html
+Хочешь переключиться на Русский язык?
+Конечно!
+нет
+перевод <a href="https://toby3d.ru">toby3d</a>
+original in English
+
+es
+Español
+./es.html
+¿Querrías cambiar a la versión en español?
+¡Vale!
+Nanai
+traducido por <a href="https://github.com/SantiagoGnzlz">SantiagoGnzlz</a> y <a href="https://github.com/HenrikhWolf">Enrique Mendoza</a>
+original in English
+
+it
+Italiano
+./it.html
+Vuoi passare alla versione in Italiano?
+Ovvio!
+Nah
+tradotto da <a target="_blank" href="https://github.com/antalele">Lele</a>
+originale in <a target="_blank" href="https://ncase.me/remember/">Inglese</a>
+
+ca
+Català
+./ca.html
+Voldries canviar a la versió en catalan?
+Val!
+No
+traduït per <a href="https://github.com/saimonmoore">saimonmoore</a>
+original in English
+
+pt
+Português
+./pt.html
+Gostaria de mudar para o idioma português?
+Óbvio!
+Nah
+Traduzido por <a href="https://github.com/ramon-mendes/">Ramon Mendes</a>
+original in English
+
+de
+Deutsch
+./de.html
+Möchten Sie zu Deutsch wechseln?
+Ja!
+Nein
+Übersetzt von <a href="https://github.com/herrhundt">herrhundt</a>
+original in English
+
+tr
+Türkçe
+./tr.html
+Türkçe'sini okumak ister misin?
+Tabii!
+Yok
+çeviri Oğul Can Yurdakul
+aslı İngilizce
+
+ar
+العربية
+./ar.html
+هل تودّ القراءة باللغة العربية؟
+نعم
+لا
+ترجمة: <a href="https://github.com/ABDR999">عبدالرحمن التميمي</a>
+النسخة الأصلية باللغة الإنجليزية
+
+cs
+Čeština
+./cs.html
+Chcete přepnout na češtinu?
+Jasně!
+Ne
+přeložila Karin Neumannová
+original in English
+
+hu
+Magyar
+./hu.html
+Lenne kedved magyarul olvasni?
+Naná!
+Dehogyis
+fordította <a href="https://github.com/czondi">czondi</a>
+original in English
+
+fa
+فارسی
+./fa.html
+آیا می‌خواهید به زبان فارسی تغییر دهید؟
+حتما!
+نه
+ترجمه توسط <a href="https://github.com/amir2mi">امیرمحمد محمدی</a>
+نسخه اصلی به زبان انگلیسی
+
+ka
+ქართული
+./ka.html
+გინდა გადართო ქართულ ენაზე?
+კი!
+არა
+მთარგმნელი <a href="https://www.facebook.com/razmikecg">რაზმიკ ბადალიანი</a>
+original in English

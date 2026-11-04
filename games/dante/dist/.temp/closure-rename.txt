@@ -1,0 +1,10 @@
+A:u
+g:m
+h:o
+i:h
+j:s
+l:j
+m:l
+o:i
+u:g
+v:v
