@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+	<meta name="theme-color" content="#0a0809">
+    <link rel="stylesheet" href="./assets/css/all.min.css">
+    <link rel="stylesheet" href="./assets/css/rpg-awesome.min.css">
+    <link rel="stylesheet" href="./assets/css/style.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png">
+    <link rel="manifest" href="./site.webmanifest">
+    <link rel="mask-icon" href="./safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <title>Quick Dungeon Crawler on Demand!</title>
+    <meta name="description" content="Quick Dungeon Crawler on Demand! Dive into a fast-paced, browser-based RPG adventure. Explore dungeons, battle monsters, and level up instantly—no downloads required!">
+    <style>
+		body {
+			background-color: #0a0809;
+		}
+    </style>
+</head>
+<body>
+    <main>
+        <section id="title-screen" class="game-container">
+            <div>
+                <img src="assets/icon/logo.webp" alt="Quick Dungeon Crawler logo">
+                <h1>Quick Dungeon Crawler on Demand!</h1>
+            </div>
+            <div>
+                <p id="title-play-prompt" data-i18n="tap-to-explore">Tap to explore the dungeon</p>
+                <div id="title-run-progress" hidden><span data-i18n="floor-count"></span> · <span data-i18n="room-count"></span></div>
+            </div>
+            <button id="title-menu-btn" aria-label="Open menu"><i class="fas fa-cog"></i></button>
+        </section>
+        <section id="character-creation" class="game-container">
+            <form id="name-submit">
+                <h1 data-i18n="what-is-your-name">What is your name?</h1>
+                <input type="text" id="name-input" autocomplete="off" value="Hero">
+                <p id="alert"></p>
+                <label><input type="checkbox" id="hardcore-checkbox" style="width:inherit;position:relative;top:1px"> <span data-i18n="hardcore">Hardcore</span></label>
+                <br>
+                <button type="submit" data-i18n="confirm">Confirm</button>
+            </form>
+        </section>
+        <section id="dungeon-main" class="game-container scrollable">
+            <header>
+                <p id="player-name"></p>
+                <p id="player-exp"></p>
+                <p id="player-gold"></p>
+                <button onclick="openInventory()" data-i18n-attr="aria-label:open-inventory" aria-label="Open inventory"><i class="fas fa-bars" style="font-size: calc(1.3rem * var(--font-scale));"></i></button>
+            </header>
+            <div class="stat-panel">
+                <div class="box" id="dungeon-stats-panel">
+                    <h4>
+                        <a class="stats-title-link" id="stats-help-link" href="#" onclick="openStatsModal(); event.stopPropagation(); return false;" data-i18n-attr="aria-label:stats-help,title:stats-help" aria-label="What do these stats do?" title="What do these stats do?">
+                            <span data-i18n="stats">Stats</span>
+                            <i class="fa fa-circle-question stats-help-icon" aria-hidden="true"></i>
+                        </a>
+                    </h4>
+                    <p title="Health points"><i class="fas fa-heart" id="player-hp-icon"></i><span data-i18n="hp">HP:</span> <span id="player-hp"></span></p>
+                    <div class="key-stats" aria-label="Core stats">
+                        <p title="Attack power; increases damage dealt"><i class="ra ra-sword"></i><span data-i18n="atk">ATK:</span> <span id="player-atk"></span></p>
+                        <p title="Defense; reduces damage taken"><i class="ra ra-round-shield"></i><span data-i18n="def">DEF:</span> <span id="player-def"></span></p>
+                        <p title="Attacks per second (attack speed)"><i class="ra ra-plain-dagger"></i><span data-i18n="aps">APS:</span> <span id="player-atkspd"></span></p>
+                    </div>
+                    <details class="advanced-stats" id="advanced-stats">
+                        <summary><span data-i18n="more">More</span></summary>
+                        <div>
+                            <p title="Vampirism; percent of damage returned as health"><i class="ra ra-dripping-blade"></i><span data-i18n="vamp">VAMP:</span> <span id="player-vamp"></span></p>
+                            <p title="Critical hit chance"><i class="ra ra-lightning-bolt"></i><span data-i18n="c-rate">C.RATE:</span> <span id="player-crate"></span></p>
+                            <p title="Critical damage bonus"><i class="ra ra-focused-lightning"></i><span data-i18n="c-dmg">C.DMG:</span> <span id="player-cdmg"></span></p>
+                            <p title="Chance to evade attacks"><i class="ra ra-player-dodge"></i><span data-i18n="dodge">DODGE:</span> <span id="player-dodge"></span></p>
+                            <p title="Increases equipment drop chance"><i class="ra ra-perspective-dice-one"></i><span data-i18n="luck">LUCK:</span> <span id="player-luck"></span></p>
+                        </div>
+                    </details>
+                </div>
+                <div class="box" id="bonus-stats"></div>
+                <div class="box" id="companion-panel">
+                    <h4 data-i18n="companion">Companion</h4>
+                    <p id="companion-name" data-i18n="none">None</p>
+                    <p id="companion-exp" class="hidden"></p>
+                    <p><i class="ra ra-sword"></i><span data-i18n="atk">ATK:</span> <span id="companion-atk">0</span></p>
+                    <p><i class="ra ra-plain-dagger"></i><span data-i18n="aps">APS:</span> <span id="companion-atkspd">0</span></p>
+                    <p id="companion-bonus"></p>
+                    <button id="summon-companion" class="hidden" data-i18n="summon">Summon</button>
+                </div>
+            </div>
+            <div class="dungeon-head">
+                <div class="dungeon-status">
+                    <p id="dungeonTime"></p>
+                    <p id="floorCount"></p>
+                    <p id="roomCount"></p>
+                </div>
+                <div class="dungeon-controls">
+                    <button id="dungeonActivity"></button>
+                    <button id="auto-mode-btn" class="hidden" aria-label="Toggle auto mode"><i class="fas fa-play"></i></button>
+                    <button id="auto-mode-settings-btn" class="hidden"><i class="fas fa-sliders-h" aria-hidden="true"></i><span class="sr-only"><span data-i18n="auto-mode">Auto Mode</span> <span data-i18n="settings">Settings</span></span></button>
+                </div>
+            </div>
+            <div class="logBox primary-panel">
+                <div class="logBox-header">
+                    <p id="dungeonAction"></p>
+                    <button id="clear-log-button" type="button" class="clear-log-button" data-i18n="clear-log" data-i18n-attr="aria-label:clear-log" aria-label="Clear log">Clear log</button>
+                </div>
+                <div id="dungeonLog"></div>
+            </div>
+        </section>
+        <div id="loading" class="game-container">
+            <div class="loader"></div>
+        </div>
+        <div class="modal-container" id="inventory">
+            <div class="content">
+                <div class="content-head">
+                      <h3><span data-i18n="inventory">Inventory</span> (<span id="inventory-item-count">0</span>/<span id="inventory-item-limit">100</span>)</h3>
+                    <div>
+                        <p onclick="openForgeModal()" role="button" aria-label="Open forge"><i class="ra ra-anvil"></i></p>
+                        <p onclick="closeInventory()" role="button" aria-label="Close inventory"><i class="fa fa-xmark"></i></p>
+                    </div>
+                </div>
+                <div class="content-head">
+                      <select id="sell-rarity">
+                          <option value="none" data-i18n="sell">Sell</option>
+                          <option class="Common" value="Common" data-i18n="common">Common</option>
+                          <option class="Uncommon" value="Uncommon" data-i18n="uncommon">Uncommon</option>
+                          <option class="Rare" value="Rare" data-i18n="rare">Rare</option>
+                          <option class="Epic" value="Epic" data-i18n="epic">Epic</option>
+                          <option class="Legendary" value="Legendary" data-i18n="legendary">Legendary</option>
+                          <option class="Heirloom" value="Heirloom" data-i18n="heirloom">Heirloom</option>
+                          <option value="tier" data-i18n="sell-by-tier">Below tier…</option>
+                          <option value="level" data-i18n="sell-by-level">Below level…</option>
+                          <option class="Common" value="All" data-i18n="all">All</option>
+                      </select>
+                      <select id="sort-inventory">
+                          <option value="none" data-i18n="sort">Sort</option>
+                          <option value="category" data-i18n="category">Category</option>
+                          <option value="level" data-i18n="level">Level</option>
+                          <option value="rarity" data-i18n="rarity">Rarity</option>
+                          <option value="tier" data-i18n="tier">Tier</option>
+                      </select>
+                  </div>
+                <div class="inventorySlots" id="playerInventory"></div>
+                <div class="stat-panel">
+                    <div class="box">
+                        <div class="box-head">
+                              <h4 data-i18n="equipment">Equipment</h4>
+                            <div>
+                                <p id="equip-best-settings" role="button" aria-label="Configure auto-equip priorities" title="Auto Equip Priorities"><i class="fa fa-sliders-h"></i></p>
+                                <p id="equip-best"><i class="fa fa-arrows-rotate"></i></p>
+                                <p id="unequip-all"><i class="fa fa-circle-xmark"></i></p>
+                            </div>
+                        </div>
+                        <div id="playerEquipment"></div>
+                        <div class="companion-charm-slot-group" aria-labelledby="companion-charm-heading">
+                            <div class="companion-charm-slot-group__copy">
+                                <span class="companion-charm-slot-group__eyebrow" data-i18n="companion">Companion</span>
+                            </div>
+                            <div id="companionCharmSlot"></div>
+                        </div>
+                    </div>
+                </div>
+                <button id="menu-btn" data-i18n="menu">Menu</button>
+            </div>
+        </div>
+        <div class="modal-container" id="equipmentInfo"></div>
+        <div class="modal-container" id="combatPanel"></div>
+        <div class="modal-container" id="endgameModal">
+            <div class="content endgame-content">
+                <h3 data-i18n="run-summary">Run summary</h3>
+                <p class="endgame-player">
+                    <span class="endgame-player-identity">
+                        <span id="endgame-player-name"></span>
+                        <span id="endgame-player-title" class="player-title" hidden></span>
+                    </span>
+                    <span id="endgame-player-mode" class="endgame-mode-badge" hidden></span>
+                </p>
+                <ul class="endgame-meta" id="endgame-meta"></ul>
+                <div class="endgame-unlocks" id="endgame-unlocks" hidden></div>
+                <ul class="endgame-stats" id="endgame-stats"></ul>
+                <p class="endgame-hint" data-i18n="run-summary-hint">Start a new run to dive back into the dungeon.</p>
+                <div class="button-container">
+                    <button id="endgame-start-btn" data-i18n="start-new-run">Start new Run</button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-container" id="lvlupPanel">
+            <div class="content" id="lvlupSelect"></div>
+        </div>
+        <div class="modal-container" id="defaultModal"></div>
+        <div class="modal-container" id="menuModal"></div>
+        <div class="modal-container" id="confirmationModal"></div>
+        <div class="modal-container" id="statsModal">
+            <div class="content">
+                <div class="content-head">
+                    <h3 data-i18n="stats">Stats</h3>
+                    <p onclick="closeStatsModal()" aria-label="Close stats"><i class="fa fa-xmark"></i></p>
+                </div>
+                <div class="modal-body">
+                    <p><i class="fas fa-heart"></i><strong data-i18n="stat-display.health">Health</strong>: <span data-i18n="stats-modal.health">Health points. When it reaches 0, you are defeated.</span></p>
+                    <p><i class="ra ra-sword"></i><strong data-i18n="stat-display.attack">Attack</strong>: <span data-i18n="stats-modal.attack">Attack power that increases damage dealt.</span></p>
+                    <p><i class="ra ra-round-shield"></i><strong data-i18n="stat-display.defense">Defense</strong>: <span data-i18n="stats-modal.defense">Defense that reduces damage taken.</span></p>
+                    <p><i class="ra ra-plain-dagger"></i><strong data-i18n="stat-display.attack-speed">Attack Speed</strong>: <span data-i18n="stats-modal.attack-speed">Attacks per second; higher values make you attack faster.</span></p>
+                    <p><i class="ra ra-dripping-blade"></i><strong data-i18n="stat-display.vampirism">Vampirism</strong>: <span data-i18n="stats-modal.vampirism">Percent of damage returned as health.</span></p>
+                    <p><i class="ra ra-lightning-bolt"></i><strong data-i18n="stat-display.crit-rate">Critical Rate</strong>: <span data-i18n="stats-modal.crit-rate">Chance to land a critical hit.</span></p>
+                    <p><i class="ra ra-focused-lightning"></i><strong data-i18n="stat-display.crit-dmg">Critical Damage</strong>: <span data-i18n="stats-modal.crit-dmg">Bonus damage dealt on critical hits.</span></p>
+                    <p><i class="ra ra-player-dodge"></i><strong data-i18n="stat-display.dodge">Dodge</strong>: <span data-i18n="stats-modal.dodge">Chance to evade incoming attacks.</span></p>
+                    <p><i class="ra ra-perspective-dice-one"></i><strong data-i18n="stat-display.luck">Luck</strong>: <span data-i18n="stats-modal.luck">Increases equipment drop chance.</span></p>
+                    <p><strong data-i18n="stat-display.faster-run">Faster Run</strong>: <span data-i18n="stats-modal.faster-run-desc">Boot bonus that reduces time between dungeon events.</span></p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-container" id="companionModal">
+            <div class="content">
+                <div class="content-head">
+                      <h3 data-i18n="companions">Companions</h3>
+                    <p onclick="closeCompanionModal()"><i class="fa fa-xmark"></i></p>
+                </div>
+                <div class="companion-list" id="available-companions"></div>
+            </div>
+        </div>
+        <div class="modal-container" id="forgeModal">
+            <div class="content">
+                <div class="content-head">
+                      <h3><i class="ra ra-anvil"></i> <span data-i18n="the-forge">The Forge</span></h3>
+                    <p onclick="closeForgeModal()"><i class="fa fa-xmark"></i></p>
+                </div>
+                                <div class="forge-mode-toggle" role="tablist" aria-label="Forge mode">
+                                        <button id="forge-mode-merge" class="active" type="button" role="tab" aria-selected="true" data-forge-mode="merge" data-i18n="merge-items">Merge</button>
+                                        <button id="forge-mode-reroll" type="button" role="tab" aria-selected="false" data-forge-mode="reroll" data-i18n="reroll-stats">Reroll Stats</button>
+                                        <button id="forge-mode-refine" type="button" role="tab" aria-selected="false" data-forge-mode="refine"><i class="ra ra-crystal-ball" aria-hidden="true"></i><span data-i18n="refine">Refine</span></button>
+                                </div>
+                <div class="forge-description">
+                      <p data-i18n="combine-three-items-of-the-same-tier-and-rarity-to-forge-one-of-the-next-rarity">Combine three items of the same tier and rarity to forge one of the next rarity!</p>
+                    <p id="forge-player-gold" class="forge-current-gold"></p>
+                </div>
+                    <div class="forge-buttons">
+                        <button id="forge-confirm" disabled data-i18n="forge-equipment">Forge Equipment</button>
+                        <button id="forge-clear" data-i18n="clear-selection">Clear Selection</button>
+                    </div>
+                <div class="forge-target" id="forge-target-panel">
+                    <label for="forge-target-category" data-i18n="crafted-gear-piece">Crafted Gear Piece</label>
+                    <select id="forge-target-category">
+                        <option value="" data-i18n="choose-gear-piece">Choose gear piece</option>
+                    </select>
+                </div>
+                                <div class="forge-slots" id="forge-merge-panel">
+                    <div class="forge-slot-container">
+                          <h4 data-i18n="material-1">Material 1</h4>
+                          <div class="forge-slot" id="forge-slot-1">
+                            <p data-i18n="select-equipment">Select equipment</p>
+                          </div>
+                    </div>
+                    <div class="forge-slot-container">
+                          <h4 data-i18n="material-2">Material 2</h4>
+                          <div class="forge-slot" id="forge-slot-2">
+                            <p data-i18n="select-equipment">Select equipment</p>
+                          </div>
+                    </div>
+                    <div class="forge-plus">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <div class="forge-slot-container">
+                          <h4 data-i18n="material-3">Material 3</h4>
+                          <div class="forge-slot" id="forge-slot-3">
+                            <p data-i18n="select-equipment">Select equipment</p>
+                          </div>
+                    </div>
+                </div>
+                <div class="reroll-panel" id="forge-reroll-panel" style="display: none;">
+                    <div class="forge-slot-container reroll-slot-container">
+                          <h4 data-i18n="selected-equipment">Selected Equipment</h4>
+                          <div class="forge-slot reroll-slot" id="reroll-slot">
+                            <p data-i18n="select-equipment">Select equipment</p>
+                          </div>
+                    </div>
+                    <div class="reroll-stat-locks" id="reroll-stat-locks" style="display: none;">
+                        <h4 data-i18n="stat-lock">Lock Stats</h4>
+                        <p data-i18n="stat-lock-help">Locked stats keep their type and value. At least one stat must remain unlocked.</p>
+                        <div class="reroll-stat-lock-options" id="reroll-stat-lock-options"></div>
+                    </div>
+                    <div class="reroll-preview" id="reroll-preview" style="display: none;">
+                        <div class="reroll-preview-card">
+                            <h4 data-i18n="current-stats">Current Stats</h4>
+                            <div id="reroll-current-item"></div>
+                        </div>
+                        <div class="reroll-preview-card">
+                            <h4 data-i18n="possible-stats">Possible Stats</h4>
+                            <div id="reroll-preview-item"></div>
+                        </div>
+                    </div>
+                    <div class="forge-cost reroll-cost" id="reroll-cost" style="display: none;">
+                          <p><span data-i18n="cost">Cost:</span> <i class="fas fa-coins" style="color: #FFD700;"></i><span id="reroll-cost-amount">0</span> <span data-i18n="gold">gold</span> <span class="refine-material-cost" id="reroll-stone-cost" style="display: none;"><i class="ra ra-crystal-ball"></i><span id="reroll-stone-cost-amount">0</span> <span data-i18n="refine-stones">Refine Stones</span></span></p>
+                    </div>
+                </div>
+                <div class="reroll-panel" id="forge-refine-panel" style="display: none;">
+                    <div class="forge-slot-container reroll-slot-container">
+                          <h4 data-i18n="selected-equipment">Selected Equipment</h4>
+                          <div class="forge-slot reroll-slot" id="refine-slot">
+                            <p data-i18n="select-equipment">Select equipment</p>
+                          </div>
+                    </div>
+                    <div class="reroll-preview" id="refine-preview" style="display: none;">
+                        <div class="reroll-preview-card">
+                            <h4 data-i18n="current-stats">Current Stats</h4>
+                            <div id="refine-current-item"></div>
+                        </div>
+                        <div class="reroll-preview-card">
+                            <h4 data-i18n="refined-stats">Refined Stats</h4>
+                            <div id="refine-preview-item"></div>
+                        </div>
+                    </div>
+                    <div class="forge-cost reroll-cost refine-cost" id="refine-cost" style="display: none;">
+                          <p><span data-i18n="cost">Cost:</span> <i class="fas fa-coins" style="color: #FFD700;"></i><span id="refine-cost-amount">0</span> <span data-i18n="gold">gold</span> <span class="refine-material-cost"><i class="ra ra-crystal-ball"></i><span id="refine-stone-cost-amount">0</span> <span data-i18n="refine-stones">Refine Stones</span></span> <span class="refine-material-cost guardian-core-cost" id="refine-core-cost" style="display: none;"><i class="ra ra-crystal-cluster"></i><span id="refine-core-cost-amount">0</span> <span data-i18n="guardian-cores">Guardian Cores</span></span></p>
+                          <p class="refine-ascension-hint" id="refine-ascension-hint" style="display: none;" data-i18n="guardian-core-refine-hint">Level 100 gear can be refined beyond +10 with Guardian Cores, dropped by floor bosses from Floor 20 onward.</p>
+                    </div>
+                </div>
+                <div class="forge-result" id="forge-result" style="display: none;">
+                      <h4 data-i18n="result-preview">Result Preview</h4>
+                    <div class="forge-result-item" id="forge-result-item"></div>
+                    <div class="forge-cost">
+                          <p><span data-i18n="cost">Cost:</span> <i class="fas fa-coins" style="color: #FFD700;"></i><span id="forge-cost-amount">0</span> <span data-i18n="gold">gold</span></p>
+                    </div>
+                </div>
+                <div class="forge-equipment-list" id="forge-equipment-list">
+                    <div class="forge-equipment-heading">
+                        <h4 data-i18n="available-equipment">Available Equipment</h4>
+                        <label class="forge-refinement-toggle">
+                            <input id="forge-include-refinement" type="checkbox">
+                            <span data-i18n="forge-include-refinement">Include refinement</span>
+                        </label>
+                    </div>
+                    <div class="forge-equipment-grid" id="forge-equipment-grid"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+	<script src="./assets/js/howler.min.js"></script>
+    <script src="./assets/js/legacy-support.js"></script>
+    <script src="./assets/js/progression.js"></script>
+    <script src="./assets/js/affixes.js"></script>
+    <script src="./assets/js/utility.js"></script>
+    <script src="./assets/js/titles.js"></script>
+    <script src="./assets/js/elements.js"></script>
+    <script src="./assets/js/music.js"></script>
+    <script src="./assets/js/player.js"></script>
+    <script src="./assets/js/equipment.js"></script>
+    <script src="./assets/js/forge.js"></script>
+    <script src="./assets/js/companion.js"></script>
+    <script src="./assets/js/screen-wake-lock.js"></script>
+    <script src="./assets/js/combat.js"></script>
+    <script src="./assets/js/automode.js"></script>
+    <script src="./assets/js/dungeon.js"></script>
+    <script src="./assets/js/enemy.js"></script>
+    <script src="./assets/js/bestiary.js"></script>
+    <script src="./assets/js/language.js"></script>
+    <script src="./assets/js/main.js"></script>
+    <script>
+        if (typeof navigator.serviceWorker !== 'undefined' && !(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+    <script src="./assets/js/native.js"></script>
+</body>
+</html>

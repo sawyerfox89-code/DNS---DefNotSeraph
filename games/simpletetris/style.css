@@ -1,0 +1,957 @@
+/* ============================================
+   MODERN TETRIS 2026 - CSS VARIABLES
+   ============================================ */
+:root {
+    /* Colors - 2026 Palette */
+    --primary: #7c3aed;
+    --primary-hover: #6d28d9;
+    --surface: rgba(255, 255, 255, 0.05);
+    --surface-hover: rgba(255, 255, 255, 0.08);
+    --border: rgba(255, 255, 255, 0.1);
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent-gold: #f59e0b;
+    --success: #10b981;
+    --danger: #ef4444;
+    --background: #0f0d1a;
+    
+    /* Legacy variables for theme system compatibility */
+    --primary-color: #7c3aed;
+    --secondary-color: #4a4489;
+    --accent-color: #ff6b6b;
+    --background-color: #0f0d1a;
+    --text-color: #f8fafc;
+    --grid-line-color: rgba(255, 255, 255, 0.1);
+    --button-hover-color: #6d28d9;
+    
+    /* Typography */
+    --font-ui: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* ============================================
+   RESET & BASE STYLES
+   ============================================ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Smooth transitions for interactive elements */
+button, .button, a, 
+.panel, .modal, .modal-content,
+.achievement-item, .bet-type-card,
+input, select, textarea {
+    transition-property: background-color, border-color, color, box-shadow, opacity, transform;
+    transition-duration: 0.15s;
+    transition-timing-function: ease;
+}
+
+body {
+    font-family: var(--font-ui);
+    background: var(--background);
+    color: var(--text-primary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    line-height: 1.6;
+}
+
+/* ============================================
+   LAYOUT - GRID SYSTEM
+   ============================================ */
+.game-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+        "left"
+        "canvas"
+        "right"
+        "gamepad"
+        "buttons"
+        "ai-panel"
+        "footer";
+    gap: 16px;
+    max-width: 100%;
+    padding: 16px;
+    margin: 0 auto;
+}
+
+/* Desktop Layout (≥768px) */
+@media (min-width: 768px) {
+    .game-container {
+        grid-template-columns: 200px auto 200px;
+        grid-template-rows: auto auto auto;
+        grid-template-areas:
+            "left canvas right"
+            "buttons buttons buttons"
+            "ai-panel ai-panel ai-panel"
+            "footer footer footer";
+        gap: 16px;
+        max-width: 900px;
+        padding: 24px;
+    }
+}
+
+/* Grid Areas */
+.left-sidebar {
+    grid-area: left;
+}
+
+.canvas-area {
+    grid-area: canvas;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.right-sidebar {
+    grid-area: right;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.virtual-gamepad {
+    grid-area: gamepad;
+}
+
+.button-bar {
+    grid-area: buttons;
+}
+
+.ai-vs-ai-panel {
+    grid-area: ai-panel;
+}
+
+.game-footer {
+    grid-area: footer;
+}
+
+/* ============================================
+   GLASSMORPHISM PANELS
+   ============================================ */
+.panel {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+    padding: 20px;
+}
+
+/* ============================================
+   SCORE PANEL
+   ============================================ */
+.score-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.stat-item:last-child {
+    border-bottom: none;
+}
+
+.stat-label {
+    font-family: var(--font-ui);
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.stat-value {
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.stat-value.balance {
+    color: var(--accent-gold);
+}
+
+.stat-value.balance::after {
+    content: ' TC';
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+
+.balance-item {
+    margin-top: 8px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ============================================
+   CANVAS STYLING
+   ============================================ */
+.canvas-wrapper {
+    position: relative;
+    display: inline-block;
+    line-height: 0;
+}
+
+#tetris-canvas {
+    width: 300px;
+    height: 600px;
+    border-radius: 8px;
+    background-color: rgba(0, 0, 0, 0.6);
+    box-shadow: 
+        inset 0 0 30px rgba(0, 0, 0, 0.5),
+        0 0 40px rgba(124, 58, 237, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    display: block;
+}
+
+/* Show pointer cursor only when canvas can be tapped to start */
+#tetris-canvas.canvas-idle {
+    cursor: pointer;
+}
+
+/* Pulsing "TAP TO PLAY" hint shown on touch screens when game is idle */
+.canvas-tap-hint {
+    display: none;
+    position: absolute;
+    bottom: 18%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(124, 58, 237, 0.85);
+    color: #fff;
+    font-family: var(--font-ui);
+    font-weight: 700;
+    font-size: 1.1rem;
+    letter-spacing: 0.08em;
+    padding: 12px 28px;
+    border-radius: 40px;
+    pointer-events: none;
+    white-space: nowrap;
+    animation: tap-pulse 1.6s ease-in-out infinite;
+    box-shadow: 0 4px 20px rgba(124, 58, 237, 0.5);
+}
+
+@keyframes tap-pulse {
+    0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
+    50%       { opacity: 0.65; transform: translateX(-50%) scale(0.96); }
+}
+
+/* Show hint only on touch devices when game is not running */
+@media (hover: none) and (pointer: coarse) {
+    .canvas-tap-hint.visible {
+        display: block;
+    }
+}
+
+@media (min-width: 768px) {
+    #tetris-canvas {
+        width: 320px;
+        height: 640px;
+    }
+}
+
+@media (max-width: 767px) {
+    #tetris-canvas {
+        width: calc(100vw - 40px);
+        max-width: 300px;
+        height: auto;
+        aspect-ratio: 1/2;
+    }
+}
+
+/* ============================================
+   NEXT PIECE PANEL
+   ============================================ */
+.next-piece {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.next-piece h3 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+#next-piece-canvas {
+    width: 100px;
+    height: 100px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+}
+
+/* ============================================
+   AI INSIGHT PANEL
+   ============================================ */
+.ai-insight {
+    background: rgba(124, 58, 237, 0.06);
+    border: 1px solid rgba(124, 58, 237, 0.15);
+}
+
+.ai-insight h3 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--primary);
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.ai-insight p {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* ============================================
+   CONTROLS PANEL
+   ============================================ */
+.controls-instructions h3 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.controls-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.control-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.control-key {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 22px;
+    padding: 0 6px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+}
+
+/* Hide controls on small mobile screens */
+@media (max-width: 767px) {
+    .controls-instructions {
+        display: none;
+    }
+}
+
+/* ============================================
+   BUTTON SYSTEM
+   ============================================ */
+button, .button {
+    font-family: var(--font-ui);
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+}
+
+button:hover, .button:hover {
+    transform: translateY(-1px);
+}
+
+button:active, .button:active {
+    transform: translateY(0px);
+}
+
+/* Primary Button */
+.button-primary {
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+}
+
+.button-primary:hover {
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
+}
+
+/* Secondary Button - ghost/outlined */
+.button-secondary {
+    background: rgba(255, 255, 255, 0.05);
+    color: #e2e8f0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.button-secondary:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Icon/Tertiary Button */
+.button-icon {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.button-icon:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+}
+
+/* Warning Button (for AI mode) */
+.button-warning {
+    background-color: #ffc107;
+    color: #212529;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+.button-warning:hover {
+    background-color: #e0a800;
+}
+
+/* ============================================
+   BUTTON BAR LAYOUT
+   ============================================ */
+.button-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.button-group-primary,
+.button-group-secondary,
+.button-group-tertiary {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.button-group-primary {
+    gap: 12px;
+}
+
+/* Mobile button adjustments */
+@media (max-width: 767px) {
+    .button-bar {
+        gap: 10px;
+    }
+    
+    .button-group-primary,
+    .button-group-secondary,
+    .button-group-tertiary {
+        gap: 6px;
+    }
+    
+    .button-primary {
+        padding: 10px 18px;
+        font-size: 0.9rem;
+    }
+    
+    .button-secondary {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+    }
+    
+    .button-icon {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+    button, .button {
+        min-height: 48px;
+        min-width: 48px;
+    }
+}
+
+/* ============================================
+   AI VS AI PANEL
+   ============================================ */
+.ai-vs-ai-panel {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.ai-player {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    border-left: 4px solid;
+}
+
+.ai-player-1 {
+    border-left-color: #dc3545;
+}
+
+.ai-player-2 {
+    border-left-color: #007bff;
+}
+
+.ai-player h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.ai-thinking, .ai-plan {
+    font-size: 0.8rem;
+    line-height: 1.3;
+    min-height: 2.5rem;
+    padding: 0.5rem;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+}
+
+.game-controls {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.current-turn {
+    grid-column: 1 / -1;
+    text-align: center;
+    font-weight: bold;
+    padding: 0.5rem;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+#ai1-thinking, #ai2-thinking {
+    color: #ffc107;
+}
+
+#ai1-plan, #ai2-plan {
+    color: #28a745;
+}
+
+@media (max-width: 767px) {
+    .ai-vs-ai-panel {
+        grid-template-columns: 1fr;
+    }
+    
+    .game-controls {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+
+/* ============================================
+   FOOTER
+   ============================================ */
+.game-footer {
+    text-align: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.3);
+    color: var(--text-muted);
+    border-radius: 12px;
+    backdrop-filter: blur(8px);
+}
+
+.game-footer p {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.3;
+}
+
+/* ============================================
+   MODALS - GLASSMORPHISM
+   ============================================ */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    background: rgba(15, 13, 26, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 2rem;
+    border-radius: 20px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.close-modal {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 2rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: color 0.2s;
+}
+
+.close-modal:hover {
+    color: var(--text-primary);
+}
+
+/* ============================================
+   ACHIEVEMENTS
+   ============================================ */
+.achievements-progress {
+    text-align: center;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    color: var(--accent-gold);
+}
+
+.achievements-list {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.achievement-item {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(8px);
+    padding: 1rem;
+    border-radius: 12px;
+    border-left: 4px solid;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.achievement-item.unlocked {
+    border-color: var(--success);
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.achievement-item.locked {
+    border-color: var(--text-muted);
+    opacity: 0.6;
+}
+
+.achievement-icon-large {
+    font-size: 2.5rem;
+}
+
+.achievement-info h3 {
+    margin: 0 0 0.3rem 0;
+    color: var(--text-primary);
+}
+
+.achievement-info p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.achievement-reward {
+    margin-left: auto;
+    color: var(--accent-gold);
+    font-weight: bold;
+    font-family: var(--font-mono);
+}
+
+/* Achievement Notification */
+.achievement-notification {
+    position: fixed;
+    top: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 13, 26, 0.95);
+    backdrop-filter: blur(20px);
+    border: 2px solid var(--accent-gold);
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    z-index: 3000;
+    box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3);
+    transition: top 0.5s ease-out;
+    max-width: 400px;
+}
+
+.achievement-notification.show {
+    top: 20px;
+}
+
+.achievement-notification .achievement-icon {
+    font-size: 3rem;
+}
+
+.achievement-content {
+    flex: 1;
+}
+
+.achievement-title {
+    color: var(--accent-gold);
+    font-weight: bold;
+    margin-bottom: 0.3rem;
+}
+
+.achievement-name {
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    margin-bottom: 0.2rem;
+}
+
+.achievement-desc {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* ============================================
+   LEADERBOARD
+   ============================================ */
+.leaderboard {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 1rem;
+    border-radius: 12px;
+}
+
+.leaderboard-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.7rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.leaderboard-item:last-child {
+    border-bottom: none;
+}
+
+.leaderboard-rank {
+    font-weight: bold;
+    color: var(--accent-gold);
+    min-width: 30px;
+    font-family: var(--font-mono);
+}
+
+.leaderboard-name {
+    flex: 1;
+    margin: 0 1rem;
+}
+
+.leaderboard-balance {
+    color: var(--accent-gold);
+    font-weight: bold;
+    font-family: var(--font-mono);
+}
+
+/* ============================================
+   TEMPORARY MESSAGE
+   ============================================ */
+.temp-message {
+    position: fixed;
+    bottom: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(124, 58, 237, 0.95);
+    backdrop-filter: blur(12px);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    z-index: 3000;
+    transition: bottom 0.3s ease-out;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+}
+
+.temp-message.show {
+    bottom: 20px;
+}
+
+/* ============================================
+   GAME OVERLAYS
+   ============================================ */
+.game-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(4px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px;
+    color: var(--text-primary);
+}
+
+.game-overlay h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.game-overlay p {
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes vibrate {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
+}
+
+.vibrating {
+    animation: vibrate 0.1s linear 3;
+}
+
+/* Loading state */
+.loading {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
+.modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background: rgba(124, 58, 237, 0.5);
+    border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(124, 58, 237, 0.7);
+}
+
+/* ============================================
+   PWA MODE
+   ============================================ */
+.pwa-mode .game-container {
+    margin-top: env(safe-area-inset-top);
+    margin-bottom: env(safe-area-inset-bottom);
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+}
+
+/* ============================================
+   MOBILE RESPONSIVE
+   ============================================ */
+@media (max-width: 767px) {
+    body {
+        padding: 0.5rem;
+        /* Prevent content from sliding under iOS notch / home indicator */
+        padding-left: max(0.5rem, env(safe-area-inset-left));
+        padding-right: max(0.5rem, env(safe-area-inset-right));
+    }
+    
+    .game-container {
+        padding: 12px;
+    }
+    
+    .panel {
+        padding: 16px;
+    }
+    
+    .modal-content {
+        padding: 1.5rem;
+        width: 95%;
+    }
+    
+    .achievement-notification {
+        max-width: 90%;
+        padding: 1rem;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+    #tetris-canvas {
+        width: 300px;
+        height: 600px;
+    }
+}

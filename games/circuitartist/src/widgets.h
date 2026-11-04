@@ -1,0 +1,214 @@
+#ifndef WIDGETS_H
+#define WIDGETS_H
+#include "common.h"
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+void widgets_init();
+void widgets_set_sound(bool sound);
+
+// Scroll widget.
+typedef struct {
+  Rectangle content;
+  Rectangle rect;
+  Rectangle scroll_rect;
+  int value;  /* Actual scroll value */
+  int value0; /* Value of scroll when user has pressed down the button*/
+  int mouse0; /* mouse y position when user pressed down button */
+  bool down;
+  bool hit;
+  bool hidden;
+} Scroll;
+
+// Scroll Functions
+void scroll_init(Scroll* s);
+void scroll_set_content_box(Scroll* s, Rectangle box, int w);
+void scroll_update(Scroll* s, float h, v2 mouse);
+void scroll_scroll_to_bottom(Scroll* s, float h);
+void scroll_draw(Scroll* s);
+void scroll_reset_value(Scroll* s);
+int scroll_get_value(Scroll* s);
+
+// Listbox row widget, used internally in the Listbox widget.
+typedef struct {
+  char* content;
+  Rectangle hitbox_r;  // relative hitbox
+  Rectangle hitbox_g;
+  int text_y;
+  sprite_t sprite;
+} ListboxRow;
+
+// Listbox widget.
+typedef struct {
+  ListboxRow* rows;
+  Rectangle hitbox;
+  int height;
+  int row_hit;
+  int row_pad;
+  Scroll scroll;
+} Listbox;
+
+// Listbox
+void listbox_init(Listbox* l);
+void listbox_destroy(Listbox* l);
+void listbox_set_box(Listbox* l, Rectangle r);
+void listbox_add_row(Listbox* l, const char* content);
+void listbox_add_row_icon(Listbox* l, const char* content, sprite_t sprite);
+void listbox_clear(Listbox* l);
+void listbox_update(Listbox* l);
+void listbox_draw(Listbox* l, int sel);
+
+// Textbox widget. Renders text using the DrawTextBoxAdvanced routine.
+typedef struct {
+  Rectangle box;
+  char* text;
+  sprite_t* sprites;
+  int text_w;
+  int text_x;
+  int height;
+  Color bg;
+  Scroll scroll;
+} Textbox;
+
+// Text Box widget functions
+void textbox_init(Textbox* t);
+void textbox_destroy(Textbox* t);
+void textbox_set_bg(Textbox* t, Color bg);
+void textbox_set_content(Textbox* t, const char* txt, sprite_t* sprites);
+void textbox_set_box(Textbox* t, Rectangle box);
+void textbox_update(Textbox* t);
+void textbox_draw(Textbox* t);
+void textbox_scroll_to_bottom(Textbox* t);
+void textbox_calc_height(Textbox* t);
+
+// Button widget.
+// The caller has to setup its properties manually at creation.
+typedef struct {
+  bool disabled;
+  bool pressed;
+  bool toggled;
+  bool hover;
+  bool hidden;
+  bool gradient;
+  Rectangle hitbox;
+  bool primary;
+  bool done;
+} Btn;
+
+// Button
+bool btn_update(Btn* b);
+void btn_draw_text(Btn* b, const char* text);
+void btn_draw_legend(Btn* b, const char* text);
+void btn_draw_icon(Btn* b, Rectangle r);
+void btn_draw_icon_grad(Btn* b, Texture2D texture, Rectangle source);
+void btn_draw_icon2(Btn* b, int ui_scale, Texture2D texture, Rectangle source);
+void btn_draw_color(Rectangle r, Color c, bool selected, bool disabled);
+void btn_draw_checkbox(Btn* b);
+void btn_draw_checkbox_text(Btn* b, const char* txt);
+bool btn_hover(Btn* b);
+bool btn_right_click(Btn* b);
+
+typedef struct {
+  int maxValue;
+  int minValue;
+  int value;
+  int cursorValue;
+  bool pressed;
+  bool released;
+  Rectangle hitbox;
+} Slider;
+
+bool slider_update(Slider* slider);
+void slider_draw(Slider* slider);
+
+void draw_widget_frame(Rectangle inner_content);
+void draw_widget_frame_inv(Rectangle r);
+
+typedef struct {
+  Rectangle hitbox;
+  char txt[256];
+  int tlen;
+  int cursor_pos;  // Cursor position in text
+  bool active;
+  float alive;
+} Editbox;
+
+void editbox_init(Editbox* b);
+bool editbox_update(Editbox* b);
+void editbox_draw(Editbox* b);
+bool rect_hover(Rectangle hitbox, Vector2 pos);
+
+typedef struct {
+  Rectangle hitbox;
+  char txt[256];
+} Label;
+
+void custom_label_draw_centered(Rectangle hitbox, const char* txt, Color c,
+                                Color cshadow);
+void label_set_text(Label* l, const char* txt);
+void label_draw(Label* l);
+void label_draw_centered(Label* l);
+
+// LineEdit — single-line text editor with selection, clipboard, key repeat.
+#define LINEEDIT_BUFSIZE 256
+
+typedef struct {
+  Rectangle hitbox;
+  char buf[LINEEDIT_BUFSIZE];
+  int len;
+  int cursor;      // byte offset [0..len]
+  int sel_anchor;  // -1 = no selection; otherwise the other end of selection
+  float alive;     // cursor blink timer
+  bool focused;    // whether widget is receiving input
+  bool dragging;   // true while LMB held for drag-select
+  int scroll_x;    // horizontal scroll offset in screen pixels
+} LineEdit;
+
+void lineedit_init(LineEdit* e);
+void lineedit_set_text(LineEdit* e, const char* txt);
+const char* lineedit_get_text(LineEdit* e);
+void lineedit_set_focus(LineEdit* e, bool focused);
+bool lineedit_update(LineEdit* e);
+void lineedit_draw(LineEdit* e);
+
+// MultiLineEdit - editable multi-line text widget with cursor, selection,
+// scroll
+#define MLE_BUFSIZE 4096
+#define MLE_MAX_LINES 1024
+
+typedef struct {
+  Rectangle hitbox;
+  char buf[MLE_BUFSIZE];
+  int len;
+  int cursor;      // byte offset [0..len]
+  int sel_anchor;  // -1 = no selection; otherwise other end of selection
+  float alive;     // cursor blink timer
+  Scroll scroll;
+  int content_h;   // cached content height in screen pixels
+  int line_count;  // cached number of lines
+  int text_w;      // usable text width in unscaled pixels (for word wrap)
+  bool dragging;   // true while left mouse button held for drag-select
+  bool readonly;   // if true, editing is disabled but selection still works
+  bool focused;    // whether widget is receiving input
+  int pad;         // padding from each border in unscaled pixels
+} MultiLineEdit;
+
+void mle_init(MultiLineEdit* m);
+void mle_set_box(MultiLineEdit* m, Rectangle box);
+void mle_set_text(MultiLineEdit* m, const char* txt);
+const char* mle_get_text(MultiLineEdit* m);
+void mle_set_focus(MultiLineEdit* m, bool focused);
+bool mle_update(MultiLineEdit* m);
+void mle_draw(MultiLineEdit* m);
+
+void draw_frame(Rectangle r);
+void draw_sepv(Rectangle r);
+void draw_seph(Rectangle r);
+
+#if defined(__cplusplus)
+}
+#endif
+
+#endif

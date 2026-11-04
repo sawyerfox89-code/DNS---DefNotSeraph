@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Civis</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="stylesheet" href="css/style.css">
+	</head>
+	<body>
+
+		<div id="home">
+			<div id="home-menu" class="page">
+				<img id="home-menu-logo" src="img/logo-blur.png" title="Civis" alt="Civis">
+				<button data-page="home-new">New Game</button>
+				<button data-page="home-load">Load Game</button>
+				<button data-page="home-help">Help</button>
+				<button data-page="home-settings">Settings</button>
+			</div>
+
+			<div id="home-new" class="page" style="display: none">
+				<div class="flex-row flex-row-margins">
+					<label for="home-new-player1-civ" style="flex-grow: 1">Player 1 (Human)</label>
+					<select id="home-new-player1-civ" style="flex-grow: 1"></select>
+				</div>
+				<div class="flex-row flex-row-margins">
+					<label for="home-new-player2-civ" style="flex-grow: 1">Player 2 (AI)</label>
+					<select id="home-new-player2-civ" style="flex-grow: 1"></select>
+				</div>
+				<div class="flex-row flex-row-margins">
+					<label for="home-new-player3-civ" style="flex-grow: 1">Player 3 (AI)</label>
+					<select id="home-new-player3-civ" style="flex-grow: 1"></select>
+				</div>
+				<div class="flex-row flex-row-margins">
+					<label for="home-new-player4-civ" style="flex-grow: 1">Player 4 (AI)</label>
+					<select id="home-new-player4-civ" style="flex-grow: 1"></select>
+				</div>
+				<div class="flex-row flex-row-margins">
+					<button data-page="home-menu" style="flex-grow: 1">Back</button>
+					<button id="home-new-start" style="flex-grow: 1">Start</button>
+				</div>
+			</div>
+
+			<div id="home-load" class="page" style="display: none">
+				<ul id="home-load-list" class="list"></ul>
+				<div class="flex-row flex-row-margins">
+					<button data-page="home-menu" style="flex-grow: 1">Back</button>
+				</div>
+			</div>
+
+			<div id="home-help" class="page" style="display: none">
+				<p>Work in progess</p>
+				<div class="flex-row flex-row-margins">
+					<button data-page="home-menu" style="flex-grow: 1">Back</button>
+				</div>
+			</div>
+
+			<div id="home-settings" class="page" style="display: none">
+				<div class="flex-row flex-row-margins">
+					<label for="home-settings-language" style="flex-grow: 1">Language</label> 
+					<select id="home-settings-language" style="flex-grow: 2">
+						<option value="en">English</option>
+						<option value="it">Italiano</option>
+					</select>
+				</div>
+				<div class="flex-row flex-row-margins">
+					<button data-page="home-menu" style="flex-grow: 1">Back</button>
+					<button id="home-settings-save" style="flex-grow: 1">Save</button>
+				</div>
+			</div>
+
+			<span id="home-version"></span>
+			<span id="home-credits"></span>
+		</div>
+
+		<div id="main">
+			<div id="main-header">
+				<div>
+					<img src="img/ui/time.svg" alt="Turn" title="Turn" style="height: 1.5rem">
+					<span id="main-header-turn"></span>
+				</div>
+				<div>
+					<img src="img/ui/research.svg" alt="Research" title="Research" style="height: 1.5rem">
+					<span id="main-header-research"></span>
+				</div>
+				<div>
+					<img src="img/ui/culture.svg" alt="Culture" title="Culture" style="height: 1.5rem">
+					<span id="main-header-culture"></span>
+				</div>
+				<div>
+					<img src="img/ui/trade.svg" alt="Trade" title="Trade" style="height: 1.5rem">
+					<span id="main-header-trade"></span>
+				</div>
+				<button id="main-header-menu">Menu</button>
+			</div>
+
+			<svg id="main-paper"></svg>
+
+			<div id="main-sidebar">
+				<div id="main-sidebar-phase" style="flex: 1"></div>
+				<button id="main-sidebar-next">
+					<img src="img/ui/hourglass.svg" alt="Next Phase" title="Next Phase" style="height: 1.5rem">
+				</button>
+			</div>
+
+			<dialog id="main-menu">
+				<button data-action="save">Save</button>
+				<button data-action="help">Help</button>
+				<button data-action="exit">Exit</button>
+				<button data-action="cancel">Cancel</button>
+			</dialog>
+		</div>
+
+		<script src="https://cdn.jsdelivr.net/npm/dialog-polyfill@0.4.10/dialog-polyfill.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.slim.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/snapsvg@0.5.1/dist/snap.svg.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/localforage@1/dist/localforage.min.js"></script>
+		<script src="js/database.js"></script>
+		<script src="js/civis.js"></script>
+		<script src="js/main.js"></script>
+	</body>
+</html>

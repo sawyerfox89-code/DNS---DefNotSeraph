@@ -1,0 +1,212 @@
+@font-face {
+    font-family: "MajorMonoDisplay";
+    src: url(./MajorMonoDisplay.ttf);
+}
+
+:root {
+    --night: #080b0c;
+    --e-black: #1b1e22;
+    --c-blue: #accbe1;
+    --cl-blue: #dbeaf3;
+    --l-gray: #ffffff50;
+    --vl-gray: #ffffffc4;
+    --invis: #00000000;
+    --almost-invis: #00000024;
+    --slight-invis: #000000cf;
+    --p-green: #53b565;
+    --green: #30f24d;
+    --gray: #808080;
+}
+
+body {
+    color: var(--cl-blue);
+    font-family: "MajorMonoDisplay";
+    margin: 0;
+    overflow: hidden;
+    background: var(--night);
+    --background: black;
+}
+
+#splashScreen {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--slight-invis);
+    backdrop-filter: blur(10px);
+    z-index: 1;
+    text-shadow: 0 0 8vh rgb(255, 255, 255);
+    transition: all 0.5s ease, display 1.5s allow-discrete;
+    scale: 1;
+}
+
+#splashScreen>h1 {
+    font-size: 7em;
+    animation: pulse 2s infinite ease;
+    opacity: 1;
+}
+
+.spinner {
+    width: 3vmin;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 1vmin solid;
+    border-color: #ffffff #ffffff00;
+    animation: l1 1s infinite;
+}
+
+@keyframes l1 {
+    to {
+        transform: rotate(.5turn)
+    }
+}
+
+.dialog img,
+.scrollSettings img {
+    opacity: 0.6;
+    transition: all 0.3s ease;
+}
+
+.dialog>*:hover>img,
+.dialog>*>*:hover>img,
+.scrollSettings img:hover {
+    opacity: 1;
+}
+
+/* scrollbars */
+::-webkit-scrollbar {
+    width: 0.4vw;
+}
+
+::-webkit-scrollbar-track {
+    border-radius: 1vh;
+    background: var(--invis);
+    margin-top: 1vh;
+    margin-bottom: 1vh;
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 1vh;
+    background: var(--vl-gray);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: white;
+    transition: all 0.2s ease;
+}
+
+@-moz-document url-prefix() {
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: var(--vl-gray) var(--invis);
+    }
+}
+
+/* sliders */
+.range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 1.5vh;
+    height: 2.5vh;
+    background: white;
+    cursor: pointer;
+}
+
+.range::-moz-range-thumb {
+    -moz-appearance: none;
+    appearance: none;
+    width: 1.5vh;
+    height: 2.5vh;
+    background: white;
+    cursor: pointer;
+}
+
+.range::-webkit-slider-thumb:hover {
+    background: var(--p-green);
+}
+
+/* remove number arrows */
+.number::-webkit-outer-spin-button,
+.number::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* animations */
+@keyframes jump {
+    0% {
+        transform: translateY(0vmin);
+    }
+
+    50% {
+        transform: translateY(0.2vmin);
+    }
+
+    100% {
+        transform: translateY(0vmin);
+    }
+}
+
+@keyframes fadein {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+
+@keyframes zoomin {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes fadeout {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes zoomout {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.75;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}

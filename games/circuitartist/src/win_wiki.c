@@ -1,0 +1,158 @@
+#include "win_wiki.h"
+
+#include "assert.h"
+#include "common.h"
+#include "font.h"
+#include "game_registry.h"
+#include "i18n.h"
+#include "layout.h"
+#include "stb_ds.h"
+#include "stdlib.h"
+#include "string.h"
+#include "ui.h"
+#include "utils.h"
+#include "widgets.h"
+
+static struct {
+  GameRegistry* registry;
+  bool inited;
+  Textbox tb;
+  Listbox lb;
+  Listbox lb0;
+  int topic_sel;
+  int item_sel;
+  Layout* layout;
+  Rectangle modal;
+  bool opened_this_frame;
+  bool closed;
+  Btn btn_close;
+  Btn btn_topic[10];
+} C = {0};
+
+static void update_layout() {
+  layout_update_offset(C.layout);
+  Layout* l = C.layout;
+  C.modal = layout_rect(l, "window");
+  for (int i = 0; i < 7; i++) {
+    C.btn_topic[i].hitbox = layout_rectb(l, TextFormat("topic%d", i + 1));
+  }
+  listbox_set_box(&C.lb, layout_rectb(l, "listbox"));
+  textbox_set_box(&C.tb, layout_rectb(l, "content_box"));
+  C.btn_close.hitbox = layout_rectb(l, "btn_close");
+}
+
+static TutorialTopic* get_topics() { return C.registry->topics; }
+
+static void set_sel(int topic, int item) {
+  TutorialTopic* topics = get_topics();
+  if (topic != C.topic_sel) {
+    C.topic_sel = topic;
+    C.item_sel = -1;
+    listbox_clear(&C.lb);
+    TutorialItem* items = topics[C.topic_sel].items;
+    for (int i = 0; i < arrlen(items); i++) {
+      listbox_add_row_icon(&C.lb, items[i].name, items[i].icon);
+    }
+  }
+  if (item != C.item_sel) {
+    C.item_sel = item;
+    TutorialItem* item = &topics[C.topic_sel].items[C.item_sel];
+    textbox_set_content(&C.tb, item->desc, item->desc_imgs);
+  }
+}
+
+void win_wiki_init() {
+  C.registry = getreg();
+  C.layout = easy_load_layout("wiki");
+  C.topic_sel = -1;
+  C.item_sel = -1;
+  textbox_init(&C.tb);
+  listbox_init(&C.lb);
+  C.lb.row_pad = 5;
+
+  update_layout();
+  set_sel(0, 0);
+}
+
+void win_wiki_open() {
+  ui_winpush(WINDOW_WIKI);
+  C.opened_this_frame = true;
+  C.closed = false;
+}
+
+void win_wiki_update() {
+  update_layout();
+  int ntopic = arrlen(get_topics());
+  for (int i = 0; i < 10; i++) {
+    C.btn_topic[i].hidden = i >= ntopic;
+  }
+  if (IsKeyPressed(KEY_TAB) && !C.opened_this_frame) {
+    ui_winpop();
+    return;
+  }
+  C.opened_this_frame = false;
+
+  // Cancel button: we close without performing any action.
+  if (btn_update(&C.btn_close) || IsKeyPressed(KEY_ESCAPE)) {
+    ui_winpop();
+    return;
+  }
+
+  // Topic buttons update
+  for (int i = 0; i < ntopic; i++) {
+    if (btn_update(&C.btn_topic[i])) {
+      if (i != C.topic_sel) {
+        set_sel(i, 0);
+      }
+    }
+  }
+  for (int i = 0; i < 10; i++) {
+    C.btn_topic[i].toggled = i == C.topic_sel;
+  }
+
+  listbox_update(&C.lb);
+  textbox_update(&C.tb);
+
+  // Listbox rows
+  int hit = C.lb.row_hit;
+  if (hit >= 0 && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
+      C.item_sel != hit) {
+    set_sel(C.topic_sel, hit);
+  }
+}
+
+static TutorialItem* get_item() {
+  return &get_topics()[C.topic_sel].items[C.item_sel];
+}
+
+void win_wiki_draw() {
+  draw_win(C.modal, T.wiki_title);
+  textbox_draw(&C.tb);
+  listbox_draw(&C.lb, C.item_sel);
+  TutorialTopic* topics = get_topics();
+  int ntopic = arrlen(topics);
+  int s = ui_get_scale();
+  for (int i = 0; i < ntopic; i++) {
+    btn_draw_icon2(&C.btn_topic[i], s, topics[i].icon.tex,
+                   topics[i].icon.region);
+  }
+  for (int i = 0; i < ntopic; i++) {
+    btn_draw_legend(&C.btn_topic[i], topics[i].name);
+  }
+  btn_draw_text(&C.btn_close, T.close);
+}
+
+void win_wiki_open_on_item(const char* item_id) {
+  win_wiki_open();
+  TutorialTopic* topics = get_topics();
+  int nt = arrlen(topics);
+  for (int it = 0; it < nt; it++) {
+    int ni = arrlen(topics[it].items);
+    for (int ii = 0; ii < ni; ii++) {
+      if (strcmp(topics[it].items[ii].id, item_id) == 0) {
+        set_sel(it, ii);
+        return;
+      }
+    }
+  }
+}

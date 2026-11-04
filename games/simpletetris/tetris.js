@@ -1,0 +1,1507 @@
+// Tetris Game - Modular Architecture
+import { BoardModule } from './js/modules/core/BoardModule.js';
+import { PieceModule } from './js/modules/core/PieceModule.js';
+import { GameLoopManager } from './js/modules/core/GameLoopManager.js';
+import { Renderer } from './js/modules/rendering/Renderer.js';
+import { InputManager } from './js/modules/input/InputManager.js';
+import { createAdaptiveEngine } from './js/modules/ai/AdaptiveEngine.js';
+import { AiVsAi } from './js/modules/ai/AiVsAi.js';
+import { ScoringSystem } from './js/modules/game/ScoringSystem.js';
+import { UIController } from './js/modules/game/UIController.js';
+import { soundEngine } from './js/modules/audio/SoundEngine.js';
+import { ReplaySystem } from './js/modules/game/ReplaySystem.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Game constants
+    const BLOCK_SIZE = 30;
+    const STORAGE_KEYS = {
+        highScore: 'tetrisHighScore',
+        grid: 'tetrisGridContrast',
+        aiState: 'tetrisAiStateV1'
+    };
+    
+    // Get canvases and contexts
+    const canvas = document.getElementById('tetris-canvas');
+    const ctx = canvas.getContext('2d');
+    const nextPieceCanvas = document.getElementById('next-piece-canvas');
+    const nextPieceCtx = nextPieceCanvas.getContext('2d');
+    
+    // Get DOM elements
+    const elements = {
+        scoreElement: document.getElementById('score'),
+        highScoreElement: document.getElementById('high-score'),
+        levelElement: document.getElementById('level'),
+        linesElement: document.getElementById('lines'),
+        startBtn: document.getElementById('start-btn'),
+        gridToggleBtn: document.getElementById('grid-toggle'),
+        soundToggleBtn: document.getElementById('sound-toggle'),
+        aiSummaryElement: document.getElementById('ai-summary'),
+        aiInsightContainer: document.querySelector('.ai-insight'),
+        aiVsAiBtn: document.getElementById('ai-vs-ai-btn'),
+        aiVsAiPanel: document.getElementById('ai-vs-ai-panel'),
+        ai1ThinkingElement: document.getElementById('ai1-thinking'),
+        ai1PlanElement: document.getElementById('ai1-plan'),
+        ai2ThinkingElement: document.getElementById('ai2-thinking'),
+        ai2PlanElement: document.getElementById('ai2-plan'),
+        takeControlBtn: document.getElementById('take-control-btn'),
+        exitAiModeBtn: document.getElementById('exit-ai-mode-btn'),
+        currentTurnElement: document.getElementById('current-turn'),
+        balanceElement: document.getElementById('tetricoins-balance'),
+        tournamentBtn: document.getElementById('tournament-btn'),
+        achievementsBtn: document.getElementById('achievements-btn'),
+        shareBtn: document.getElementById('share-btn'),
+        achievementsModal: document.getElementById('achievements-modal'),
+        closeAchievementsBtn: document.getElementById('close-achievements'),
+        tapHint: document.getElementById('canvas-tap-hint')
+    };
+
+    // Helper: show/hide the "Tap to Play" hint overlay on the canvas
+    function setTapHintVisible(visible) {
+        if (elements.tapHint) {
+            elements.tapHint.classList.toggle('visible', visible);
+        }
+        canvas.classList.toggle('canvas-idle', visible);
+    }
+    
+    // Game state variables
+    let board = null;
+    let currentPiece = null;
+    let nextPiece = null;
+    let score = 0;
+    let highScore = 0;
+    let lines = 0;
+    let level = 1;
+    let gameOver = false;
+    let isPaused = false;
+    let dropInterval = 1000;
+    let showGrid = true;
+    let gridContrast = 1; // 0=off, 1=low (default), 2=medium, 3=high
+    let showGhost = true;
+    let consecutiveTetris = 0;
+    let lastLinesClearedWas4 = false;
+    
+    // AI vs AI mode variables
+    let aiVsAiMode = false;
+    let currentAiPlayer = 1;
+    let playerTakingControl = false;
+    let matchStats = {
+        ai1Score: 0,
+        ai2Score: 0,
+        firstTetris: null,
+        firstToReach1000: null
+    };
+    let aiMoveInterval = null;
+    let aiDropTimeout = null;
+    let aiNextMoveTimeout = null;
+    
+    // Betting and tournament variables
+    let bettingEnabled = false;
+    let currentBet = null;
+    let tournamentMode = false;
+    let tournamentMatchCount = 0;
+
+    // Initialize modules
+    Renderer.initialize({
+        ctx,
+        canvas,
+        nextPieceCtx,
+        nextPieceCanvas,
+        blockSize: BLOCK_SIZE,
+        colors: PieceModule.COLORS
+    });
+
+    AiVsAi.initialize({
+        boardModule: BoardModule,
+        colors: PieceModule.COLORS,
+        cols: BoardModule.COLS,
+        rows: BoardModule.ROWS
+    });
+
+    const aiTrainer = createAdaptiveEngine(
+        BoardModule,
+        PieceModule.SHAPE_NAMES,
+        STORAGE_KEYS.aiState,
+        PieceModule
+    );
+
+    const uiController = UIController.create(elements);
+
+    // Create replay system
+    const replaySystem = new ReplaySystem();
+
+    // Create game board
+    function createBoard() {
+        return BoardModule.createEmpty();
+    }
+
+    // Create piece functions
+    function createPiece(shapeIndex) {
+        return PieceModule.create(shapeIndex, BoardModule.COLS);
+    }
+
+    function getAdaptivePiece() {
+        const shapeIndex = aiTrainer.selectShapeIndex();
+        return createPiece(shapeIndex);
+    }
+
+    // Storage functions
+    function persistHighScore() {
+        try {
+            localStorage.setItem(STORAGE_KEYS.highScore, highScore.toString());
+        } catch (err) {
+            // Ignore storage errors
+        }
+    }
+
+    function persistGridPreference() {
+        try {
+            localStorage.setItem(STORAGE_KEYS.grid, String(gridContrast));
+        } catch (err) {
+            // Ignore storage errors
+        }
+    }
+
+    function loadPreferences() {
+        try {
+            const storedHighScore = localStorage.getItem(STORAGE_KEYS.highScore);
+            if (storedHighScore) {
+                highScore = parseInt(storedHighScore, 10);
+                if (isNaN(highScore)) highScore = 0;
+            }
+            uiController.updateHighScoreDisplay(highScore);
+
+            const storedGrid = localStorage.getItem(STORAGE_KEYS.grid);
+            if (storedGrid !== null) {
+                const parsed = parseInt(storedGrid, 10);
+                if (parsed >= 0 && parsed <= 3) {
+                    gridContrast = parsed;
+                } else {
+                    // Migrate legacy boolean value
+                    gridContrast = storedGrid === '1' ? 1 : 0;
+                }
+            }
+            showGrid = gridContrast > 0;
+            uiController.updateGridButton(gridContrast);
+            
+            const storedGhost = localStorage.getItem('tetrisShowGhost');
+            if (storedGhost !== null) {
+                showGhost = storedGhost === 'true';
+            }
+
+            aiTrainer.loadFromStorage();
+        } catch (err) {
+            // Ignore storage errors
+        }
+    }
+
+    function checkDailyBonus() {
+        if (window.tetriCoins) {
+            const bonus = window.tetriCoins.checkDailyBonus();
+            if (bonus > 0) {
+                uiController.showMessage(`Daily bonus: +${bonus} TC!`);
+                uiController.updateBalanceDisplay();
+            }
+        }
+    }
+
+    // Piece movement and collision
+    function checkCollision(piece, offsetX = 0, offsetY = 0) {
+        return !BoardModule.isValidPosition(piece, board, offsetX, offsetY);
+    }
+
+    function clearAiAutomationTimers() {
+        if (aiMoveInterval) {
+            clearInterval(aiMoveInterval);
+            aiMoveInterval = null;
+        }
+        if (aiDropTimeout) {
+            clearTimeout(aiDropTimeout);
+            aiDropTimeout = null;
+        }
+        if (aiNextMoveTimeout) {
+            clearTimeout(aiNextMoveTimeout);
+            aiNextMoveTimeout = null;
+        }
+    }
+
+    function scheduleNextAiMove(delay = 500) {
+        if (aiNextMoveTimeout) {
+            clearTimeout(aiNextMoveTimeout);
+        }
+
+        aiNextMoveTimeout = setTimeout(() => {
+            aiNextMoveTimeout = null;
+            if (aiVsAiMode && !gameOver && !playerTakingControl && currentPiece) {
+                executeAiMove();
+            }
+        }, delay);
+    }
+
+    function mergePiece() {
+        BoardModule.mergePieceInto(board, currentPiece, PieceModule.COLORS);
+    }
+    
+    function calculateGhostPosition(piece) {
+        if (!piece) return null;
+        
+        // Create a copy of the piece
+        const ghostPiece = {
+            ...piece,
+            shape: piece.shape,
+            x: piece.x,
+            y: piece.y
+        };
+        
+        // Drop the ghost piece until it collides
+        while (!checkCollision(ghostPiece, 0, 1)) {
+            ghostPiece.y++;
+        }
+        
+        // Only return ghost if it's not at the same position as current piece
+        if (ghostPiece.y === piece.y) {
+            return null;
+        }
+        
+        return ghostPiece;
+    }
+
+    function movePieceDown() {
+        if (!currentPiece) return false;
+        
+        if (!replaySystem.isPlaying() && replaySystem.isRecording()) {
+            replaySystem.recordEvent('soft_drop');
+        }
+        
+        if (!checkCollision(currentPiece, 0, 1)) {
+            currentPiece.y++;
+            soundEngine.drop();
+            return true;
+        } else {
+            // Piece has landed
+            const beforeMetrics = BoardModule.computeMetrics(board);
+            mergePiece();
+            const linesCleared = clearLines();
+            const afterMetrics = BoardModule.computeMetrics(board);
+            
+            // Register placement with adaptive engine
+            if (!aiVsAiMode || playerTakingControl) {
+                aiTrainer.registerPlacement(
+                    currentPiece.shapeIndex,
+                    beforeMetrics,
+                    afterMetrics,
+                    linesCleared
+                );
+                uiController.updateAiInsight(aiTrainer.getLiveHint());
+            }
+            
+            spawnPiece();
+            return false;
+        }
+    }
+
+    function movePieceLeft() {
+        if (!currentPiece) return;
+        if (!replaySystem.isPlaying() && replaySystem.isRecording()) {
+            replaySystem.recordEvent('left');
+        }
+        if (!checkCollision(currentPiece, -1, 0)) {
+            currentPiece.x--;
+            soundEngine.move();
+            draw();
+        }
+    }
+
+    function movePieceRight() {
+        if (!currentPiece) return;
+        if (!replaySystem.isPlaying() && replaySystem.isRecording()) {
+            replaySystem.recordEvent('right');
+        }
+        if (!checkCollision(currentPiece, 1, 0)) {
+            currentPiece.x++;
+            soundEngine.move();
+            draw();
+        }
+    }
+
+    function rotatePiece() {
+        if (!currentPiece) return;
+        
+        if (!replaySystem.isPlaying() && replaySystem.isRecording()) {
+            replaySystem.recordEvent('rotate');
+        }
+        
+        const rotated = PieceModule.rotate(currentPiece);
+        const originalShape = currentPiece.shape;
+        currentPiece.shape = rotated;
+        
+        let rotationSuccessful = false;
+        
+        // Check if rotation is valid
+        if (checkCollision(currentPiece)) {
+            // Try wall kicks
+            const offsets = [
+                { x: 1, y: 0 },
+                { x: -1, y: 0 },
+                { x: 2, y: 0 },
+                { x: -2, y: 0 },
+                { x: 0, y: -1 }
+            ];
+            
+            for (const offset of offsets) {
+                if (!checkCollision(currentPiece, offset.x, offset.y)) {
+                    currentPiece.x += offset.x;
+                    currentPiece.y += offset.y;
+                    rotationSuccessful = true;
+                    break;
+                }
+            }
+            
+            if (!rotationSuccessful) {
+                currentPiece.shape = originalShape;
+            }
+        } else {
+            rotationSuccessful = true;
+        }
+        
+        if (rotationSuccessful) {
+            soundEngine.rotate();
+        }
+        
+        draw();
+    }
+
+    function hardDrop() {
+        if (!currentPiece) return;
+        
+        if (!replaySystem.isPlaying() && replaySystem.isRecording()) {
+            replaySystem.recordEvent('hard_drop');
+        }
+        
+        while (!checkCollision(currentPiece, 0, 1)) {
+            currentPiece.y++;
+        }
+        
+        soundEngine.hardDrop();
+        
+        const beforeMetrics = BoardModule.computeMetrics(board);
+        mergePiece();
+        const linesCleared = clearLines();
+        const afterMetrics = BoardModule.computeMetrics(board);
+        
+        // Register placement with adaptive engine
+        if (!aiVsAiMode || playerTakingControl) {
+            aiTrainer.registerPlacement(
+                currentPiece.shapeIndex,
+                beforeMetrics,
+                afterMetrics,
+                linesCleared
+            );
+            uiController.updateAiInsight(aiTrainer.getLiveHint());
+        }
+        
+        draw();
+        spawnPiece();
+    }
+
+    function clearLines() {
+        const linesToClear = BoardModule.findCompletedLines(board);
+        let linesCleared = 0;
+
+        if (linesToClear.length > 0) {
+            // Remove completed lines
+            linesCleared = BoardModule.clearLines(board, linesToClear);
+
+            lines += linesCleared;
+            const prevLevel = level;
+
+            // Calculate score based on lines cleared
+            score += ScoringSystem.calculateLineScore(linesCleared, level);
+
+            // Update level every 10 lines
+            level = ScoringSystem.calculateLevel(lines);
+            
+            // Check for level up
+            if (level > prevLevel) {
+                soundEngine.levelUp();
+            }
+
+            // Adjust drop speed based on level
+            dropInterval = ScoringSystem.calculateDropInterval(level);
+
+            // Award TetriCoins if not in AI vs AI mode or if player is taking control
+            if (!aiVsAiMode || playerTakingControl) {
+                const reward = window.tetriCoins.awardLinesCleared(linesCleared);
+                if (reward > 0) {
+                    uiController.updateBalanceDisplay();
+                    uiController.showCoinReward(reward);
+                    soundEngine.coinEarned();
+                }
+                
+                // Track Tetris streak for achievement
+                if (linesCleared === 4) {
+                    consecutiveTetris++;
+                    lastLinesClearedWas4 = true;
+                    window.achievementSystem.checkTetrisStreak(consecutiveTetris);
+                    soundEngine.tetris();
+                    
+                    // Track first Tetris in AI vs AI match
+                    if (aiVsAiMode && !matchStats.firstTetris) {
+                        matchStats.firstTetris = currentAiPlayer;
+                    }
+                } else {
+                    soundEngine.lineClear(linesCleared);
+                    if (lastLinesClearedWas4) {
+                        consecutiveTetris = 0;
+                        window.achievementSystem.resetTetrisStreak();
+                    }
+                    lastLinesClearedWas4 = false;
+                }
+                
+                // Vibrate on line clear (if supported)
+                if (navigator.vibrate) {
+                    const vibrationPattern = linesCleared === 4 ? [50, 50, 50] : [30];
+                    navigator.vibrate(vibrationPattern);
+                }
+            }
+            
+            // Track score race in AI vs AI mode
+            if (aiVsAiMode && !matchStats.firstToReach1000 && score >= 1000) {
+                matchStats.firstToReach1000 = currentAiPlayer;
+            }
+
+            // Update score display
+            uiController.updateScoreDisplay(score, level, lines);
+            if (score > highScore) {
+                highScore = score;
+                uiController.updateHighScoreDisplay(highScore);
+                persistHighScore();
+            }
+        }
+
+        return linesCleared;
+    }
+
+    function spawnPiece() {
+        if (!nextPiece) {
+            nextPiece = getAdaptivePiece();
+        }
+        
+        currentPiece = nextPiece;
+        nextPiece = getAdaptivePiece();
+        
+        Renderer.drawNextPiece(nextPiece);
+        
+        if (checkCollision(currentPiece)) {
+            gameOver = true;
+            soundEngine.gameOver();
+            
+            // Stop replay recording
+            if (replaySystem.isRecording() && !aiVsAiMode) {
+                replaySystem.stopRecording({
+                    score: score,
+                    level: level,
+                    lines: lines,
+                    theme: 'default'
+                });
+                // Reset RNG to use Math.random
+                PieceModule.setRNG(null);
+            }
+            
+            // Check achievements
+            if (window.achievementSystem) {
+                window.achievementSystem.checkScoreAchievement(score);
+                window.achievementSystem.checkLinesAchievement(lines);
+            }
+            
+            // Handle bet result if in AI vs AI mode
+            if (aiVsAiMode && currentBet && window.bettingSystem) {
+                const result = window.bettingSystem.processBetResult({
+                    winner: currentAiPlayer === 1 ? 2 : 1,
+                    finalScore: score,
+                    firstTetris: matchStats.firstTetris,
+                    firstToReach1000: matchStats.firstToReach1000
+                });
+                
+                if (result) {
+                    showBetResult(result);
+                }
+            }
+            
+            // Show game over message
+            const finalMetrics = BoardModule.computeMetrics(board);
+            uiController.updateAiInsight(aiTrainer.getSummary(finalMetrics));
+            
+            gameLoopManager.stop();
+            clearAiAutomationTimers();
+            
+            // Show tap hint so mobile users know they can tap to restart
+            if (!aiVsAiMode) {
+                setTapHintVisible(true);
+            }
+
+            // Trigger friend challenge system (player games only)
+            if (!aiVsAiMode && window.challengeSystem) {
+                window.challengeSystem.onGameOver(score, level);
+            }
+            
+            // In AI vs AI mode, handle tournament continuation
+            if (aiVsAiMode && tournamentMode) {
+                tournamentMatchCount++;
+                if (tournamentMatchCount < 5) {
+                    setTimeout(() => {
+                        startAiVsAiMode();
+                    }, 2000);
+                } else {
+                    let jackpot = 0;
+                    const bettingSystem = window.bettingSystem;
+                    const finishTournament = bettingSystem && (bettingSystem.finishTournament || bettingSystem.endTournament);
+                    if (typeof finishTournament === 'function') {
+                        jackpot = finishTournament.call(bettingSystem);
+                    }
+                    if (jackpot > 0) {
+                        uiController.showMessage(`Tournament complete! Jackpot: ${jackpot} TC`);
+                    }
+                    exitAiVsAiMode();
+                }
+            }
+        } else if (aiVsAiMode && !playerTakingControl) {
+            scheduleNextAiMove(500);
+        }
+    }
+
+    function draw() {
+        Renderer.clear();
+        Renderer.drawGrid(gridContrast, BoardModule.COLS, BoardModule.ROWS);
+        Renderer.drawBoard(board);
+        if (currentPiece && showGhost) {
+            const ghostPiece = calculateGhostPosition(currentPiece);
+            if (ghostPiece) {
+                Renderer.drawGhostPiece(ghostPiece);
+            }
+        }
+        if (currentPiece) {
+            Renderer.drawPiece(currentPiece);
+        }
+    }
+
+    function toggleGrid() {
+        gridContrast = (gridContrast + 1) % 4;
+        showGrid = gridContrast > 0;
+        uiController.updateGridButton(gridContrast);
+        persistGridPreference();
+        draw();
+    }
+    
+    function toggleGhost() {
+        showGhost = !showGhost;
+        localStorage.setItem('tetrisShowGhost', showGhost.toString());
+        draw();
+    }
+    
+    function toggleSound() {
+        const enabled = soundEngine.toggleSound();
+        updateSoundButton(enabled);
+    }
+    
+    function updateSoundButton(enabled) {
+        if (elements.soundToggleBtn) {
+            const key = enabled ? 'sound_on' : 'sound_off';
+            const icon = enabled ? '🔊' : '🔇';
+            elements.soundToggleBtn.setAttribute('data-i18n', key);
+            elements.soundToggleBtn.textContent = `${icon} ${window.i18n ? window.i18n.t(key) : (enabled ? 'Sound' : 'Muted')}`;
+        }
+    }
+
+    // Game loop manager
+    const gameLoopManager = GameLoopManager.create({
+        resetState: () => {
+            board = createBoard();
+            score = 0;
+            lines = 0;
+            level = 1;
+            dropInterval = 1000;
+            gameOver = false;
+            isPaused = false;
+            currentPiece = null;
+            nextPiece = null;
+            consecutiveTetris = 0;
+            lastLinesClearedWas4 = false;
+        },
+        isGameOver: () => gameOver,
+        isPaused: () => isPaused,
+        isAiVsAiMode: () => aiVsAiMode,
+        isPlayerControl: () => playerTakingControl,
+        getDropInterval: () => dropInterval,
+        movePieceDown: () => movePieceDown(),
+        draw: () => draw(),
+        onGameStart: () => {
+            aiTrainer.resetForNewGame(board);
+            uiController.updateScoreDisplay(score, level, lines);
+            uiController.updateAiInsight(aiTrainer.getLiveHint());
+            spawnPiece();
+            draw();
+        },
+        drawPauseOverlay: () => Renderer.drawPauseOverlay()
+    });
+
+    // AI vs AI execution function
+    function executeAiMove() {
+        if (!currentPiece || gameOver || !aiVsAiMode || playerTakingControl) return;
+        if (aiMoveInterval || aiDropTimeout) return;
+        
+        // Update AI thinking display
+        uiController.updateAiThinking(currentAiPlayer, `AI ${currentAiPlayer} is analyzing...`, 'Calculating optimal position...');
+        
+        // Find best move
+        const bestMove = AiVsAi.findBestMove(
+            currentPiece, 
+            board, 
+            currentAiPlayer,
+            checkCollision
+        );
+        
+        // Apply rotations
+        for (let r = 0; r < bestMove.rotation; r++) {
+            rotatePiece();
+        }
+        
+        // Move to target X position
+        const targetX = bestMove.x;
+        const moveSteps = Math.abs(targetX - currentPiece.x);
+        
+        uiController.updateAiThinking(currentAiPlayer, null, `Moving to column ${targetX + 1}, ${bestMove.rotation} rotation(s)`);
+        
+        // Animate movement
+        let movesMade = 0;
+        aiMoveInterval = setInterval(() => {
+            if (!aiVsAiMode || playerTakingControl || !currentPiece || gameOver) {
+                clearAiAutomationTimers();
+                return;
+            }
+
+            if (movesMade >= moveSteps) {
+                clearInterval(aiMoveInterval);
+                aiMoveInterval = null;
+                // Drop the piece
+                aiDropTimeout = setTimeout(() => {
+                    aiDropTimeout = null;
+                    if (aiVsAiMode && !playerTakingControl && currentPiece && !gameOver) {
+                        hardDrop();
+                        // Switch AI player
+                        currentAiPlayer = currentAiPlayer === 1 ? 2 : 1;
+                        uiController.updateTurnDisplay(currentAiPlayer);
+                    }
+                }, 100);
+                return;
+            }
+            
+            if (currentPiece.x < targetX) {
+                movePieceRight();
+            } else if (currentPiece.x > targetX) {
+                movePieceLeft();
+            }
+            movesMade++;
+            draw();
+        }, 50);
+    }
+
+    // Game control functions
+    function startGame() {
+        setTapHintVisible(false);
+        clearAiAutomationTimers();
+        gameLoopManager.start(
+            () => {
+                elements.startBtn.textContent = 'Restart';
+                checkDailyBonus();
+                
+                // Start recording replay (only for human player, not AI vs AI)
+                if (!aiVsAiMode && !replaySystem.isPlaying()) {
+                    const seed = replaySystem.startRecording();
+                    PieceModule.setRNG(replaySystem.getRNG());
+                }
+            },
+            () => {
+                gameLoopManager.reset();
+                score = 0;
+                lines = 0;
+                level = 1;
+                dropInterval = 1000;
+                uiController.updateScoreDisplay(score, level, lines);
+            }
+        );
+    }
+
+    function togglePause() {
+        if (gameOver || !currentPiece) return;
+        isPaused = !isPaused;
+        
+        if (!replaySystem.isPlaying() && replaySystem.isRecording()) {
+            replaySystem.recordEvent(isPaused ? 'pause' : 'resume');
+        }
+        
+        gameLoopManager.pause(isPaused);
+    }
+
+    function startAiVsAiMode() {
+        // Reset match stats
+        matchStats = {
+            ai1Score: 0,
+            ai2Score: 0,
+            firstTetris: null,
+            firstToReach1000: null
+        };
+
+        const bettingSystem = window.bettingSystem;
+        if (!bettingSystem || typeof bettingSystem.startBetting !== 'function') {
+            bettingEnabled = false;
+            currentBet = null;
+            uiController.showMessage('Betting unavailable. Starting AI match directly.');
+            startAiMatch();
+            return;
+        }
+        
+        // Start betting phase
+        bettingEnabled = true;
+        const bettingStarted = bettingSystem.startBetting(
+            (bet) => {
+                currentBet = bet;
+                bettingEnabled = false;
+                startAiMatch();
+            },
+            () => {
+                currentBet = null;
+                bettingEnabled = false;
+                startAiMatch();
+            }
+        );
+
+        if (bettingStarted === false) {
+            bettingEnabled = false;
+            startAiMatch();
+        }
+    }
+
+    function startAiMatch() {
+        clearAiAutomationTimers();
+        aiVsAiMode = true;
+        currentAiPlayer = 1;
+        playerTakingControl = false;
+        
+        uiController.toggleAiVsAiPanel(true);
+        uiController.updateTakeControlButton(false);
+        startGame();
+        uiController.updateTurnDisplay(currentAiPlayer);
+    }
+
+    function exitAiVsAiMode() {
+        clearAiAutomationTimers();
+        aiVsAiMode = false;
+        playerTakingControl = false;
+        bettingEnabled = false;
+        
+        uiController.toggleAiVsAiPanel(false);
+        gameLoopManager.stop();
+        gameOver = true;
+        
+        // Show start screen
+        draw();
+        Renderer.drawStartScreen();
+        setTapHintVisible(true);
+    }
+
+    function takeControl() {
+        playerTakingControl = !playerTakingControl;
+        uiController.updateTakeControlButton(playerTakingControl);
+        
+        if (playerTakingControl) {
+            clearAiAutomationTimers();
+            gameLoopManager.resetDropCounter();
+            uiController.updateAiThinking(1, 'Player in control!', null);
+            uiController.updateAiThinking(2, 'Waiting...', null);
+        } else {
+            if (currentPiece && !gameOver) {
+                scheduleNextAiMove(100);
+            }
+        }
+    }
+
+    function showBetResult(result) {
+        const overlay = document.createElement('div');
+        overlay.className = 'bet-result-overlay';
+        
+        const content = document.createElement('div');
+        content.className = `bet-result-content ${result.won ? 'win' : 'lose'}`;
+        
+        const icon = document.createElement('div');
+        icon.className = 'result-icon';
+        icon.textContent = result.won ? '🎉' : '😢';
+        
+        const message = document.createElement('div');
+        message.className = 'result-message';
+        message.innerHTML = `
+            <h2>${result.won ? 'You Won!' : 'You Lost'}</h2>
+            <p>${result.message}</p>
+            ${result.won ? `<p class="winnings">+${result.payout} TC</p>` : ''}
+        `;
+        
+        content.appendChild(icon);
+        content.appendChild(message);
+        overlay.appendChild(content);
+        document.body.appendChild(overlay);
+        
+        if (result.won) {
+            createConfetti();
+        }
+        
+        setTimeout(() => overlay.remove(), 5000);
+    }
+
+    function createConfetti() {
+        for (let i = 0; i < 50; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.left = Math.random() * 100 + '%';
+            confetti.style.animationDelay = Math.random() * 3 + 's';
+            confetti.style.backgroundColor = ['#ff0', '#f0f', '#0ff', '#f00', '#0f0'][Math.floor(Math.random() * 5)];
+            document.body.appendChild(confetti);
+            setTimeout(() => confetti.remove(), 4000);
+        }
+    }
+
+    function startTournament() {
+        tournamentMode = true;
+        tournamentMatchCount = 0;
+        if (window.bettingSystem && typeof window.bettingSystem.startTournament === 'function') {
+            window.bettingSystem.startTournament();
+        }
+        
+        const tournamentProgress = document.getElementById('tournament-progress');
+        if (tournamentProgress) {
+            tournamentProgress.style.display = 'block';
+        }
+        
+        startAiVsAiMode();
+    }
+
+    function showAchievementsModal() {
+        if (!elements.achievementsModal) return;
+        
+        elements.achievementsModal.style.display = 'flex';
+        
+        const progressElement = document.getElementById('achievements-progress');
+        if (progressElement) {
+            progressElement.textContent = window.achievementSystem.getProgress();
+        }
+        
+        const listElement = document.getElementById('achievements-list');
+        if (listElement) {
+            listElement.innerHTML = '';
+            const achievements = window.achievementSystem.getAllAchievements();
+            achievements.forEach(achievement => {
+                const item = document.createElement('div');
+                item.className = `achievement-item ${achievement.unlocked ? 'unlocked' : 'locked'}`;
+                item.innerHTML = `
+                    <div class="achievement-icon-large">${achievement.name.split(' ')[0]}</div>
+                    <div class="achievement-info">
+                        <h3>${achievement.name}</h3>
+                        <p>${achievement.description}</p>
+                        ${achievement.progress !== undefined && !achievement.unlocked ? 
+                            `<p>Progress: ${achievement.progress}/${achievement.target}</p>` : ''}
+                    </div>
+                    ${achievement.reward > 0 ? `<div class="achievement-reward">+${achievement.reward} TC</div>` : ''}
+                `;
+                listElement.appendChild(item);
+            });
+        }
+        
+        const leaderboardElement = document.getElementById('leaderboard');
+        if (leaderboardElement) {
+            leaderboardElement.innerHTML = '';
+            const leaderboard = window.achievementSystem.getLeaderboard();
+            if (leaderboard.length === 0) {
+                leaderboardElement.innerHTML = '<p style="text-align: center; color: rgba(255,255,255,0.5);">No entries</p>';
+            } else {
+                leaderboard.forEach((entry, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'leaderboard-item';
+                    item.innerHTML = `
+                        <div class="leaderboard-rank">#${index + 1}</div>
+                        <div class="leaderboard-name">${entry.name || 'Player'}</div>
+                        <div class="leaderboard-balance">${window.tetriCoins.formatCoins(entry.balance)} TC</div>
+                    `;
+                    leaderboardElement.appendChild(item);
+                });
+            }
+        }
+    }
+
+    function initBettingUI() {
+        if (!window.bettingSystem) {
+            return;
+        }
+
+        // Betting UI initialization (keep existing logic)
+        let selectedBetType = null;
+        let selectedTarget = null;
+        let selectedAmount = null;
+
+        const betTypeCards = document.querySelectorAll('.bet-type-card');
+        betTypeCards.forEach(card => {
+            const betType = card.dataset.betType;
+            const buttons = card.querySelectorAll('.bet-option-btn');
+            
+            buttons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.bet-option-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    selectedBetType = betType;
+                    selectedTarget = btn.dataset.target;
+                    updatePlaceBetButton();
+                });
+            });
+        });
+
+        const quickBetButtons = document.querySelectorAll('.quick-bet-btn');
+        quickBetButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                quickBetButtons.forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedAmount = parseInt(btn.dataset.amount);
+                const customBetInput = document.getElementById('custom-bet-amount');
+                if (customBetInput) customBetInput.value = '';
+                updatePlaceBetButton();
+            });
+        });
+
+        const customBetInput = document.getElementById('custom-bet-amount');
+        if (customBetInput) {
+            customBetInput.addEventListener('input', () => {
+                quickBetButtons.forEach(b => b.classList.remove('selected'));
+                const value = parseInt(customBetInput.value);
+                selectedAmount = isNaN(value) ? null : value;
+                updatePlaceBetButton();
+            });
+        }
+
+        const placeBetBtn = document.getElementById('place-bet-btn');
+        if (placeBetBtn) {
+            placeBetBtn.addEventListener('click', () => {
+                if (!selectedBetType || !selectedTarget || !selectedAmount) return;
+                
+                const result = window.bettingSystem.placeBet(selectedBetType, selectedTarget, selectedAmount);
+                if (result.success) {
+                    uiController.showMessage(`Bet placed: ${selectedAmount} TC`);
+                    placeBetBtn.disabled = true;
+                    uiController.updateBalanceDisplay();
+                } else {
+                    uiController.showMessage(`Error: ${result.message}`);
+                }
+            });
+        }
+
+        const cancelBetBtn = document.getElementById('cancel-bet-btn');
+        if (cancelBetBtn) {
+            cancelBetBtn.addEventListener('click', () => {
+                if (window.bettingSystem && typeof window.bettingSystem.stopBetting === 'function') {
+                    window.bettingSystem.stopBetting();
+                }
+                currentBet = null;
+                bettingEnabled = false;
+                startAiMatch();
+            });
+        }
+
+        function updatePlaceBetButton() {
+            if (placeBetBtn) {
+                placeBetBtn.disabled = !(selectedBetType && selectedTarget && selectedAmount);
+            }
+        }
+    }
+
+    // Input handlers
+    document.addEventListener('keydown', (e) => {
+        InputManager.handleKeydown(e, {
+            isGameOver: gameOver,
+            hasCurrentPiece: !!currentPiece,
+            isPaused: isPaused,
+            isAiVsAiMode: aiVsAiMode,
+            onStart: () => startGame(),
+            onMoveLeft: () => movePieceLeft(),
+            onMoveRight: () => movePieceRight(),
+            onMoveDown: () => movePieceDown(),
+            onRotate: () => rotatePiece(),
+            onHardDrop: () => hardDrop(),
+            onTogglePause: () => togglePause(),
+            onToggleGrid: () => toggleGrid(),
+            onToggleGhost: () => toggleGhost(),
+            onTakeControl: () => takeControl()
+        });
+    });
+
+    // Tap or click the canvas to start the game when idle
+    function handleCanvasActivation() {
+        if (!currentPiece || gameOver) {
+            soundEngine.init();
+            startGame();
+        }
+    }
+    canvas.addEventListener('click', handleCanvasActivation);
+    canvas.addEventListener('touchend', (e) => {
+        if (!currentPiece || gameOver) {
+            e.preventDefault();
+            handleCanvasActivation();
+            return;
+        }
+        InputManager.handleTouchEnd(e, !!currentPiece && !gameOver, {
+            onMoveLeft: () => movePieceLeft(),
+            onMoveRight: () => movePieceRight(),
+            onRotate: () => rotatePiece(),
+            onHardDrop: () => hardDrop()
+        });
+    });
+
+    canvas.addEventListener('touchstart', (e) => {
+        InputManager.handleTouchStart(e, !!currentPiece && !gameOver);
+    });
+
+    canvas.addEventListener('touchmove', (e) => {
+        InputManager.handleTouchMove(e);
+    });
+
+    // Button event listeners
+    elements.startBtn.addEventListener('click', () => {
+        soundEngine.init();
+        startGame();
+    });
+    if (elements.gridToggleBtn) {
+        elements.gridToggleBtn.addEventListener('click', toggleGrid);
+    }
+    if (elements.soundToggleBtn) {
+        elements.soundToggleBtn.addEventListener('click', toggleSound);
+    }
+    if (elements.aiVsAiBtn) {
+        elements.aiVsAiBtn.addEventListener('click', startAiVsAiMode);
+    }
+    if (elements.exitAiModeBtn) {
+        elements.exitAiModeBtn.addEventListener('click', exitAiVsAiMode);
+    }
+    if (elements.takeControlBtn) {
+        elements.takeControlBtn.addEventListener('click', takeControl);
+    }
+    if (elements.tournamentBtn) {
+        elements.tournamentBtn.addEventListener('click', startTournament);
+    }
+    if (elements.achievementsBtn) {
+        elements.achievementsBtn.addEventListener('click', showAchievementsModal);
+    }
+    if (elements.closeAchievementsBtn) {
+        elements.closeAchievementsBtn.addEventListener('click', () => {
+            elements.achievementsModal.style.display = 'none';
+        });
+    }
+    if (elements.shareBtn) {
+        elements.shareBtn.addEventListener('click', () => {
+            showShareModal();
+        });
+    }
+
+    // Share Modal functionality
+    const shareModal = document.getElementById('share-modal');
+    const closeShareBtn = document.getElementById('close-share');
+    const shareScoreBtn = document.getElementById('share-score-btn');
+    const shareReplayBtn = document.getElementById('share-replay-btn');
+    const shareReplayNative = document.getElementById('share-replay-native');
+    const saveReplayBtn = document.getElementById('save-replay-btn');
+    const savedReplaysList = document.getElementById('saved-replays-list');
+
+    function showShareModal() {
+        // Update share stats
+        const shareStats = document.getElementById('share-stats');
+        const lang = getCurrentLanguage ? getCurrentLanguage() : 'en';
+        shareStats.innerHTML = `
+            <div>${getTranslation ? getTranslation('score', lang) : 'Score:'} <strong>${score}</strong></div>
+            <div>${getTranslation ? getTranslation('level', lang) : 'Level:'} <strong>${level}</strong></div>
+            <div>${getTranslation ? getTranslation('lines', lang) : 'Lines:'} <strong>${lines}</strong></div>
+            <div>${getTranslation ? getTranslation('balance', lang) : 'Balance:'} <strong>${window.tetriCoins.getBalance()} TC</strong></div>
+        `;
+
+        // Enable/disable replay buttons based on whether a replay exists
+        const hasReplay = !replaySystem.isRecording() && replaySystem.metadata && Object.keys(replaySystem.metadata).length > 0 && replaySystem.metadata.score !== undefined;
+        shareReplayBtn.disabled = !hasReplay;
+        shareReplayNative.disabled = !hasReplay;
+        saveReplayBtn.disabled = !hasReplay;
+
+        // Load and display saved replays
+        updateSavedReplaysList();
+
+        shareModal.style.display = 'block';
+    }
+
+    function updateSavedReplaysList() {
+        const replays = replaySystem.loadReplays();
+        if (replays.length === 0) {
+            savedReplaysList.innerHTML = '<div class="no-replays">' + 
+                (getTranslation ? getTranslation('replay_no_data', getCurrentLanguage ? getCurrentLanguage() : 'en') : 'No saved replays') + 
+                '</div>';
+            return;
+        }
+
+        savedReplaysList.innerHTML = replays.map((replay, index) => {
+            const date = new Date(replay.savedAt);
+            return `
+                <div class="replay-item">
+                    <div class="replay-item-header">
+                        <div class="replay-item-name">${replay.name}</div>
+                        <div class="replay-item-date">${date.toLocaleDateString()}</div>
+                    </div>
+                    <div class="replay-item-stats">
+                        <div>Score: ${replay.metadata.score || 0}</div>
+                        <div>Level: ${replay.metadata.level || 1}</div>
+                        <div>Lines: ${replay.metadata.lines || 0}</div>
+                    </div>
+                    <div class="replay-item-actions">
+                        <button class="play-btn" data-index="${index}">▶️ Play</button>
+                        <button class="share-btn" data-index="${index}">🔗 Share</button>
+                        <button class="delete-btn" data-index="${index}">🗑️ Delete</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Add event listeners to replay buttons
+        savedReplaysList.querySelectorAll('.play-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                playReplayByIndex(index);
+                shareModal.style.display = 'none';
+            });
+        });
+
+        savedReplaysList.querySelectorAll('.share-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                shareReplayByIndex(index);
+            });
+        });
+
+        savedReplaysList.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                const lang = getCurrentLanguage ? getCurrentLanguage() : 'en';
+                if (confirm(getTranslation ? getTranslation('replay_delete_confirm', lang) : 'Delete this replay?')) {
+                    replaySystem.deleteReplay(index);
+                    updateSavedReplaysList();
+                }
+            });
+        });
+    }
+
+    function playReplayByIndex(index) {
+        const replays = replaySystem.loadReplays();
+        if (index >= 0 && index < replays.length) {
+            const replayData = replaySystem.import(replays[index].data);
+            if (replayData) {
+                startReplayPlayback(replayData);
+            }
+        }
+    }
+
+    function shareReplayByIndex(index) {
+        const replays = replaySystem.loadReplays();
+        if (index >= 0 && index < replays.length) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('replay', replays[index].data);
+            copyToClipboard(url.toString());
+            showTempMessage(getTranslation ? getTranslation('replay_shared', getCurrentLanguage ? getCurrentLanguage() : 'en') : 'Replay link copied!');
+        }
+    }
+
+    if (closeShareBtn) {
+        closeShareBtn.addEventListener('click', () => {
+            shareModal.style.display = 'none';
+        });
+    }
+
+    if (shareScoreBtn) {
+        shareScoreBtn.addEventListener('click', () => {
+            const lang = getCurrentLanguage ? getCurrentLanguage() : 'en';
+            const text = `🎮 Tetris PWA - ${getTranslation ? getTranslation('score', lang) : 'Score'}: ${score}\n` +
+                        `${getTranslation ? getTranslation('level', lang) : 'Level'}: ${level}\n` +
+                        `${getTranslation ? getTranslation('lines', lang) : 'Lines'}: ${lines}\n` +
+                        `${getTranslation ? getTranslation('balance', lang) : 'Balance'}: ${window.tetriCoins.getBalance()} TC\n\n` +
+                        window.location.href;
+            copyToClipboard(text);
+            shareScoreBtn.classList.add('success-flash');
+            setTimeout(() => shareScoreBtn.classList.remove('success-flash'), 600);
+        });
+    }
+
+    if (shareReplayBtn) {
+        shareReplayBtn.addEventListener('click', () => {
+            const url = replaySystem.generateShareURL();
+            if (url) {
+                copyToClipboard(url);
+                showTempMessage(getTranslation ? getTranslation('replay_shared', getCurrentLanguage ? getCurrentLanguage() : 'en') : 'Replay link copied!');
+                shareReplayBtn.classList.add('success-flash');
+                setTimeout(() => shareReplayBtn.classList.remove('success-flash'), 600);
+            }
+        });
+    }
+
+    if (shareReplayNative) {
+        shareReplayNative.addEventListener('click', () => {
+            const url = replaySystem.generateShareURL();
+            if (url && navigator.share) {
+                navigator.share({
+                    title: 'Tetris Replay',
+                    text: `Check out my Tetris game! Score: ${score}`,
+                    url: url
+                }).catch(err => console.log('Share cancelled'));
+            }
+        });
+    }
+
+    if (saveReplayBtn) {
+        saveReplayBtn.addEventListener('click', () => {
+            const lang = getCurrentLanguage ? getCurrentLanguage() : 'en';
+            const name = prompt(getTranslation ? getTranslation('replay_name_prompt', lang) : 'Enter a name for this replay:');
+            if (name) {
+                replaySystem.saveReplay(name);
+                updateSavedReplaysList();
+                
+                // Check achievement
+                const savedReplays = replaySystem.loadReplays();
+                if (window.achievementSystem) {
+                    window.achievementSystem.checkReplaySaveAchievement(savedReplays.length);
+                }
+                
+                showTempMessage('Replay saved!');
+            }
+        });
+    }
+
+    function copyToClipboard(text) {
+        // Use modern Clipboard API if available
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).catch(err => {
+                console.warn('Clipboard API failed, falling back to execCommand:', err);
+                fallbackCopyToClipboard(text);
+            });
+        } else {
+            fallbackCopyToClipboard(text);
+        }
+    }
+
+    function fallbackCopyToClipboard(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+        } catch (err) {
+            console.warn('Failed to copy:', err);
+        }
+        document.body.removeChild(textarea);
+    }
+
+    function showTempMessage(message) {
+        const msg = document.createElement('div');
+        msg.className = 'temp-message';
+        msg.textContent = message;
+        msg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #4CAF50; color: white; padding: 15px 20px; border-radius: 5px; z-index: 3000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);';
+        document.body.appendChild(msg);
+        
+        setTimeout(() => {
+            msg.style.transition = 'opacity 0.3s';
+            msg.style.opacity = '0';
+            setTimeout(() => msg.remove(), 300);
+        }, 3000);
+    }
+
+    // Replay playback functionality
+    const replayBanner = document.getElementById('replay-banner');
+    const replayInfo = document.getElementById('replay-info');
+    const stopReplayBtn = document.getElementById('stop-replay-btn');
+
+    function startReplayPlayback(replayData) {
+        // Stop current game if running
+        gameLoopManager.stop();
+        gameOver = false;
+        
+        // Reset board
+        board = createBoard();
+        score = 0;
+        lines = 0;
+        level = 1;
+        currentPiece = null;
+        nextPiece = null;
+        
+        // Set RNG for replay
+        PieceModule.setRNG(replayData.s ? replaySystem.getRNG() : null);
+        
+        // Show replay banner
+        replayBanner.style.display = 'block';
+        const lang = getCurrentLanguage ? getCurrentLanguage() : 'en';
+        replayInfo.textContent = `${getTranslation ? getTranslation('score', lang) : 'Score'}: ${replayData.m.score || 0} | ` +
+                                 `${getTranslation ? getTranslation('level', lang) : 'Level'}: ${replayData.m.level || 1}`;
+        
+        // Start game
+        gameLoopManager.start(
+            () => {},
+            () => {
+                gameLoopManager.reset();
+                uiController.updateScoreDisplay(score, level, lines);
+            }
+        );
+        
+        // Start playback
+        replaySystem.startPlayback(replayData, {
+            left: () => movePieceLeft(),
+            right: () => movePieceRight(),
+            rotate: () => rotatePiece(),
+            soft_drop: () => movePieceDown(),
+            hard_drop: () => hardDrop(),
+            pause: () => togglePause(),
+            resume: () => togglePause(),
+            onComplete: () => {
+                setTimeout(() => {
+                    stopReplayPlayback();
+                    const lang = getCurrentLanguage ? getCurrentLanguage() : 'en';
+                    showTempMessage(getTranslation ? getTranslation('replay_finished', lang) : 'Replay finished!');
+                }, 1000);
+            }
+        });
+    }
+
+    function stopReplayPlayback() {
+        replaySystem.stopPlayback();
+        replayBanner.style.display = 'none';
+        PieceModule.setRNG(null);
+        gameLoopManager.stop();
+        gameOver = true;
+        draw();
+        Renderer.drawStartScreen();
+        setTapHintVisible(true);
+    }
+
+    if (stopReplayBtn) {
+        stopReplayBtn.addEventListener('click', stopReplayPlayback);
+    }
+
+    // Check for replay in URL on load
+    const urlReplayData = ReplaySystem.fromURL();
+    if (urlReplayData) {
+        const lang = getCurrentLanguage ? getCurrentLanguage() : 'en';
+        if (confirm(getTranslation ? getTranslation('replay_confirm', lang) : 'A replay was shared with you. Watch it?')) {
+            setTimeout(() => {
+                startReplayPlayback(urlReplayData);
+            }, 1000);
+        } else {
+            // Clear the replay parameter from URL
+            const url = new URL(window.location.href);
+            url.searchParams.delete('replay');
+            window.history.replaceState({}, '', url);
+        }
+    }
+
+    // Virtual gamepad — connect buttons to game actions (mobile small screens)
+    (function initVirtualGamepad() {
+        /**
+         * Attach both touch (preferred) and click listeners so the gamepad
+         * works on any pointer type that triggers the buttons.
+         * Using touchstart + preventDefault stops the 300 ms click delay
+         * and prevents ghost-click duplication.
+         */
+        function attachAction(id, action) {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+
+            // Visual feedback helper
+            function press()   { btn.classList.add('pressed'); }
+            function release() { btn.classList.remove('pressed'); }
+
+            const handleTouchEnd = (e) => { e.preventDefault(); release(); };
+
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                press();
+                action();
+            }, { passive: false });
+
+            btn.addEventListener('touchend',   handleTouchEnd, { passive: false });
+            btn.addEventListener('touchcancel', handleTouchEnd, { passive: false });
+
+            // Fallback for pointer / mouse (desktop testing, a11y)
+            btn.addEventListener('click', () => {
+                action();
+            });
+        }
+
+        // Soft-drop repeat rate: 80 ms ≈ 12.5 drops/s — responsive without
+        // being uncontrollably fast on small phones.
+        const SOFT_DROP_INTERVAL_MILLIS = 80;
+
+        // Soft-drop: repeat while held down
+        let softDropInterval = null;
+        const downBtn = document.getElementById('vgp-down');
+
+        function clearSoftDrop() {
+            clearInterval(softDropInterval);
+            softDropInterval = null;
+            if (downBtn) downBtn.classList.remove('pressed');
+        }
+
+        // Clear interval if page hides or app loses focus (e.g. incoming call)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) clearSoftDrop();
+        });
+        window.addEventListener('blur', clearSoftDrop);
+
+        if (downBtn) {
+            downBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                downBtn.classList.add('pressed');
+                if (!softDropInterval) {
+                    movePieceDown();
+                    softDropInterval = setInterval(() => movePieceDown(), SOFT_DROP_INTERVAL_MILLIS);
+                }
+            }, { passive: false });
+
+            const stopSoftDrop = (e) => {
+                e.preventDefault();
+                clearSoftDrop();
+            };
+            downBtn.addEventListener('touchend',    stopSoftDrop, { passive: false });
+            downBtn.addEventListener('touchcancel', stopSoftDrop, { passive: false });
+
+            // Click fallback
+            downBtn.addEventListener('click', () => movePieceDown());
+        }
+
+        attachAction('vgp-left',     () => movePieceLeft());
+        attachAction('vgp-right',    () => movePieceRight());
+        attachAction('vgp-rotate',   () => rotatePiece());
+        attachAction('vgp-harddrop', () => hardDrop());
+    })();
+
+    // Initialize
+    initBettingUI();
+    window.tetriCoins.addListener(() => uiController.updateBalanceDisplay());
+    board = createBoard();
+    loadPreferences();
+    updateSoundButton(soundEngine.enabled);
+    draw();
+    Renderer.drawStartScreen();
+    setTapHintVisible(true);
+
+    // Listen for language changes
+    window.addEventListener('languageChanged', (e) => {
+        if (elements.gridToggleBtn) {
+            uiController.updateGridButton(gridContrast);
+        }
+        updateSoundButton(soundEngine.enabled);
+    });
+});

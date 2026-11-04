@@ -1,0 +1,10 @@
+{
+  "name": "minesweeper",
+  "version": "0.1.0",
+  "author": "Michael Butler <michael@butlerpc.net>",
+  "description": "A clone of the loveable old game on Windows that runs in the browser.",
+  "devDependencies": {
+    "jshint": "^2.12.0",
+    "prettier": "2.2.1"
+  }
+}

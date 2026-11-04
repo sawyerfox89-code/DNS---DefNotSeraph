@@ -1,0 +1,382 @@
+/* ============================================
+   MOBILE SMALL — 3–5 INCH DEVICE ADAPTATION
+   Targets common phone viewports in the 3–5 inch class:
+   320–480 px width, 480–950 px height, touch-first devices.
+   ============================================ */
+
+/* ---- Virtual gamepad: hidden by default ---- */
+.virtual-gamepad {
+    display: none;
+}
+
+/* ---- Show virtual gamepad on ALL touch mobile devices (≤767px) ---- */
+@media (hover: none) and (pointer: coarse) and (max-width: 767px) {
+
+    .game-container {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "left"
+            "canvas"
+            "gamepad"
+            "buttons"
+            "ai-panel"
+            "footer";
+    }
+
+    .virtual-gamepad {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 4px 4px;
+        margin: 0 auto;
+        width: 100%;
+        max-width: 480px;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+    }
+
+    .gamepad-row {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .gamepad-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 12px;
+        color: var(--text-primary);
+        font-size: 1.4rem;
+        cursor: pointer;
+        touch-action: manipulation;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        transition: background 0.1s, transform 0.1s;
+        min-width: 64px;
+        min-height: 56px;
+        flex: 1;
+    }
+
+    .gamepad-btn:active,
+    .gamepad-btn.pressed {
+        background: rgba(124, 58, 237, 0.45);
+        border-color: rgba(124, 58, 237, 0.7);
+        transform: scale(0.93);
+    }
+
+    .gamepad-btn.hard-drop {
+        background: rgba(124, 58, 237, 0.18);
+        border-color: rgba(124, 58, 237, 0.4);
+        min-height: 50px;
+        font-size: 1.1rem;
+    }
+
+    .gamepad-btn.hard-drop:active,
+    .gamepad-btn.hard-drop.pressed {
+        background: rgba(124, 58, 237, 0.55);
+    }
+
+    .gamepad-btn.soft-drop {
+        min-height: 50px;
+        font-size: 1.2rem;
+    }
+}
+
+/* ---- Compact stats bar (narrow phones 320–480px) ---- */
+@media (hover: none) and (pointer: coarse) and (min-width: 320px) and (max-width: 480px) and (min-height: 480px) and (max-height: 950px) {
+
+    /* Stack the whole page without side padding */
+    body {
+        padding: 0;
+        align-items: flex-start;
+        /* Prevent horizontal scroll from any overflowing child */
+        overflow-x: hidden;
+    }
+
+    /* Single-column layout that puts everything in order */
+    .game-container {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "left"
+            "canvas"
+            "gamepad"
+            "buttons"
+            "ai-panel"
+            "footer";
+        gap: 6px;
+        padding: 6px;
+        width: 100%;
+    }
+
+    /* ---- Left sidebar → horizontal stats strip ---- */
+    .left-sidebar {
+        order: -1;
+    }
+
+    .panel.score-section {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0;
+        padding: 6px 8px;
+        border-radius: 10px;
+    }
+
+    .stat-item {
+        flex: 1 1 25%;        /* each of the 4 stats takes one quarter of the row */
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 4px 6px;
+        border-bottom: none;
+        border-right: none;   /* dividers handled with border-left below */
+        text-align: center;
+    }
+
+    /* Dividers: add a left border between adjacent stats (but not before balance-item) */
+    .stat-item + .stat-item:not(.balance-item) {
+        border-left: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    /* Legacy :last-child rule kept for safety — balance-item has its own overrides */
+    .stat-item:last-child {
+        border-right: none;
+    }
+
+    .stat-label {
+        font-size: 0.6rem;
+        letter-spacing: 0.03em;
+    }
+
+    .stat-value {
+        font-size: 0.85rem;
+    }
+
+    .balance-item {
+        /* Break onto its own full-width row */
+        flex: 0 0 100%;
+        /* Row layout: label | value | buy-button side-by-side */
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        /* Separator from the stats row above */
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+        border-right: none;
+        padding: 6px 8px;
+        margin-top: 0;
+    }
+
+    /* Shop "Buy TC" button — compact inline variant for the balance row */
+    .shop-open-btn {
+        font-size: 0.65rem;
+        padding: 3px 8px;
+        border-radius: 6px;
+        margin-left: 0;
+        flex-shrink: 0;
+        vertical-align: baseline;
+    }
+
+    /* ---- Canvas: full width, no sidebars ---- */
+    .canvas-area {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+
+    .canvas-wrapper {
+        width: calc(100vw - 12px);
+        max-width: 320px;
+    }
+
+    #tetris-canvas {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1/2;
+        border-radius: 6px;
+    }
+
+    /* ---- Hide right sidebar (next piece / AI insight / controls) ---- */
+    .right-sidebar {
+        display: none;
+    }
+
+    /* ---- Compact button bar ---- */
+    .button-bar {
+        gap: 6px;
+        padding: 0 2px;
+    }
+
+    .button-group-primary,
+    .button-group-secondary,
+    .button-group-tertiary {
+        gap: 4px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .button-primary {
+        padding: 8px 12px;
+        font-size: 0.78rem;
+        border-radius: 9px;
+    }
+
+    .button-secondary {
+        padding: 6px 10px;
+        font-size: 0.72rem;
+        border-radius: 8px;
+    }
+
+    .button-icon {
+        padding: 7px 10px;
+        font-size: 0.78rem;
+    }
+
+    /* ---- AI vs AI panel: single column ---- */
+    .ai-vs-ai-panel {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+        padding: 12px;
+        border-radius: 12px;
+    }
+
+    .ai-player {
+        padding: 0.5rem;
+    }
+
+    .ai-player h4 {
+        font-size: 0.85rem;
+    }
+
+    /* ---- Footer ---- */
+    .game-footer {
+        padding: 8px;
+        border-radius: 8px;
+    }
+
+    .game-footer p {
+        font-size: 0.68rem;
+    }
+
+    /* ---- Modal adjustments ---- */
+    .modal-content {
+        padding: 1rem;
+        width: 98%;
+        border-radius: 14px;
+    }
+
+    /* ---- Betting panel ---- */
+    #betting-panel {
+        width: 98%;
+        padding: 1rem;
+        border-radius: 14px;
+        max-height: 94vh;
+    }
+
+    .bet-types {
+        gap: 0.6rem;
+    }
+
+    .bet-type-card {
+        padding: 0.7rem;
+    }
+
+    .bet-type-title h3 {
+        font-size: 0.9rem;
+    }
+
+    .bet-type-desc {
+        font-size: 0.78rem;
+    }
+
+    .betting-header h2 {
+        font-size: 1.3rem;
+    }
+
+    .betting-countdown {
+        font-size: 1.8rem;
+    }
+
+    /* ---- Achievement notification ---- */
+    .achievement-notification {
+        max-width: 96%;
+        padding: 0.8rem;
+        border-radius: 12px;
+    }
+
+    /* ---- Temp message ---- */
+    .temp-message {
+        font-size: 0.85rem;
+        padding: 0.7rem 1.2rem;
+    }
+}
+
+/* ---- Extra-compact overrides for very short viewports (e.g. iPhone SE1/SE2, 375×667) ---- */
+/* Goal: stats strip + canvas + virtual gamepad all fit within the visible viewport.           */
+/*                                                                                             */
+/* --_ui-height: combined height of all non-canvas rows (stats panel, gamepad, gaps, padding) */
+/* Canvas aspect-ratio is 1:2, so:                                                            */
+/*   max canvas height = 100dvh − --_ui-height                                                */
+/*   max canvas width  = (100dvh − --_ui-height) / 2                                          */
+/*                                                                                             */
+/* dvh (dynamic viewport height) shrinks when the browser chrome is visible —                 */
+/* exactly the condition where we need the most vertical space savings.                        */
+/* Supported since Safari 15.4; iPhone SE2 runs iOS 15.4+.                                    */
+/*                                                                                             */
+/* Width range 320–480 px + max-height 700 px targets compact phones only and does not        */
+/* affect tablets or larger handsets.                                                          */
+@media (hover: none) and (pointer: coarse) and (min-width: 320px) and (max-width: 480px) and (max-height: 700px) {
+
+    /* 195 px = stats panel (~69 px) + gamepad (~90 px) + grid gaps (~18 px) + container padding (12 px) + margin (~6 px) */
+    :root {
+        --_ui-height: 195px;
+    }
+
+    /* Tighter stats panel */
+    .panel.score-section {
+        padding: 3px 6px;
+    }
+
+    .stat-item {
+        padding: 2px 4px;
+    }
+
+    .balance-item {
+        padding: 3px 6px;
+    }
+
+    /* Smaller virtual gamepad buttons */
+    .gamepad-btn {
+        min-height: 42px;
+        font-size: 1.2rem;
+    }
+
+    .gamepad-btn.hard-drop,
+    .gamepad-btn.soft-drop {
+        min-height: 38px;
+        font-size: 1.1rem;
+    }
+
+    .virtual-gamepad {
+        padding: 4px 4px 2px;
+        gap: 4px;
+    }
+
+    /* Constrain canvas width: 12 px = game-container horizontal padding (6 px × 2 sides) */
+    .canvas-wrapper {
+        max-width: min(calc(100vw - 12px), calc((100dvh - var(--_ui-height)) / 2));
+    }
+
+    /* Safety cap: prevent the canvas element itself from overflowing the viewport */
+    #tetris-canvas {
+        max-height: calc(100dvh - var(--_ui-height));
+    }
+}

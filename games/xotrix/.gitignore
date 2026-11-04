@@ -1,0 +1,18 @@
+# Operating-system files
+.DS_Store
+Thumbs.db
+
+# Editor and IDE settings
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Local tooling and logs
+*.log
+coverage/
+
+# Local environment files; XOTrix currently uses no environment variables
+.env
+.env.*
+!.env.example

@@ -1,0 +1,174 @@
+#board {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height: 60%;
+    aspect-ratio: 1/2;
+    pointer-events: none;
+}
+
+#lockTimer,
+#lockCounter {
+    position: absolute;
+    bottom: -0.8vh;
+    width: 100%;
+    height: 0.8vh;
+    border-radius: 0.5vh;
+    border: none;
+}
+
+#lockCounter {
+    bottom: -1.4vh;
+    height: 0.6vh;
+}
+
+:is(#lockTimer, #lockCounter, #garbageQueue) {
+    background-color: var(--invis);
+    
+}
+
+:is(#lockTimer, #lockCounter, #garbageQueue)::-webkit-progress-bar {
+    background-color: var(--invis);
+    
+}
+
+:is(#lockTimer, #lockCounter)::-webkit-progress-value {
+    background-color: var(--cl-blue);
+    border-radius: 0.7vh;
+}
+
+:is(#lockTimer, #lockCounter)::-moz-progress-bar {
+    background-color: var(--cl-blue);
+    border-radius: 0.7vh;
+}
+
+#garbageQueue::-moz-progress-bar {
+    background-color: var(--invis);
+}
+
+#climbSpeedBar {
+    /* css variables which can be changed with js */
+    --bar-colour: red;
+    --background-colour: #00000000;
+    position: absolute;
+    width: 100%;
+    height: 1vh;
+    border-radius: 0.5vh;
+    bottom: -5%;
+
+    border: none;
+    background-color: var(--background-colour); /* background for unfilled part (Firefox) */
+    overflow: hidden; /* clip the progress fill inside rounded corners */
+}
+
+#climbSpeedBar::-webkit-progress-value {
+    background-color: var(--bar-colour);
+    border-radius: 0.7vh;
+}
+
+#climbSpeedBar::-webkit-progress-bar {
+    background-color: var(--background-colour);
+    border-radius: 0.7vh;
+}
+
+#climbSpeedBar::-moz-progress-bar {
+    background-color: var(--bar-colour);
+    border-radius: 0.7vh; /* note: Firefox rounds corners only on the filled part */
+}
+
+#garbageQueue {
+    position: absolute;
+    width: 122vh;
+    height: 0.5vh;
+    border-radius: 0.5vh;
+    transform-origin: 0 0;
+    transform: rotate(-90deg);
+    left: -2%;
+    bottom: -1%;
+}
+
+#garbageQueue::-webkit-progress-value {
+    background-color: red;
+    border-radius: 0.7vh;
+}
+
+#garbageQueue::-moz-progress-value {
+    background-color: red;
+    border-radius: 0.7vh;
+}
+
+.text {
+    position: fixed;
+    font-size: 1.6em;
+    margin: 0;
+    user-select: none;
+}
+
+#redochoices {
+    position: absolute;
+    display: flex;
+    bottom: 10vh;
+    width: 100%;
+    flex-direction: row;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    opacity: 0;
+    transition: all 0.3s ease;
+    user-select: none;
+}
+
+.redochoice {
+    height: 3.5vh;
+    aspect-ratio: 1/1;
+    border: 0.3vh solid var(--l-gray);
+    border-radius: 10vmin;
+    transition: all 0.3s ease-out;
+    background-color: var(--invis);
+    outline: none;
+    color: var(--l-gray);
+    margin: 0.3vmin;
+}
+
+.redochoice:hover {
+    border-color: var(--cl-blue);
+    color: var(--cl-blue);
+    transition: all 0.05s ease;
+}
+
+.redochoice.selected {
+    border-color: var(--p-green);
+    color: var(--p-green);
+}
+
+.redochoice.selected:hover {
+    border-color: var(--green);
+    color: var(--green);
+    transition: all 0.05s ease;
+}
+
+#rainbowSides {
+    position: fixed;
+    top: -100vh;
+    left: 0;
+    height: 500vh;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    opacity: 0;
+    pointer-events: none;
+}
+
+#rainbowLeft {
+    width: 13vw;
+    background: repeating-linear-gradient(#ff4545, #00c375, #006aff, #ff0095, #ff4545 200vh);
+    filter: blur(150px);
+}
+
+#rainbowRight {
+    width: 13vw;
+    background: repeating-linear-gradient(#ff4545, #00c375, #006aff, #ff0095, #ff4545 200vh);
+    filter: blur(150px);
+}

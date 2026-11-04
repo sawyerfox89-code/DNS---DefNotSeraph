@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+
+<html lang="pt-br">
+	<head>
+	    <meta charset="UTF-8">
+	    <title>Atom's Game</title>
+	    <link rel="stylesheet" type="text/css" href="others/style.css">
+	    <!-- Scripts are loaded in order. effects.js defines sprites, engine.js runs the game. -->
+	    <script src="scripts/periodic_table.js"></script>
+	    <script src="scripts/effects.js"></script>
+	</head>
+	<body>
+		<!-- SoundTrack -->
+		<audio id="intro" src="sound/intro.mp3" preload></audio>
+		<audio id="background" src="sound/minecraft_just_jump.mp3" preload loop></audio>
+		<audio id="explosion" src="sound/boom.mp3" preload></audio>
+		<audio id="up" src="sound/up.mp3" preload></audio>
+		<audio id="lose" src="sound/lose.mp3" preload></audio>
+
+		<!-- Game Engine (loaded last to ensure DOM and other scripts are ready) -->
+		<script src="scripts/engine.js"></script>
+
+	</body>
+</html>

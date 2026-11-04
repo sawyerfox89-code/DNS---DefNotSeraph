@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "evolc-metrics": {
+      "command": "bun",
+      "args": ["run", "/Users/dodo/evolc/packages/mcp/index.ts"],
+      "env": {
+        "EVOLC_COMPANY_ID": "ai-office-simulator"
+      }
+    }
+  }
+}

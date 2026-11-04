@@ -1,0 +1,1742 @@
+// ========== The Forge System ==========
+// Late game feature for combining equipment
+
+let forgeModalElement = null;
+let forgeGoldElement = null;
+let forgeMode = 'merge';
+let selectedForgeItems = [null, null, null];
+let selectedForgeCategory = '';
+let forgeResult = null;
+let forgeLevelRange = null;
+let forgeCost = 0;
+let selectedRerollItem = null;
+let selectedRerollStatLocks = [];
+let rerollCost = 0;
+let rerollStoneCost = 0;
+let selectedRefineItem = null;
+let refineCost = 0;
+let refineStoneCost = 0;
+let refineCoreCost = 0;
+const ASCENDED_REFINE_GOLD_GROWTH = 1.5;
+const ASCENDED_REFINE_CORE_GROWTH = 1.25;
+const FORGE_INCLUDE_REFINEMENT_STORAGE_KEY = 'forgeIncludeRefinement';
+let forgeIncludeRefinement = false;
+try {
+    forgeIncludeRefinement = typeof localStorage !== 'undefined'
+        && localStorage.getItem(FORGE_INCLUDE_REFINEMENT_STORAGE_KEY) === 'true';
+} catch (error) {
+    console.warn('Unable to read the Forge stat display preference:', error);
+}
+
+const getForgeDisplayStatTotals = (equipment) => getEquipmentStatTotals(
+    forgeIncludeRefinement ? equipment : { ...equipment, refineLevel: 0 }
+);
+
+const FORGE_PERMANENT_UNLOCK_STORAGE_KEY = 'forgePermanentUnlocked';
+
+const hasCachedPermanentForgeUnlock = () => {
+    try {
+        return typeof localStorage !== 'undefined'
+            && localStorage.getItem(FORGE_PERMANENT_UNLOCK_STORAGE_KEY) === 'true';
+    } catch (error) {
+        console.warn('Unable to read the cached Forge entitlement:', error);
+        return false;
+    }
+};
+
+const persistPermanentForgeUnlock = (active) => {
+    try {
+        if (typeof localStorage === 'undefined') {
+            return;
+        }
+        if (active) {
+            localStorage.setItem(FORGE_PERMANENT_UNLOCK_STORAGE_KEY, 'true');
+        } else {
+            localStorage.removeItem(FORGE_PERMANENT_UNLOCK_STORAGE_KEY);
+        }
+    } catch (error) {
+        console.warn('Unable to save the Forge entitlement:', error);
+    }
+};
+
+const cachedPermanentForgeUnlock = hasCachedPermanentForgeUnlock();
+let forgeUnlocked = cachedPermanentForgeUnlock;
+const forgeEntitlements = {
+    desktop: false,
+    membership: false,
+    purchase: cachedPermanentForgeUnlock,
+};
+
+const FORGE_PRODUCT_ID = 'forge_unlock_premium';
+const FORGE_PURCHASE_URL = 'https://werkstattl.itch.io/quick-dungeon-crawler-on-demand/purchase';
+const FORGE_CATEGORY_CONFIG = Object.freeze([
+    { category: 'Sword', attribute: 'Damage', type: 'Weapon' },
+    { category: 'Axe', attribute: 'Damage', type: 'Weapon' },
+    { category: 'Hammer', attribute: 'Damage', type: 'Weapon' },
+    { category: 'Dagger', attribute: 'Damage', type: 'Weapon' },
+    { category: 'Flail', attribute: 'Damage', type: 'Weapon' },
+    { category: 'Scythe', attribute: 'Damage', type: 'Weapon' },
+    { category: 'Plate', attribute: 'Defense', type: 'Armor' },
+    { category: 'Chain', attribute: 'Defense', type: 'Armor' },
+    { category: 'Leather', attribute: 'Defense', type: 'Armor' },
+    { category: 'Tower', attribute: 'Defense', type: 'Shield' },
+    { category: 'Kite', attribute: 'Defense', type: 'Shield' },
+    { category: 'Buckler', attribute: 'Defense', type: 'Shield' },
+    { category: 'Great Helm', attribute: 'Defense', type: 'Helmet' },
+    { category: 'Horned Helm', attribute: 'Defense', type: 'Helmet' },
+    { category: 'Mask', attribute: 'Defense', type: 'Mask' },
+    { category: 'Boots', attribute: 'Defense', type: 'Boots' },
+    { category: 'Ring', attribute: 'Utility', type: 'Accessory' },
+    { category: 'Amulet', attribute: 'Utility', type: 'Accessory' },
+    { category: 'Talisman', attribute: 'Utility', type: 'Accessory' },
+]);
+
+const ensureForgeTokenInventory = () => {
+    if (!player.inventory || typeof player.inventory !== 'object') {
+        player.inventory = { consumables: [], equipment: [], refineStones: 0, forgeTokens: 0 };
+    }
+    const parsedCount = Number(player.inventory.forgeTokens);
+    player.inventory.forgeTokens = Number.isFinite(parsedCount)
+        ? Math.max(0, Math.floor(parsedCount))
+        : 0;
+    return player.inventory.forgeTokens;
+};
+
+const getForgeTokenCount = () => ensureForgeTokenInventory();
+const hasForgeToken = () => getForgeTokenCount() > 0;
+const getForgeActionGoldCost = (goldCost) => goldCost;
+const hasForgeActionAccess = () => forgeUnlocked || hasForgeToken();
+const canPayForgeAction = (goldCost) => hasForgeActionAccess() && player.gold >= goldCost;
+
+const payForForgeAction = (goldCost) => {
+    if (!canPayForgeAction(goldCost)) {
+        return false;
+    }
+    player.gold -= goldCost;
+    if (!forgeUnlocked) {
+        player.inventory.forgeTokens -= 1;
+    }
+    return true;
+};
+
+const closeForgeUnlockModal = () => {
+    closeDefaultModal();
+};
+
+const buyPermanentForgeUnlock = () => {
+    if (isNativePurchasePlatform() && typeof buyForgeUnlock === 'function') {
+        buyForgeUnlock();
+        return;
+    }
+
+    closeForgeUnlockModal();
+    if (/Android/i.test(navigator.userAgent)) {
+        ratingSystem.openGooglePlayForRating();
+    } else {
+        openExternal(FORGE_PURCHASE_URL);
+    }
+};
+
+const buyForgeMembershipUnlock = () => {
+    if (isNativePurchasePlatform() && typeof buyForgeMembership === 'function') {
+        buyForgeMembership();
+        return;
+    }
+
+    closeForgeUnlockModal();
+    if (/Android/i.test(navigator.userAgent)) {
+        ratingSystem.openGooglePlayForRating();
+    } else {
+        openExternal(FORGE_PURCHASE_URL);
+    }
+};
+
+const openForgeUnlockModal = () => {
+    if (!defaultModalElement) {
+        return;
+    }
+
+    sfxOpen.play();
+    defaultModalElement.style.zIndex = "2";
+    defaultModalElement.style.display = "flex";
+    defaultModalElement.innerHTML = `
+        <div class="content forge-unlock-modal">
+            <div class="content-head">
+                <h3><i class="ra ra-anvil"></i> <span data-i18n="unlock-the-forge">Unlock The Forge</span></h3>
+                <p id="forge-unlock-close"><i class="fa fa-xmark"></i></p>
+            </div>
+            <p class="forge-free-access-hint">
+                <i class="fas fa-circle-info" aria-hidden="true"></i>
+                <span data-i18n="forge-free-access-hint">Tip: A wandering blacksmith sells a Forge Token for Gold on Floor 13.</span>
+            </p>
+            <div class="forge-unlock-options">
+                <section class="forge-unlock-option">
+                    <h4 data-i18n="forge-permanent-unlock">Permanent Unlock</h4>
+                    <p class="forge-unlock-price" data-iap-product="${FORGE_PRODUCT_ID}" data-i18n="iap-price-loading">Price shown at checkout</p>
+                    <ul class="forge-membership-benefits">
+                        <li data-i18n="forge-permanent-unlock-keep-forever">Keep forever</li>
+                    </ul>
+                    <button id="forge-buy-permanent" type="button" data-i18n="buy-permanently">Buy Permanently</button>
+                </section>
+                ${getForgeMembershipMarkup("forge-buy-membership")}
+            </div>
+            <div class="iap-secondary-actions">
+                <button type="button" data-iap-restore data-i18n="iap-restore-purchases">Restore purchases</button>
+                <button type="button" data-iap-manage-subscriptions data-i18n="iap-manage-subscription">Manage subscription</button>
+            </div>
+            <p class="iap-legal-links">
+                <a href="https://dungeon.werkstattl.com/privacy.html" data-iap-legal-url="https://dungeon.werkstattl.com/privacy.html"><span data-i18n="iap-privacy-policy">Privacy Policy</span> <i class="fas fa-arrow-up-right-from-square external-link-icon" aria-hidden="true"></i> <span class="sr-only" data-i18n="opens-in-browser">(opens in browser)</span></a>
+                <span data-iap-apple-only hidden><span aria-hidden="true"> · </span><a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" data-iap-legal-url="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"><span data-i18n="iap-terms-of-use">Terms of Use</span> <i class="fas fa-arrow-up-right-from-square external-link-icon" aria-hidden="true"></i> <span class="sr-only" data-i18n="opens-in-browser">(opens in browser)</span></a></span>
+            </p>
+            <p class="iap-status" data-iap-status role="status" aria-live="polite"></p>
+        </div>`;
+    applyTranslations(defaultModalElement);
+    if (typeof preparePurchaseUI === 'function') preparePurchaseUI(defaultModalElement);
+
+    const buyPermanentButton = document.querySelector('#forge-buy-permanent');
+    const buyMembershipButton = document.querySelector('#forge-buy-membership');
+    const closeButton = document.querySelector('#forge-unlock-close');
+    const cancelButton = document.querySelector('#forge-unlock-cancel');
+
+    if (buyPermanentButton) {
+        buyPermanentButton.onclick = () => {
+            sfxConfirm.play();
+            buyPermanentForgeUnlock();
+        };
+    }
+    if (buyMembershipButton) {
+        buyMembershipButton.onclick = () => {
+            sfxConfirm.play();
+            buyForgeMembershipUnlock();
+        };
+    }
+    [closeButton, cancelButton].forEach(button => {
+        if (!button) return;
+        button.onclick = () => {
+            sfxDecline.play();
+            closeForgeUnlockModal();
+        };
+    });
+};
+
+const setForgeUnlockButton = (confirmButton) => {
+    confirmButton.disabled = false;
+    confirmButton.setAttribute('data-i18n', 'unlock-the-forge-premium');
+    confirmButton.textContent = t('unlock-the-forge-premium');
+    confirmButton.onclick = openForgeUnlockModal;
+};
+
+// Initialize forge system
+const initializeForge = () => {
+    forgeModalElement = document.querySelector('#forgeModal');
+    forgeGoldElement = document.querySelector('#forge-player-gold');
+    const refinementToggle = document.querySelector('#forge-include-refinement');
+    if (refinementToggle) {
+        refinementToggle.checked = forgeIncludeRefinement;
+        refinementToggle.onchange = () => {
+            forgeIncludeRefinement = refinementToggle.checked;
+            try {
+                if (typeof localStorage !== 'undefined') {
+                    localStorage.setItem(FORGE_INCLUDE_REFINEMENT_STORAGE_KEY, String(forgeIncludeRefinement));
+                }
+            } catch (error) {
+                console.warn('Unable to save the Forge stat display preference:', error);
+            }
+            loadForgeEquipment();
+            updateForgeDisplay();
+        };
+    }
+    populateForgeCategoryOptions();
+    const targetCategorySelect = document.querySelector('#forge-target-category');
+    if (targetCategorySelect) {
+        targetCategorySelect.onchange = () => {
+            selectedForgeCategory = targetCategorySelect.value;
+            forgeResult = null;
+            forgeLevelRange = null;
+            calculateForgeResult();
+            updateForgeDisplay();
+        };
+    }
+    const modeButtons = document.querySelectorAll('[data-forge-mode]');
+    modeButtons.forEach(button => {
+        button.onclick = () => setForgeMode(button.dataset.forgeMode);
+    });
+};
+
+const populateForgeCategoryOptions = () => {
+    const targetCategorySelect = document.querySelector('#forge-target-category');
+    if (!targetCategorySelect) {
+        return;
+    }
+
+    targetCategorySelect.innerHTML = '';
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.setAttribute('data-i18n', 'choose-gear-piece');
+    placeholder.textContent = t('choose-gear-piece');
+    targetCategorySelect.appendChild(placeholder);
+
+    FORGE_CATEGORY_CONFIG.forEach(({ category }) => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = equipmentName(category);
+        targetCategorySelect.appendChild(option);
+    });
+    targetCategorySelect.value = selectedForgeCategory;
+};
+
+function setForgeEntitlement(source, active) {
+    if (Object.prototype.hasOwnProperty.call(forgeEntitlements, source)) {
+        forgeEntitlements[source] = Boolean(active);
+        if (source === 'purchase') {
+            persistPermanentForgeUnlock(active);
+        }
+    }
+    forgeUnlocked = Object.values(forgeEntitlements).some(Boolean);
+    if (forgeModalElement && forgeModalElement.style.display === 'flex') {
+        updateForgeDisplay();
+    }
+}
+
+function unlockForge(source = 'purchase') {
+    setForgeEntitlement(source, true);
+}
+
+const updateForgeGold = () => {
+    if (forgeGoldElement) {
+        const refineStoneCount = typeof getRefineStoneCount === 'function' ? getRefineStoneCount() : 0;
+        const guardianCoreCount = typeof getGuardianCoreCount === 'function' ? getGuardianCoreCount() : 0;
+        const guardianCoreMarkup = guardianCoreCount > 0
+            ? ` <span class="forge-material-count guardian-core-count" title="${t('guardian-cores')}"><i class="ra ra-crystal-cluster"></i>${nFormatter(guardianCoreCount)}</span>`
+            : '';
+        const forgeTokenCount = forgeUnlocked
+            ? ''
+            : ` <span class="forge-material-count" title="${t('forge-tokens')}"><i class="ra ra-anvil"></i>${nFormatter(getForgeTokenCount())}</span>`;
+        forgeGoldElement.innerHTML = `<i class="fas fa-coins" style="color: #FFD700;"></i>${nFormatter(player.gold)} <span class="forge-material-count"><i class="ra ra-crystal-ball"></i>${nFormatter(refineStoneCount)}</span>${guardianCoreMarkup}${forgeTokenCount}`;
+    }
+};
+
+const resetMergeState = ({ keepTargetCategory = false } = {}) => {
+    selectedForgeItems = [null, null, null];
+    if (!keepTargetCategory) {
+        selectedForgeCategory = '';
+    }
+    forgeResult = null;
+    forgeLevelRange = null;
+    forgeCost = 0;
+    const resultContainer = document.querySelector('#forge-result');
+    if (resultContainer) {
+        resultContainer.style.display = 'none';
+    }
+    const resultItem = document.querySelector('#forge-result-item');
+    if (resultItem) {
+        resultItem.innerHTML = '';
+    }
+    const targetCategorySelect = document.querySelector('#forge-target-category');
+    if (targetCategorySelect) {
+        targetCategorySelect.value = selectedForgeCategory;
+    }
+};
+
+const resetRerollState = () => {
+    selectedRerollItem = null;
+    selectedRerollStatLocks = [];
+    rerollCost = 0;
+    rerollStoneCost = 0;
+    const rerollPreviewContainer = document.querySelector('#reroll-preview');
+    if (rerollPreviewContainer) {
+        rerollPreviewContainer.style.display = 'none';
+    }
+    const rerollCostContainer = document.querySelector('#reroll-cost');
+    if (rerollCostContainer) {
+        rerollCostContainer.style.display = 'none';
+    }
+    const currentItem = document.querySelector('#reroll-current-item');
+    if (currentItem) {
+        currentItem.innerHTML = '';
+    }
+    const previewItem = document.querySelector('#reroll-preview-item');
+    if (previewItem) {
+        previewItem.innerHTML = '';
+    }
+};
+
+const resetRefineState = () => {
+    selectedRefineItem = null;
+    refineCost = 0;
+    refineStoneCost = 0;
+    refineCoreCost = 0;
+    const refinePreviewContainer = document.querySelector('#refine-preview');
+    if (refinePreviewContainer) {
+        refinePreviewContainer.style.display = 'none';
+    }
+    const refineCostContainer = document.querySelector('#refine-cost');
+    if (refineCostContainer) {
+        refineCostContainer.style.display = 'none';
+    }
+    const currentItem = document.querySelector('#refine-current-item');
+    if (currentItem) {
+        currentItem.innerHTML = '';
+    }
+    const previewItem = document.querySelector('#refine-preview-item');
+    if (previewItem) {
+        previewItem.innerHTML = '';
+    }
+};
+
+const resetForgeState = () => {
+    resetMergeState();
+    resetRerollState();
+    resetRefineState();
+};
+
+const updateForgeModeVisibility = () => {
+    const mergePanel = document.querySelector('#forge-merge-panel');
+    const targetPanel = document.querySelector('#forge-target-panel');
+    const rerollPanel = document.querySelector('#forge-reroll-panel');
+    const refinePanel = document.querySelector('#forge-refine-panel');
+    const forgeResultPanel = document.querySelector('#forge-result');
+    const description = document.querySelector('#forgeModal .forge-description p:first-child');
+    const modeButtons = document.querySelectorAll('[data-forge-mode]');
+
+    if (mergePanel) {
+        mergePanel.style.display = forgeMode === 'merge' ? 'flex' : 'none';
+    }
+    if (targetPanel) {
+        targetPanel.style.display = forgeMode === 'merge' ? 'flex' : 'none';
+    }
+    if (rerollPanel) {
+        rerollPanel.style.display = forgeMode === 'reroll' ? 'block' : 'none';
+    }
+    if (refinePanel) {
+        refinePanel.style.display = forgeMode === 'refine' ? 'block' : 'none';
+    }
+    if (forgeResultPanel && forgeMode !== 'merge') {
+        forgeResultPanel.style.display = 'none';
+    }
+    if (description) {
+        let key = 'combine-three-items-of-the-same-tier-and-rarity-to-forge-one-of-the-next-rarity';
+        if (forgeMode === 'reroll') {
+            key = 'reroll-description';
+        } else if (forgeMode === 'refine') {
+            key = 'refine-description';
+        }
+        description.setAttribute('data-i18n', key);
+        description.textContent = t(key);
+    }
+    modeButtons.forEach(button => {
+        const isActive = button.dataset.forgeMode === forgeMode;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+};
+
+const setForgeMode = (mode) => {
+    if (mode !== 'merge' && mode !== 'reroll' && mode !== 'refine') {
+        return;
+    }
+    if (forgeMode !== mode) {
+        resetForgeState();
+    }
+    forgeMode = mode;
+    updateForgeModeVisibility();
+    loadForgeEquipment();
+    updateForgeDisplay();
+};
+
+const getRerollCost = (equipment) => Math.max(1000, Math.round((equipment.value || 0) * 10));
+const isFiniteRerollStatValue = (value) => typeof value === 'number' && Number.isFinite(value);
+const getRerollEquipmentStatKeys = (equipment) => {
+    const stats = equipment && Array.isArray(equipment.stats) ? equipment.stats : [];
+    const supportedStats = typeof getEquipmentRerollStatPool === 'function'
+        ? new Set(getEquipmentRerollStatPool(equipment))
+        : null;
+    return stats
+        .map((entry) => {
+            const statType = entry && Object.keys(entry)[0];
+            return statType && isFiniteRerollStatValue(entry[statType]) ? statType : null;
+        })
+        .filter((statType, index, keys) => statType
+            && (!supportedStats || supportedStats.has(statType))
+            && keys.indexOf(statType) === index);
+};
+const getRerollStatRollCounts = (equipment) => {
+    if (typeof getEquipmentStatRollCounts === 'function') {
+        return getEquipmentStatRollCounts(equipment);
+    }
+    return getRerollEquipmentStatKeys(equipment).reduce((rollCounts, statType) => {
+        rollCounts[statType] = 1;
+        return rollCounts;
+    }, {});
+};
+const getRerollRollBudget = (equipment, lockedStatKeys = []) => {
+    const rollCounts = getRerollStatRollCounts(equipment);
+    const lockedKeys = new Set(Array.isArray(lockedStatKeys) ? lockedStatKeys : []);
+    const total = Object.values(rollCounts).reduce((sum, count) => sum + count, 0);
+    const locked = Object.entries(rollCounts).reduce(
+        (sum, [statType, count]) => sum + (lockedKeys.has(statType) ? count : 0),
+        0,
+    );
+    return { total, locked, remaining: Math.max(0, total - locked) };
+};
+const getValidRerollStatLockKeys = (equipment, requestedKeys) => {
+    const availableKeys = getRerollEquipmentStatKeys(equipment);
+    const maximumLocks = Math.max(0, availableKeys.length - 1);
+    const requested = Array.isArray(requestedKeys) ? requestedKeys : [];
+    return requested
+        .filter((statType, index) => availableKeys.includes(statType) && requested.indexOf(statType) === index)
+        .slice(0, maximumLocks);
+};
+const STAT_LOCK_RARITY_RANK = Object.freeze({
+    Common: 1,
+    Uncommon: 2,
+    Rare: 3,
+    Epic: 4,
+    Legendary: 5,
+    Heirloom: 6,
+});
+// Every additional lock costs more than the previous one instead of a flat per-lock factor.
+const STAT_LOCK_ESCALATION = 2.25;
+const getStatLockWeight = (locks) => {
+    let weight = 0;
+    for (let index = 0; index < locks; index += 1) {
+        weight += Math.pow(STAT_LOCK_ESCALATION, index);
+    }
+    return weight;
+};
+const getStatLockRerollCosts = (equipment, lockedStatCount) => {
+    const baseGold = getRerollCost(equipment);
+    const locks = Math.max(0, Math.floor(Number(lockedStatCount) || 0));
+    if (locks === 0) {
+        return { gold: baseGold, stones: 0 };
+    }
+
+    const rarityRank = STAT_LOCK_RARITY_RANK[equipment && equipment.rarity] || 1;
+    const tier = Math.max(1, Math.min(15, Math.floor(Number(equipment && equipment.tier) || 1)));
+    const perLockGoldScale = 0.55 + ((rarityRank - 1) * 0.275) + ((tier - 1) * 0.11);
+    const lockWeight = getStatLockWeight(locks);
+    const gold = Math.round(baseGold * (1 + (lockWeight * perLockGoldScale)));
+    const stones = Math.ceil(lockWeight * rarityRank * (1 + ((tier - 1) * 0.15)));
+    return { gold, stones };
+};
+const getAscendedRefineStep = (equipment) => {
+    const currentLevel = typeof getEquipmentRefineLevel === 'function' ? getEquipmentRefineLevel(equipment) : 0;
+    return Math.max(0, currentLevel + 1 - REFINE_MAX_LEVEL);
+};
+const getRefineCost = (equipment) => {
+    const currentLevel = typeof getEquipmentRefineLevel === 'function' ? getEquipmentRefineLevel(equipment) : 0;
+    const baseCost = Math.max(2500, Math.round((equipment.value || 0) * (currentLevel + 1) * 3.75));
+    return Math.round(baseCost * Math.pow(ASCENDED_REFINE_GOLD_GROWTH, getAscendedRefineStep(equipment)));
+};
+const getRefineStoneCost = (equipment) => {
+    const currentLevel = typeof getEquipmentRefineLevel === 'function' ? getEquipmentRefineLevel(equipment) : 0;
+    return Math.max(1, Math.ceil((currentLevel + 1) * 0.75));
+};
+const getRefineGuardianCoreCost = (equipment) => {
+    const step = getAscendedRefineStep(equipment);
+    return step > 0 ? Math.ceil(Math.pow(ASCENDED_REFINE_CORE_GROWTH, step - 1)) : 0;
+};
+const hasRefineMaterials = () => (
+    (typeof getRefineStoneCount === 'function' ? getRefineStoneCount() : 0) >= refineStoneCost
+    && (typeof getGuardianCoreCount === 'function' ? getGuardianCoreCount() : 0) >= refineCoreCost
+);
+
+const cloneEquipment = (equipment) => JSON.parse(JSON.stringify(equipment));
+
+const openForgeModal = () => {
+    if (!forgeModalElement) initializeForge();
+
+    if (inventoryOpen) {
+        closeInventory(true);
+    }
+
+    sfxOpen.play();
+    menuModalElement.style.display = "none";
+
+    forgeModalElement.style.display = "flex";
+    let dimDungeon = document.querySelector('#dungeon-main');
+    if (dimDungeon) {
+        dimDungeon.style.filter = "brightness(50%)";
+    }
+    
+    forgeMode = 'merge';
+    resetForgeState();
+    updateForgeModeVisibility();
+    
+    loadForgeEquipment();
+    updateForgeDisplay();
+};
+
+// Close forge modal
+const closeForgeModal = () => {
+    sfxDecline.play();
+    forgeModalElement.style.display = "none";
+    let dimDungeon = document.querySelector('#dungeon-main');
+    if (dimDungeon) {
+        dimDungeon.style.filter = "brightness(100%)";
+    }
+
+    resetForgeState();
+    updateForgeDisplay();
+};
+
+// Load available equipment for forging
+const loadForgeEquipment = () => {
+    const equipmentGrid = document.querySelector('#forge-equipment-grid');
+    if (!equipmentGrid) {
+        return;
+    }
+    equipmentGrid.innerHTML = "";
+    
+    // Collect forgeable equipment from both inventory and equipped items
+    const forgeableEquipment = [];
+    // Charms can only be rerolled or refined, never merged.
+    const allowCharms = forgeMode === 'reroll' || forgeMode === 'refine';
+    const isCharm = (equip) => typeof isCompanionCharm === 'function' && isCompanionCharm(equip);
+
+    // Add inventory equipment
+    player.inventory.equipment.forEach((equipStr, sourceIndex) => {
+        const equip = JSON.parse(equipStr);
+        if (!allowCharms && isCharm(equip)) {
+            return;
+        }
+        forgeableEquipment.push({
+            equipStr,
+            equip,
+            source: 'inventory',
+            sourceIndex
+        });
+    });
+
+    // Add equipped items
+    player.equipped.forEach((equip, sourceIndex) => {
+        if (!allowCharms && isCharm(equip)) {
+            return;
+        }
+        forgeableEquipment.push({
+            equipStr: JSON.stringify(equip),
+            equip,
+            source: 'equipped',
+            sourceIndex
+        });
+    });
+
+    // The equipped charm lives outside player.equipped
+    if (allowCharms && typeof getEquippedCompanionCharm === 'function') {
+        const equippedCharm = getEquippedCompanionCharm();
+        if (equippedCharm) {
+            forgeableEquipment.push({
+                equipStr: JSON.stringify(equippedCharm),
+                equip: equippedCharm,
+                source: 'companionCharm',
+                sourceIndex: -1
+            });
+        }
+    }
+    
+    if (forgeableEquipment.length === 0) {
+        equipmentGrid.innerHTML = `<p class="forge-empty">${t('no-forge-equipment')}</p>`;
+        return;
+    }
+
+    // Sort equipment by rarity (highest to lowest), then by level (highest to lowest)
+    const rarityOrder = ['Heirloom', 'Legendary', 'Epic', 'Rare', 'Uncommon', 'Common'];
+    
+    // Filter out equipment that is already selected in any forge slot
+    const selectedStrs = forgeMode === 'reroll'
+        ? (selectedRerollItem ? [selectedRerollItem.equipmentStr] : [])
+        : forgeMode === 'refine'
+            ? (selectedRefineItem ? [selectedRefineItem.equipmentStr] : [])
+        : selectedForgeItems.filter(Boolean).map(item => item.equipmentStr);
+    const filteredEquipment = forgeableEquipment.filter(item => {
+        if (selectedStrs.includes(item.equipStr)) {
+            return false;
+        }
+        if (forgeMode === 'refine' && typeof canRefineEquipment === 'function') {
+            return canRefineEquipment(item.equip);
+        }
+        return true;
+    });
+
+    filteredEquipment.sort((a, b) => {
+        const rarityA = rarityOrder.indexOf(a.equip.rarity);
+        const rarityB = rarityOrder.indexOf(b.equip.rarity);
+        // First sort by rarity
+        if (rarityA !== rarityB) {
+            return rarityA - rarityB;
+        }
+        // If same rarity, sort by level (highest to lowest)
+        const refineA = typeof getEquipmentRefineLevel === 'function' ? getEquipmentRefineLevel(a.equip) : 0;
+        const refineB = typeof getEquipmentRefineLevel === 'function' ? getEquipmentRefineLevel(b.equip) : 0;
+        if (refineA !== refineB) {
+            return refineB - refineA;
+        }
+        return b.equip.lvl - a.equip.lvl;
+    });
+    
+    filteredEquipment.forEach((item, index) => {
+        const { equipStr, equip, source, sourceIndex } = item;
+        const equipDiv = document.createElement('div');
+        equipDiv.className = `forge-equipment-item ${equip.rarity}`;
+        
+        // Format stats display
+        const statsHtml = Object.entries(getForgeDisplayStatTotals(equip)).map(([statName, statValue]) =>
+            `<li>${statName.replace(/([A-Z])/g, ".$1").replace(/crit/g, "c").toUpperCase()}${formatEquipmentValue(statName, statValue, { includeSign: true })}</li>`
+        ).join('');
+        
+        equipDiv.innerHTML = `
+            <div class="equipment-icon">${equipmentIcon(equip.category)}</div>
+            <div class="equipment-info">
+                <p class="${equip.rarity}">${typeof equipmentDisplayName === 'function' ? equipmentDisplayName(equip) : equipmentName(equip.category)}</p>
+                <p>Lv.${equip.lvl} T${equip.tier}</p>
+                <ul class="equipment-stats">
+                    ${statsHtml}
+                </ul>
+                <p class="equipment-value">${t('value')}: ${nFormatter(typeof getEquipmentEffectiveValue === 'function' ? getEquipmentEffectiveValue(equip) : equip.value)}</p>
+                ${source !== 'inventory' ? `<p class="equipped-indicator">⚔️ ${t('equipped')}</p>` : ''}
+            </div>
+        `;
+        // Only allow click if a slot is free
+        equipDiv.addEventListener('click', () => {
+            if (forgeMode === 'reroll') {
+                selectRerollEquipment(equipStr, source, sourceIndex, equip);
+                return;
+            }
+            if (forgeMode === 'refine') {
+                selectRefineEquipment(equipStr, source, sourceIndex, equip);
+                return;
+            }
+            if (selectedForgeItems[0] === null || selectedForgeItems[1] === null || selectedForgeItems[2] === null) {
+                selectForgeEquipment(equipStr, index, source, sourceIndex, equip);
+            } else {
+                sfxDeny.play();
+            }
+        });
+        equipmentGrid.appendChild(equipDiv);
+    });
+};
+
+// Select equipment for forging
+const selectForgeEquipment = (equipmentStr, index, source = 'inventory', sourceIndex = -1, equipmentOverride = null) => {
+    const equipment = equipmentOverride || JSON.parse(equipmentStr);
+    
+    // Check if this item is already selected in any slot
+    if ((selectedForgeItems[0] && selectedForgeItems[0].equipmentStr === equipmentStr) ||
+        (selectedForgeItems[1] && selectedForgeItems[1].equipmentStr === equipmentStr) ||
+        (selectedForgeItems[2] && selectedForgeItems[2].equipmentStr === equipmentStr)) {
+        // Item already selected, play deny sound and return
+        sfxDeny.play();
+        return;
+    }
+
+    // Find first empty slot
+    if (selectedForgeItems[0] === null) {
+        selectedForgeItems[0] = { equipment, equipmentStr, source, sourceIndex };
+        sfxEquip.play();
+    } else if (selectedForgeItems[1] === null) {
+        selectedForgeItems[1] = { equipment, equipmentStr, source, sourceIndex };
+        sfxEquip.play();
+    } else if (selectedForgeItems[2] === null) {
+        selectedForgeItems[2] = { equipment, equipmentStr, source, sourceIndex };
+        sfxEquip.play();
+    } else {
+        // All slots full, replace first item
+        selectedForgeItems[0] = { equipment, equipmentStr, source, sourceIndex };
+        sfxEquip.play();
+    }
+    
+    calculateForgeResult();
+    updateForgeDisplay();
+    loadForgeEquipment();
+};
+
+const selectRerollEquipment = (equipmentStr, source = 'inventory', sourceIndex = -1, equipmentOverride = null) => {
+    if (selectedRerollItem && selectedRerollItem.equipmentStr !== equipmentStr) {
+        sfxDeny.play();
+        return;
+    }
+    const equipment = equipmentOverride || JSON.parse(equipmentStr);
+    selectedRerollItem = { equipment, equipmentStr, source, sourceIndex };
+    selectedRerollStatLocks = [];
+    calculateRerollPreview();
+    updateForgeDisplay();
+    loadForgeEquipment();
+    sfxEquip.play();
+};
+
+const selectRefineEquipment = (equipmentStr, source = 'inventory', sourceIndex = -1, equipmentOverride = null) => {
+    const equipment = equipmentOverride || JSON.parse(equipmentStr);
+    if (typeof canRefineEquipment === 'function' && !canRefineEquipment(equipment)) {
+        sfxDeny.play();
+        return;
+    }
+    selectedRefineItem = { equipment, equipmentStr, source, sourceIndex };
+    calculateRefinePreview();
+    updateForgeDisplay();
+    loadForgeEquipment();
+    sfxEquip.play();
+};
+
+const calculateRerollPreview = () => {
+    if (!selectedRerollItem) {
+        rerollCost = 0;
+        rerollStoneCost = 0;
+        return;
+    }
+    selectedRerollStatLocks = getValidRerollStatLockKeys(
+        selectedRerollItem.equipment,
+        selectedRerollStatLocks,
+    );
+    const costs = getStatLockRerollCosts(selectedRerollItem.equipment, selectedRerollStatLocks.length);
+    rerollCost = costs.gold;
+    rerollStoneCost = costs.stones;
+    displayRerollPreview();
+};
+
+const calculateRefinePreview = () => {
+    if (!selectedRefineItem) {
+        refineCost = 0;
+        refineStoneCost = 0;
+        refineCoreCost = 0;
+        return;
+    }
+    refineCost = getRefineCost(selectedRefineItem.equipment);
+    refineStoneCost = getRefineStoneCost(selectedRefineItem.equipment);
+    refineCoreCost = getRefineGuardianCoreCost(selectedRefineItem.equipment);
+    displayRefinePreview();
+};
+
+const renderPossibleRerollStats = (equipment, excludedStats = []) => {
+    const excluded = new Set(Array.isArray(excludedStats) ? excludedStats : []);
+    const statPool = typeof getEquipmentRerollStatPool === 'function'
+        ? getEquipmentRerollStatPool(equipment).filter((statType) => !excluded.has(statType))
+        : [];
+    const uniqueStats = Array.from(new Set(statPool));
+    const orderedStats = getOrderedEquipmentStats(uniqueStats.reduce((totals, stat) => {
+        totals[stat] = 1;
+        return totals;
+    }, {}));
+    const statsMarkup = orderedStats.map(stat => `
+        <li class="equipment-stat-row">
+            <span class="stat-name">${formatEquipmentStatLabel(stat)}</span>
+        </li>`).join('');
+    const rollBudget = getRerollRollBudget(equipment, excludedStats);
+    const remainingLabel = t('remaining', { count: `${rollBudget.remaining}/${rollBudget.total} 🎲` });
+
+    return `
+        <div class="equipment-card reroll-possible-card">
+            <h3 class="${equipment.rarity}">${equipmentIcon(equipment.baseCategory || equipment.category)}${typeof equipmentDisplayLabel === 'function' ? equipmentDisplayLabel(equipment) : equipmentLabel(equipment.rarity, equipment.category)}</h3>
+            <h5 class="lvltier ${equipment.rarity}"><b>Lv.${equipment.lvl} ${t('tier')} ${equipment.tier === undefined ? 1 : equipment.tier}</b></h5>
+            <p class="reroll-roll-budget">${remainingLabel}</p>
+            <ul class="equipment-stat-list reroll-possible-list">
+                ${statsMarkup || `<li class="equipment-stat-row"><span class="stat-name">${translateEquipText('no-stats-available', 'No stats available')}</span></li>`}
+            </ul>
+        </div>`;
+};
+
+const displayRefinePreview = () => {
+    const previewContainer = document.querySelector('#refine-preview');
+    const costContainer = document.querySelector('#refine-cost');
+    const currentItem = document.querySelector('#refine-current-item');
+    const previewItem = document.querySelector('#refine-preview-item');
+    const costAmount = document.querySelector('#refine-cost-amount');
+    const stoneAmount = document.querySelector('#refine-stone-cost-amount');
+
+    if (!selectedRefineItem || !previewContainer || !costContainer || !currentItem || !previewItem || !costAmount || !stoneAmount) {
+        return;
+    }
+
+    const currentEquipment = selectedRefineItem.equipment;
+    const currentTotals = getEquipmentStatTotals(currentEquipment);
+    const previewEquipment = cloneEquipment(currentEquipment);
+    previewEquipment.refineLevel = (typeof getEquipmentRefineLevel === 'function' ? getEquipmentRefineLevel(currentEquipment) : 0) + 1;
+    const previewTotals = getEquipmentStatTotals(previewEquipment);
+    const currentIcon = equipmentIcon(currentEquipment.baseCategory || currentEquipment.category);
+
+    currentItem.innerHTML = renderEquipmentCard({
+        item: currentEquipment,
+        icon: currentIcon,
+        totals: currentTotals,
+        labelFallback: ''
+    });
+    previewItem.innerHTML = renderEquipmentCard({
+        item: previewEquipment,
+        icon: currentIcon,
+        totals: previewTotals,
+        comparisonTotals: currentTotals,
+        labelFallback: '',
+        highlightDiff: true
+    });
+
+    costAmount.textContent = nFormatter(getForgeActionGoldCost(refineCost));
+    stoneAmount.textContent = nFormatter(refineStoneCost);
+    const coreCost = document.querySelector('#refine-core-cost');
+    const coreAmount = document.querySelector('#refine-core-cost-amount');
+    if (coreCost && coreAmount) {
+        coreAmount.textContent = nFormatter(refineCoreCost);
+        coreCost.style.display = refineCoreCost > 0 ? '' : 'none';
+    }
+    const ascensionHint = document.querySelector('#refine-ascension-hint');
+    if (ascensionHint) {
+        ascensionHint.style.display = refineCoreCost > 0 ? 'block' : 'none';
+    }
+    const hasGold = canPayForgeAction(refineCost);
+    const hasMaterials = hasRefineMaterials();
+    const costElement = costAmount.parentElement;
+    if (costElement) {
+        costElement.style.color = hasGold && hasMaterials ? '#4CAF50' : '#F44336';
+    }
+    previewContainer.style.display = 'grid';
+    costContainer.style.display = 'block';
+    updateForgeGold();
+};
+
+const renderRerollStatLocks = () => {
+    const container = document.querySelector('#reroll-stat-locks');
+    const optionsContainer = document.querySelector('#reroll-stat-lock-options');
+    if (!container || !optionsContainer || !selectedRerollItem) {
+        if (container) {
+            container.style.display = 'none';
+        }
+        return;
+    }
+
+    const equipment = selectedRerollItem.equipment;
+    const statKeys = getRerollEquipmentStatKeys(equipment);
+    if (statKeys.length < 2) {
+        selectedRerollStatLocks = [];
+        container.style.display = 'none';
+        return;
+    }
+
+    selectedRerollStatLocks = getValidRerollStatLockKeys(equipment, selectedRerollStatLocks);
+    const totals = getForgeDisplayStatTotals(equipment);
+    const statRollCounts = getRerollStatRollCounts(equipment);
+    const sortedStatKeys = [...statKeys].sort((statA, statB) => {
+        const labelComparison = formatEquipmentStatLabel(statA).localeCompare(
+            formatEquipmentStatLabel(statB),
+            undefined,
+            { sensitivity: 'base' },
+        );
+        return labelComparison || statA.localeCompare(statB);
+    });
+    optionsContainer.innerHTML = sortedStatKeys.map((statType) => `
+        <label class="reroll-stat-lock-option ${selectedRerollStatLocks.includes(statType) ? 'selected' : ''}">
+            <input type="checkbox" data-reroll-stat-lock="${statType}" ${selectedRerollStatLocks.includes(statType) ? 'checked' : ''}>
+            <span>${formatEquipmentStatLabel(statType)}</span>
+            <span class="reroll-stat-lock-rolls">🎲 ×${statRollCounts[statType] || 1}</span>
+            ${typeof renderEquipmentRollQualityMeter === 'function' ? renderEquipmentRollQualityMeter(equipment, statType) : ''}
+            <span class="reroll-stat-lock-value">${formatEquipmentValue(statType, totals[statType] || 0, { includeSign: true })}</span>
+        </label>
+    `).join('');
+
+    optionsContainer.querySelectorAll('input[data-reroll-stat-lock]').forEach((input) => {
+        input.addEventListener('change', () => {
+            const statType = input.getAttribute('data-reroll-stat-lock');
+            const requestedLocks = input.checked
+                ? [...selectedRerollStatLocks, statType]
+                : selectedRerollStatLocks.filter((key) => key !== statType);
+            const validLocks = getValidRerollStatLockKeys(equipment, requestedLocks);
+            if (input.checked && !validLocks.includes(statType)) {
+                sfxDeny.play();
+                input.checked = false;
+                return;
+            }
+            selectedRerollStatLocks = validLocks;
+            calculateRerollPreview();
+            updateRerollDisplay();
+        });
+    });
+    container.style.display = 'block';
+};
+
+const displayRerollPreview = () => {
+    const previewContainer = document.querySelector('#reroll-preview');
+    const costContainer = document.querySelector('#reroll-cost');
+    const currentItem = document.querySelector('#reroll-current-item');
+    const previewItem = document.querySelector('#reroll-preview-item');
+    const costAmount = document.querySelector('#reroll-cost-amount');
+    const stoneCostContainer = document.querySelector('#reroll-stone-cost');
+    const stoneAmount = document.querySelector('#reroll-stone-cost-amount');
+
+    if (!selectedRerollItem || !previewContainer || !costContainer || !currentItem || !previewItem || !costAmount) {
+        return;
+    }
+
+    const currentEquipment = selectedRerollItem.equipment;
+    const currentTotals = getForgeDisplayStatTotals(currentEquipment);
+    const currentIcon = equipmentIcon(currentEquipment.baseCategory || currentEquipment.category);
+
+    currentItem.innerHTML = renderEquipmentCard({
+        item: currentEquipment,
+        icon: currentIcon,
+        totals: currentTotals,
+        labelFallback: '',
+        showRollCounts: true,
+        showRollQualityMeter: true,
+    });
+    previewItem.innerHTML = renderPossibleRerollStats(currentEquipment, selectedRerollStatLocks);
+
+    costAmount.textContent = nFormatter(getForgeActionGoldCost(rerollCost));
+    if (stoneAmount && stoneCostContainer) {
+        stoneAmount.textContent = nFormatter(rerollStoneCost);
+        stoneCostContainer.style.display = rerollStoneCost > 0 ? 'inline-flex' : 'none';
+    }
+    const hasGold = canPayForgeAction(rerollCost);
+    const hasStones = (typeof getRefineStoneCount === 'function' ? getRefineStoneCount() : 0) >= rerollStoneCost;
+    const costElement = costAmount.parentElement;
+    if (costElement) {
+        costElement.style.color = hasGold && hasStones ? '#4CAF50' : '#F44336';
+    }
+    previewContainer.style.display = 'grid';
+    costContainer.style.display = 'block';
+    updateForgeGold();
+};
+
+const updateRerollDisplay = () => {
+    updateForgeGold();
+    updateForgeModeVisibility();
+
+    const slot = document.querySelector('#reroll-slot');
+    if (slot) {
+        if (selectedRerollItem) {
+            const equip = selectedRerollItem.equipment;
+            slot.innerHTML = `
+                <div class="selected-equipment ${equip.rarity}">
+                    ${equipmentIcon(equip.category)}
+                    <p>${typeof equipmentDisplayName === 'function' ? equipmentDisplayName(equip) : equipmentName(equip.category)}</p>
+                    <p>Lv.${equip.lvl} T${equip.tier}</p>
+                </div>
+            `;
+            slot.className = 'forge-slot reroll-slot selected';
+            slot.onclick = () => {
+                resetRerollState();
+                updateForgeDisplay();
+                loadForgeEquipment();
+                sfxUnequip.play();
+            };
+        } else {
+            slot.innerHTML = `<p data-i18n="select-equipment">${t('select-equipment')}</p>`;
+            slot.className = 'forge-slot reroll-slot';
+            slot.onclick = null;
+        }
+    }
+
+    renderRerollStatLocks();
+    if (selectedRerollItem) {
+        displayRerollPreview();
+    }
+
+    const confirmButton = document.querySelector('#forge-confirm');
+    const clearButton = document.querySelector('#forge-clear');
+
+    if (clearButton) {
+        clearButton.onclick = () => {
+            resetRerollState();
+            updateForgeDisplay();
+            loadForgeEquipment();
+            sfxUnequip.play();
+        };
+    }
+
+    if (!confirmButton) {
+        return;
+    }
+
+    if (!hasForgeActionAccess()) {
+        setForgeUnlockButton(confirmButton);
+        return;
+    }
+
+    const hasRerollGold = selectedRerollItem && canPayForgeAction(rerollCost);
+    const hasRerollStones = selectedRerollItem
+        && (typeof getRefineStoneCount === 'function' ? getRefineStoneCount() : 0) >= rerollStoneCost;
+    if (hasRerollGold && hasRerollStones) {
+        confirmButton.disabled = false;
+        confirmButton.setAttribute('data-i18n', 'reroll-equipment');
+        confirmButton.textContent = t('reroll-equipment');
+    } else if (selectedRerollItem && !hasRerollStones) {
+        confirmButton.disabled = true;
+        confirmButton.setAttribute('data-i18n', 'not-enough-refine-stones');
+        confirmButton.textContent = t('not-enough-refine-stones');
+    } else if (selectedRerollItem) {
+        confirmButton.disabled = true;
+        confirmButton.setAttribute('data-i18n', 'not-enough-gold');
+        confirmButton.textContent = t('not-enough-gold');
+    } else {
+        confirmButton.disabled = true;
+        confirmButton.setAttribute('data-i18n', 'select-1-item');
+        confirmButton.textContent = t('select-1-item');
+    }
+
+    confirmButton.onclick = () => {
+        if (hasRerollGold && hasRerollStones) {
+            executeReroll();
+        } else {
+            sfxDeny.play();
+        }
+    };
+};
+
+const updateRefineDisplay = () => {
+    updateForgeGold();
+    updateForgeModeVisibility();
+
+    const slot = document.querySelector('#refine-slot');
+    if (slot) {
+        if (selectedRefineItem) {
+            const equip = selectedRefineItem.equipment;
+            slot.innerHTML = `
+                <div class="selected-equipment ${equip.rarity}">
+                    ${equipmentIcon(equip.category)}
+                    <p>${typeof equipmentDisplayName === 'function' ? equipmentDisplayName(equip) : equipmentName(equip.category)}</p>
+                    <p>Lv.${equip.lvl} T${equip.tier}</p>
+                </div>
+            `;
+            slot.className = 'forge-slot reroll-slot selected';
+            slot.onclick = () => {
+                resetRefineState();
+                updateForgeDisplay();
+                loadForgeEquipment();
+                sfxUnequip.play();
+            };
+        } else {
+            slot.innerHTML = `<p data-i18n="select-equipment">${t('select-equipment')}</p>`;
+            slot.className = 'forge-slot reroll-slot';
+            slot.onclick = null;
+        }
+    }
+
+    if (selectedRefineItem) {
+        displayRefinePreview();
+    }
+
+    const confirmButton = document.querySelector('#forge-confirm');
+    const clearButton = document.querySelector('#forge-clear');
+
+    if (clearButton) {
+        clearButton.onclick = () => {
+            resetRefineState();
+            updateForgeDisplay();
+            loadForgeEquipment();
+            sfxUnequip.play();
+        };
+    }
+
+    if (!confirmButton) {
+        return;
+    }
+
+    if (!hasForgeActionAccess()) {
+        setForgeUnlockButton(confirmButton);
+        return;
+    }
+
+    const hasStones = (typeof getRefineStoneCount === 'function' ? getRefineStoneCount() : 0) >= refineStoneCost;
+    const hasCores = (typeof getGuardianCoreCount === 'function' ? getGuardianCoreCount() : 0) >= refineCoreCost;
+    if (selectedRefineItem && canPayForgeAction(refineCost) && hasStones && hasCores) {
+        confirmButton.disabled = false;
+        confirmButton.setAttribute('data-i18n', 'refine-equipment');
+        confirmButton.textContent = t('refine-equipment');
+    } else if (selectedRefineItem && !hasStones) {
+        confirmButton.disabled = true;
+        confirmButton.setAttribute('data-i18n', 'not-enough-refine-stones');
+        confirmButton.textContent = t('not-enough-refine-stones');
+    } else if (selectedRefineItem && !hasCores) {
+        confirmButton.disabled = true;
+        confirmButton.setAttribute('data-i18n', 'not-enough-guardian-cores');
+        confirmButton.textContent = t('not-enough-guardian-cores');
+    } else if (selectedRefineItem) {
+        confirmButton.disabled = true;
+        confirmButton.setAttribute('data-i18n', 'not-enough-gold');
+        confirmButton.textContent = t('not-enough-gold');
+    } else {
+        confirmButton.disabled = true;
+        confirmButton.setAttribute('data-i18n', 'select-1-item');
+        confirmButton.textContent = t('select-1-item');
+    }
+
+    confirmButton.onclick = () => {
+        if (selectedRefineItem && canPayForgeAction(refineCost) && hasStones && hasCores) {
+            executeRefine();
+        } else {
+            sfxDeny.play();
+        }
+    };
+};
+
+// Update forge display
+const updateForgeDisplay = () => {
+    updateForgeGold();
+    updateForgeModeVisibility();
+    if (forgeMode === 'reroll') {
+        updateRerollDisplay();
+        return;
+    }
+    if (forgeMode === 'refine') {
+        updateRefineDisplay();
+        return;
+    }
+    // Update slot 1
+    const slot1 = document.querySelector('#forge-slot-1');
+    if (selectedForgeItems[0]) {
+        const equip = selectedForgeItems[0].equipment;
+        slot1.innerHTML = `
+            <div class="selected-equipment ${equip.rarity}">
+                ${equipmentIcon(equip.category)}
+                <p>${typeof equipmentDisplayName === 'function' ? equipmentDisplayName(equip) : equipmentName(equip.category)}</p>
+                <p>Lv.${equip.lvl} T${equip.tier}</p>
+            </div>
+        `;
+        slot1.className = 'forge-slot selected';
+        slot1.onclick = () => {
+            selectedForgeItems[0] = null;
+            forgeResult = null;
+            forgeLevelRange = null;
+            forgeCost = 0;
+            updateForgeDisplay();
+            loadForgeEquipment(); // update equipment list after removal
+            document.querySelector('#forge-result').style.display = 'none';
+            sfxUnequip.play();
+        };
+    } else {
+        slot1.innerHTML = `<p data-i18n="select-equipment">${t('select-equipment')}</p>`;
+        slot1.className = 'forge-slot';
+        slot1.onclick = null;
+    }
+    
+    // Update slot 2
+    const slot2 = document.querySelector('#forge-slot-2');
+    if (selectedForgeItems[1]) {
+        const equip = selectedForgeItems[1].equipment;
+        slot2.innerHTML = `
+            <div class="selected-equipment ${equip.rarity}">
+                ${equipmentIcon(equip.category)}
+                <p>${typeof equipmentDisplayName === 'function' ? equipmentDisplayName(equip) : equipmentName(equip.category)}</p>
+                <p>Lv.${equip.lvl} T${equip.tier}</p>
+            </div>
+        `;
+        slot2.className = 'forge-slot selected';
+        slot2.onclick = () => {
+            selectedForgeItems[1] = null;
+            forgeResult = null;
+            forgeLevelRange = null;
+            forgeCost = 0;
+            updateForgeDisplay();
+            loadForgeEquipment(); // update equipment list after removal
+            document.querySelector('#forge-result').style.display = 'none';
+            sfxUnequip.play();
+        };
+    } else {
+        slot2.innerHTML = `<p data-i18n="select-equipment">${t('select-equipment')}</p>`;
+        slot2.className = 'forge-slot';
+        slot2.onclick = null;
+    }
+
+    // Update slot 3
+    const slot3 = document.querySelector('#forge-slot-3');
+    if (slot3) {
+        if (selectedForgeItems[2]) {
+            const equip3 = selectedForgeItems[2].equipment;
+            slot3.innerHTML = `
+            <div class="selected-equipment ${equip3.rarity}">
+                ${equipmentIcon(equip3.category)}
+                <p>${typeof equipmentDisplayName === 'function' ? equipmentDisplayName(equip3) : equipmentName(equip3.category)}</p>
+                <p>Lv.${equip3.lvl} T${equip3.tier}</p>
+            </div>
+            `;
+            slot3.className = 'forge-slot selected';
+            slot3.onclick = () => {
+                selectedForgeItems[2] = null;
+                forgeResult = null;
+                forgeLevelRange = null;
+                forgeCost = 0;
+                updateForgeDisplay();
+                loadForgeEquipment(); // update equipment list after removal
+                document.querySelector('#forge-result').style.display = 'none';
+                sfxUnequip.play();
+            };
+        } else {
+            slot3.innerHTML = `<p data-i18n="select-equipment">${t('select-equipment')}</p>`;
+            slot3.className = 'forge-slot';
+            slot3.onclick = null;
+        }
+    }
+    
+    // Update buttons
+    const confirmButton = document.querySelector('#forge-confirm');
+    const clearButton = document.querySelector('#forge-clear');
+
+    clearButton.onclick = () => {
+        resetMergeState();
+        updateForgeDisplay();
+        loadForgeEquipment();
+        sfxUnequip.play();
+    };
+
+    if (!hasForgeActionAccess()) {
+        setForgeUnlockButton(confirmButton);
+        return;
+    }
+
+    const allSelected = selectedForgeItems[0] && selectedForgeItems[1] && selectedForgeItems[2];
+    const sameTier = allSelected &&
+        selectedForgeItems[0].equipment.tier === selectedForgeItems[1].equipment.tier &&
+        selectedForgeItems[0].equipment.tier === selectedForgeItems[2].equipment.tier;
+    const sameRarity = allSelected &&
+        selectedForgeItems[0].equipment.rarity === selectedForgeItems[1].equipment.rarity &&
+        selectedForgeItems[0].equipment.rarity === selectedForgeItems[2].equipment.rarity;
+    const hasTargetCategory = FORGE_CATEGORY_CONFIG.some(({ category }) => category === selectedForgeCategory);
+
+    if (allSelected && (!sameTier || !sameRarity)) {
+        confirmButton.disabled = true;
+        if (!sameTier) {
+            confirmButton.setAttribute('data-i18n', 'items-must-share-tier');
+            confirmButton.textContent = `${t('items-must-share-tier')}`;
+        } else {
+            confirmButton.setAttribute('data-i18n', 'items-must-share-rarity');
+            confirmButton.textContent = `${t('items-must-share-rarity')}`;
+        }
+    } else if (allSelected && !hasTargetCategory) {
+        confirmButton.disabled = true;
+        confirmButton.setAttribute('data-i18n', 'choose-gear-piece');
+        confirmButton.textContent = t('choose-gear-piece');
+    } else if (allSelected && canPayForgeAction(forgeCost)) {
+        confirmButton.disabled = false;
+        confirmButton.setAttribute('data-i18n', 'forge-equipment');
+        confirmButton.textContent = `${t('forge-equipment')}`;
+    } else if (allSelected) {
+        confirmButton.disabled = true;
+        confirmButton.setAttribute('data-i18n', 'not-enough-gold');
+        confirmButton.textContent = `${t('not-enough-gold')}`;
+    } else {
+        confirmButton.disabled = true;
+        confirmButton.setAttribute('data-i18n', 'select-3-items');
+        confirmButton.textContent = `${t('select-3-items')}`;
+    }
+    
+    // Confirm button for unlocked forge
+    confirmButton.onclick = () => {
+        const allSelectedConfirm = selectedForgeItems[0] && selectedForgeItems[1] && selectedForgeItems[2];
+        const sameTierConfirm = allSelectedConfirm &&
+            selectedForgeItems[0].equipment.tier === selectedForgeItems[1].equipment.tier &&
+            selectedForgeItems[0].equipment.tier === selectedForgeItems[2].equipment.tier;
+        const sameRarityConfirm = allSelectedConfirm &&
+            selectedForgeItems[0].equipment.rarity === selectedForgeItems[1].equipment.rarity &&
+            selectedForgeItems[0].equipment.rarity === selectedForgeItems[2].equipment.rarity;
+        const hasTargetCategoryConfirm = FORGE_CATEGORY_CONFIG.some(
+            ({ category }) => category === selectedForgeCategory
+        );
+
+        if (allSelectedConfirm && sameTierConfirm && sameRarityConfirm && hasTargetCategoryConfirm && canPayForgeAction(forgeCost)) {
+            executeForging();
+        } else {
+            sfxDeny.play();
+        }
+    };
+};
+
+// Calculate forge result
+const calculateForgeResult = () => {
+    const hasTargetCategory = FORGE_CATEGORY_CONFIG.some(({ category }) => category === selectedForgeCategory);
+    if (!selectedForgeItems[0] || !selectedForgeItems[1] || !selectedForgeItems[2] || !hasTargetCategory) {
+        document.querySelector('#forge-result').style.display = 'none';
+        forgeResult = null;
+        forgeLevelRange = null;
+        forgeCost = 0;
+        return;
+    }
+
+    const item1 = selectedForgeItems[0].equipment;
+    const item2 = selectedForgeItems[1].equipment;
+    const item3 = selectedForgeItems[2].equipment;
+
+    // Ensure all items share the same tier and rarity
+    if (!(item1.tier === item2.tier &&
+          item1.tier === item3.tier &&
+          item1.rarity === item2.rarity &&
+          item1.rarity === item3.rarity)) {
+        document.querySelector('#forge-result').style.display = 'none';
+        forgeCost = 0;
+        return;
+    }
+
+    // Determine possible level range
+    const avgLvl = Math.round((item1.lvl + item2.lvl + item3.lvl) / 3);
+    const minLvl = Math.max(1, avgLvl - 1);
+    const maxLvl = clampEquipmentLevel(avgLvl + 2);
+    forgeLevelRange = { min: minLvl, max: maxLvl };
+
+    // Calculate result equipment
+    forgeResult = createForgedEquipment(item1, item2, item3, selectedForgeCategory);
+
+    // Calculate cost (based on input item values)
+    forgeCost = Math.round((item1.value + item2.value + item3.value) * 2.5);
+    
+    // Display result
+    displayForgeResult();
+};
+
+// Create forged equipment
+const createForgedEquipment = (item1, item2, item3, targetCategory) => {
+    // Generate a fresh piece of equipment similar to a normal dungeon drop
+    const forgedEquipment = createEquipment(false, { allowCompanionCharm: false });
+    const targetConfig = FORGE_CATEGORY_CONFIG.find(({ category }) => category === targetCategory);
+    if (!targetConfig) {
+        return null;
+    }
+
+    // Use the player's chosen gear piece and its matching stat pool.
+    forgedEquipment.category = targetConfig.category;
+    forgedEquipment.attribute = targetConfig.attribute;
+    forgedEquipment.type = targetConfig.type;
+    forgedEquipment.slot = null;
+    forgedEquipment.slot = getEquipmentSlot(forgedEquipment);
+
+    // Set tier to the same as input items
+    forgedEquipment.tier = item1.tier;
+
+    // Set level roughly around the average of the input items
+    const avgLvl = Math.round((item1.lvl + item2.lvl + item3.lvl) / 3);
+    const minLvl = Math.max(1, avgLvl - 1);
+    const maxLvl = clampEquipmentLevel(avgLvl + 2);
+    forgedEquipment.lvl = randomizeNum(minLvl, maxLvl);
+
+    // Increase rarity by one step if possible
+    const rarityOrder = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Heirloom'];
+    let currentRarityIndex = rarityOrder.indexOf(item1.rarity);
+    if (currentRarityIndex < rarityOrder.length - 1) {
+        forgedEquipment.rarity = rarityOrder[currentRarityIndex + 1];
+    } else {
+        forgedEquipment.rarity = item1.rarity; // Already max rarity
+    }
+
+    // Re-roll stats so the item matches normal drops for its level
+    rerollEquipmentStats(forgedEquipment);
+
+    // Mark item as forged
+    forgedEquipment.forged = true;
+
+    return forgedEquipment;
+};
+
+
+// Display forge result
+const displayForgeResult = () => {
+    const resultContainer = document.querySelector('#forge-result');
+    const resultItem = document.querySelector('#forge-result-item');
+    const costAmount = document.querySelector('#forge-cost-amount');
+    
+    resultContainer.style.display = 'block';
+    
+    let rx = /\.0+$|(\.[0-9]*[1-9])0+$/;
+    
+    resultItem.innerHTML = `
+        <div class="forged-equipment ${forgeResult.rarity}">
+            <h4 class="${forgeResult.rarity}">
+                ${forgeResult.icon}${typeof equipmentDisplayLabel === 'function' ? equipmentDisplayLabel(forgeResult) : equipmentLabel(forgeResult.rarity, forgeResult.category)}
+            </h4>
+            <h5 class="${forgeResult.rarity}">Lv.${forgeLevelRange.min}-${forgeLevelRange.max} ${t('tier')} ${forgeResult.tier}</h5>
+            <ul style="display:none">
+                ${forgeResult.stats.map(stat => {
+                    const statName = Object.keys(stat)[0];
+                    const statValue = stat[statName];
+                    if (["critRate", "critDmg", "atkSpd", "vamp", "dodge", "luck", "fasterRun"].includes(statName)) {
+                        return `<li>${statName.replace(/([A-Z])/g, ".$1").replace(/crit/g, "c").toUpperCase()}+${statValue.toFixed(2).replace(rx, "$1")}%</li>`;
+                    } else {
+                        return `<li>${statName.replace(/([A-Z])/g, ".$1").replace(/crit/g, "c").toUpperCase()}+${statValue}</li>`;
+                    }
+                }).join('')}
+            </ul>
+            <p class="forged-indicator">⚒️ ${t('forged-equipment')}</p>
+        </div>
+    `;
+    
+    costAmount.textContent = nFormatter(getForgeActionGoldCost(forgeCost));
+    
+    // Color cost based on affordability
+    const costElement = costAmount.parentElement;
+    if (canPayForgeAction(forgeCost)) {
+        costElement.style.color = '#4CAF50';
+    } else {
+        costElement.style.color = '#F44336';
+    }
+    updateForgeGold();
+};
+
+const applyRerolledEquipment = (equipment, rerolledEquipment) => {
+    equipment.stats = cloneEquipment(rerolledEquipment.stats);
+    if (rerolledEquipment.statRolls && typeof rerolledEquipment.statRolls === 'object') {
+        equipment.statRolls = cloneEquipment(rerolledEquipment.statRolls);
+    } else {
+        delete equipment.statRolls;
+    }
+    equipment.value = rerolledEquipment.value;
+    equipment.icon = rerolledEquipment.icon;
+};
+
+const showForgedResultPopup = (equipment) => {
+    if (!defaultModalElement || !equipment) {
+        return;
+    }
+
+    const icon = equipment.icon || equipmentIcon(equipment.baseCategory || equipment.category);
+    const totals = getEquipmentStatTotals(equipment);
+
+    defaultModalElement.style.zIndex = "3";
+    defaultModalElement.style.display = "flex";
+    defaultModalElement.innerHTML = `
+        <div class="content forged-result-modal">
+            <div class="content-head">
+                <h3><i class="ra ra-anvil"></i> <span data-i18n="combined-into">${t('combined-into')}</span></h3>
+                <p onclick="closeDefaultModal()" data-i18n-attr="aria-label:close" aria-label="${t('close')}"><i class="fa fa-xmark"></i></p>
+            </div>
+            <div class="forged-result-modal-body">
+                ${renderEquipmentCard({
+                    item: equipment,
+                    icon,
+                    totals,
+                    labelKey: 'forged-equipment',
+                    labelFallback: 'Forged Equipment'
+                })}
+                <button id="forged-result-close" type="button" data-i18n="close">${t('close')}</button>
+            </div>
+        </div>`;
+    applyTranslations(defaultModalElement);
+
+    const closeButton = document.querySelector('#forged-result-close');
+    if (closeButton) {
+        closeButton.onclick = closeDefaultModal;
+    }
+};
+
+const executeReroll = () => {
+    const hasStones = (typeof getRefineStoneCount === 'function' ? getRefineStoneCount() : 0) >= rerollStoneCost;
+    if (!selectedRerollItem || !canPayForgeAction(rerollCost) || !hasStones) {
+        sfxDeny.play();
+        return;
+    }
+
+    const paidRerollCost = rerollCost;
+    const paidRerollStoneCost = rerollStoneCost;
+    const lockedStatKeys = getValidRerollStatLockKeys(
+        selectedRerollItem.equipment,
+        selectedRerollStatLocks,
+    );
+    const rerolledEquipment = cloneEquipment(selectedRerollItem.equipment);
+    rerollEquipmentStats(rerolledEquipment, null, { lockedStatKeys });
+
+    let updated = false;
+    let updatedEquipment = null;
+    let updatedEquipmentStr = selectedRerollItem.equipmentStr;
+    let updatedSourceIndex = selectedRerollItem.sourceIndex;
+    if (selectedRerollItem.source === 'inventory') {
+        let itemIndex = Number.isInteger(selectedRerollItem.sourceIndex) ? selectedRerollItem.sourceIndex : -1;
+        if (itemIndex < 0 || player.inventory.equipment[itemIndex] !== selectedRerollItem.equipmentStr) {
+            itemIndex = player.inventory.equipment.indexOf(selectedRerollItem.equipmentStr);
+        }
+        if (itemIndex !== -1) {
+            const equipment = JSON.parse(player.inventory.equipment[itemIndex]);
+            applyRerolledEquipment(equipment, rerolledEquipment);
+            updatedEquipment = equipment;
+            updatedEquipmentStr = JSON.stringify(equipment);
+            updatedSourceIndex = itemIndex;
+            player.inventory.equipment[itemIndex] = updatedEquipmentStr;
+            updated = true;
+        }
+    } else if (selectedRerollItem.source === 'equipped') {
+        let itemIndex = Number.isInteger(selectedRerollItem.sourceIndex) ? selectedRerollItem.sourceIndex : -1;
+        if (itemIndex < 0 || player.equipped[itemIndex] !== selectedRerollItem.equipment) {
+            itemIndex = player.equipped.indexOf(selectedRerollItem.equipment);
+        }
+        if (itemIndex < 0) {
+            itemIndex = player.equipped.findIndex(eq => JSON.stringify(eq) === selectedRerollItem.equipmentStr);
+        }
+        if (itemIndex !== -1) {
+            applyRerolledEquipment(player.equipped[itemIndex], rerolledEquipment);
+            updatedEquipment = player.equipped[itemIndex];
+            updatedEquipmentStr = JSON.stringify(updatedEquipment);
+            updatedSourceIndex = itemIndex;
+            updated = true;
+        }
+    } else if (selectedRerollItem.source === 'companionCharm') {
+        const charm = typeof getEquippedCompanionCharm === 'function' ? getEquippedCompanionCharm() : null;
+        if (charm) {
+            applyRerolledEquipment(charm, rerolledEquipment);
+            updatedEquipment = charm;
+            updatedEquipmentStr = JSON.stringify(charm);
+            updatedSourceIndex = -1;
+            updated = true;
+        }
+    }
+
+    if (!updated) {
+        sfxDeny.play();
+        return;
+    }
+
+    selectedRerollItem = {
+        equipment: updatedEquipment,
+        equipmentStr: updatedEquipmentStr,
+        source: selectedRerollItem.source,
+        sourceIndex: updatedSourceIndex
+    };
+    payForForgeAction(paidRerollCost);
+    if (paidRerollStoneCost > 0) {
+        ensureRefineInventory();
+        player.inventory.refineStones -= paidRerollStoneCost;
+    }
+    saveData();
+    playerLoadStats();
+    if (typeof updateCompanionUI === 'function') {
+        updateCompanionUI();
+    }
+    sfxEquip.play();
+    calculateRerollPreview();
+    loadForgeEquipment();
+    updateForgeDisplay();
+};
+
+const applyRefinedEquipment = (equipment) => {
+    const currentLevel = typeof getEquipmentRefineLevel === 'function' ? getEquipmentRefineLevel(equipment) : 0;
+    const maxLevel = typeof getEquipmentRefineMaxLevel === 'function' ? getEquipmentRefineMaxLevel(equipment) : REFINE_MAX_LEVEL;
+    equipment.refineLevel = Math.min(maxLevel, currentLevel + 1);
+};
+
+const executeRefine = () => {
+    if (!selectedRefineItem || !canPayForgeAction(refineCost) || !hasRefineMaterials()) {
+        sfxDeny.play();
+        return;
+    }
+
+    let updatedEquipment = null;
+    let updatedSourceIndex = selectedRefineItem.sourceIndex;
+    if (selectedRefineItem.source === 'inventory') {
+        let itemIndex = Number.isInteger(selectedRefineItem.sourceIndex) ? selectedRefineItem.sourceIndex : -1;
+        if (itemIndex < 0 || player.inventory.equipment[itemIndex] !== selectedRefineItem.equipmentStr) {
+            itemIndex = player.inventory.equipment.indexOf(selectedRefineItem.equipmentStr);
+        }
+        if (itemIndex !== -1) {
+            const equipment = JSON.parse(player.inventory.equipment[itemIndex]);
+            applyRefinedEquipment(equipment);
+            player.inventory.equipment[itemIndex] = JSON.stringify(equipment);
+            updatedEquipment = equipment;
+            updatedSourceIndex = itemIndex;
+        }
+    } else if (selectedRefineItem.source === 'equipped') {
+        let itemIndex = Number.isInteger(selectedRefineItem.sourceIndex) ? selectedRefineItem.sourceIndex : -1;
+        if (itemIndex < 0 || player.equipped[itemIndex] !== selectedRefineItem.equipment) {
+            itemIndex = player.equipped.indexOf(selectedRefineItem.equipment);
+        }
+        if (itemIndex < 0) {
+            itemIndex = player.equipped.findIndex(eq => JSON.stringify(eq) === selectedRefineItem.equipmentStr);
+        }
+        if (itemIndex !== -1) {
+            applyRefinedEquipment(player.equipped[itemIndex]);
+            updatedEquipment = player.equipped[itemIndex];
+            updatedSourceIndex = itemIndex;
+        }
+    } else if (selectedRefineItem.source === 'companionCharm') {
+        const charm = typeof getEquippedCompanionCharm === 'function' ? getEquippedCompanionCharm() : null;
+        if (charm) {
+            applyRefinedEquipment(charm);
+            updatedEquipment = charm;
+            updatedSourceIndex = -1;
+        }
+    }
+
+    if (!updatedEquipment) {
+        sfxDeny.play();
+        return;
+    }
+
+    ensureRefineInventory();
+    payForForgeAction(refineCost);
+    player.inventory.refineStones -= refineStoneCost;
+    player.inventory.guardianCores -= refineCoreCost;
+    saveData();
+    playerLoadStats();
+    if (typeof updateCompanionUI === 'function') {
+        updateCompanionUI();
+    }
+    sfxEquip.play();
+    if (canRefineEquipment(updatedEquipment)) {
+        selectedRefineItem = {
+            equipment: updatedEquipment,
+            equipmentStr: JSON.stringify(updatedEquipment),
+            source: selectedRefineItem.source,
+            sourceIndex: updatedSourceIndex
+        };
+        calculateRefinePreview();
+    } else {
+        resetRefineState();
+    }
+    loadForgeEquipment();
+    updateForgeDisplay();
+};
+
+// Execute forging
+const executeForging = () => {
+    const hasTargetCategory = FORGE_CATEGORY_CONFIG.some(({ category }) => category === selectedForgeCategory);
+    if (!selectedForgeItems[0] || !selectedForgeItems[1] || !selectedForgeItems[2]
+        || !hasTargetCategory || !forgeResult || !canPayForgeAction(forgeCost)) {
+        sfxDeny.play();
+        return;
+    }
+    
+    const item1 = selectedForgeItems[0];
+    const item2 = selectedForgeItems[1];
+    const item3 = selectedForgeItems[2];
+
+    // Helper function to remove item from appropriate source
+    const removeItem = (item) => {
+        if (item.source === 'inventory') {
+            const itemIndex = player.inventory.equipment.indexOf(item.equipmentStr);
+            if (itemIndex !== -1) {
+                player.inventory.equipment.splice(itemIndex, 1);
+            }
+        } else if (item.source === 'equipped') {
+            // Prefer reference comparison to avoid JSON order issues
+            const equippedIndex = player.equipped.indexOf(item.equipment);
+            if (equippedIndex !== -1) {
+                player.equipped.splice(equippedIndex, 1);
+            } else {
+                // Fallback to string comparison in case reference changed
+                const altIndex = player.equipped.findIndex(eq =>
+                    JSON.stringify(eq) === item.equipmentStr
+                );
+                if (altIndex !== -1) {
+                    player.equipped.splice(altIndex, 1);
+                }
+            }
+        }
+    };
+
+    // Remove all items
+    removeItem(item1);
+    removeItem(item2);
+    removeItem(item3);
+
+    // Pay with one Forge Token when available, otherwise use gold.
+    payForForgeAction(forgeCost);
+    updateForgeGold();
+
+    // Validate forgeResult before adding to inventory
+    if (!forgeResult || typeof forgeResult !== 'object' || Array.isArray(forgeResult) || !forgeResult.category || !forgeResult.rarity || !forgeResult.stats) {
+        sfxDeny.play();
+        return;
+    }
+
+    const completedForgeResult = cloneEquipment(forgeResult);
+
+    // Add forged item to inventory or auto equip if slots are available
+    receiveEquipment(forgeResult);
+    sfxEquip.play();
+
+    // Clear consumed materials and the preview, keeping the target for another craft.
+    resetMergeState({ keepTargetCategory: true });
+    loadForgeEquipment();
+    updateForgeDisplay();
+    showForgedResultPopup(completedForgeResult);
+
+};

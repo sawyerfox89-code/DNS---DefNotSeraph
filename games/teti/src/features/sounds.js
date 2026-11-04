@@ -1,0 +1,120 @@
+import { SFXLIST as sfxobj } from "../data/sfxlist.js";
+import { songsobj } from "../data/data.js";
+import { Game } from "../main.js";
+
+export class Sounds {
+    sfx = {};
+    songs = [];
+    songNames = [];
+    curSongIdx = 0;
+    elSongProgress = document.getElementById("songProgress");
+    elSongText = document.getElementById("songText");
+
+    lowpassfilter;
+    audioContext;
+
+    /**
+     * 
+     * @param {string} audioName 
+     * Name of audio as specified in sfxlist.json
+     * @param {Boolean} replace
+     * If true, stops currently playing audio and starts new one
+     * If false, skips if audio is already playing
+     */
+    playSound(audioName, replace = true, silent = false) {
+        if (this.sfx[audioName] == undefined) { console.log(audioName + " not found"); return; }
+        this.sfx[audioName].muted = silent;
+        this.sfx[audioName].volume = Game.settings.volume.sfxLevel / 1000;
+        if (!replace && !this.sfx[audioName].ended && this.sfx[audioName].currentTime != 0) return;
+        this.sfx[audioName].currentTime = 0;
+        try {
+            this.sfx[audioName].play();
+        } catch (error) {()=>{}}
+    }
+
+    startSong() {
+        this.elSongText.textContent = `Now Playing ${this.songNames[this.curSongIdx]}`;
+        this.songs[this.curSongIdx].onended = () => {
+            this.endSong();
+            this.startSong();
+        };
+        this.songs[this.curSongIdx].volume = Game.settings.volume.audioLevel / 1000;
+        this.songs[this.curSongIdx].play();
+    }
+
+    endSong() {
+        this.songs[this.curSongIdx].pause();
+        this.songs[this.curSongIdx].currentTime = 0;
+        this.songs[this.curSongIdx].onended = () => { };
+        this.curSongIdx = (this.curSongIdx + 1) % this.songs.length;
+    }
+
+    pauseSong() {
+        if (this.songs[this.curSongIdx].paused) {
+            this.songs[this.curSongIdx].play();
+            this.elSongText.textContent = `Playing ${this.songNames[this.curSongIdx]}`;
+        } else {
+            this.songs[this.curSongIdx].pause();
+            this.elSongText.textContent = `Not Playing`;
+
+        }
+    }
+
+    addMenuSFX() {
+        let hoverSFX = (e) => {
+            document.querySelectorAll(e).forEach(el => (el.addEventListener("mouseenter", () => Game.sounds.playSound("menutap"))));
+        };
+        let clickSFX = (e) => {
+            document.querySelectorAll(e).forEach(el => (el.addEventListener("click", () => Game.sounds.playSound("menuclick"))));
+        };
+        hoverSFX(".settingRow");
+        hoverSFX(".closeDialogButton");
+        hoverSFX(".gamemodeSelect");
+        hoverSFX(".settingPanelButton");
+        clickSFX(".settingPanelButton");
+        clickSFX(".closeDialogButton");
+    }
+
+    initSounds() {
+        setInterval(() => {
+            if (this.songs[this.curSongIdx].currentTime == 0) return;
+            this.elSongProgress.value =
+                (this.songs[this.curSongIdx].currentTime * 100) / this.songs[this.curSongIdx].duration;
+        }, 2000);
+
+        // preload all sfx
+        sfxobj.forEach(file => {
+            const name = file.name.split(".")[0];
+            const a = new Audio(file.path);
+            this.sfx[name] = a;
+            // this.playSound(name, false, true);
+        })
+
+
+        this.audioContext = new window.AudioContext();
+        this.lowpassfilter = this.audioContext.createBiquadFilter();
+        this.lowpassfilter.type = "lowpass";
+        this.lowpassfilter.frequency.value = 20000;
+
+        songsobj.forEach(file => {
+            const songaudio = new Audio(file.path);
+            this.songs.push(songaudio);
+            this.songNames.push(file.name.split(".")[0]);
+
+            const track = this.audioContext.createMediaElementSource(songaudio);
+            track.connect(this.lowpassfilter);
+            this.lowpassfilter.connect(this.audioContext.destination);
+        })
+    }
+
+    setAudioLevel() {
+        this.songs[this.curSongIdx].volume = Number(Game.settings.volume.audioLevel) / 1000;
+    }
+
+    toggleSongMuffle(muffled) {
+        const currentTime = this.audioContext.currentTime;
+        this.lowpassfilter.frequency.cancelScheduledValues(currentTime);
+        this.lowpassfilter.frequency.setValueAtTime(this.lowpassfilter.frequency.value, currentTime);
+        this.lowpassfilter.frequency.exponentialRampToValueAtTime(muffled ? 300 : 20000, currentTime + 1);
+    }
+}

@@ -1,0 +1,2013 @@
+const combatPanel = document.querySelector("#combatPanel")
+
+// Corner combat HUD: floats the battle card over the dungeon so stats,
+// companion and the exploration log stay visible while fighting.
+const isCombatCornerHudEnabled = () =>
+    typeof combatCornerHudToggle !== 'undefined' && combatCornerHudToggle === true;
+
+const applyCombatHudLayout = () => {
+    const cornerHud = isCombatCornerHudEnabled();
+    if (combatPanel && combatPanel.classList) {
+        combatPanel.classList.toggle('combat-corner', cornerHud);
+    }
+    const dimDungeon = document.querySelector('#dungeon-main');
+    if (dimDungeon) {
+        // The corner card sits on the live dungeon; dimming it would gray out the view the card exists to keep readable.
+        dimDungeon.style.filter = cornerHud ? "brightness(100%)" : "brightness(50%)";
+    }
+    return cornerHud;
+};
+let enemyDead = false;
+let playerDead = false;
+let currentBattleMusic = false;
+
+let playerAttackTimeout;
+let enemyAttackTimeout;
+let companionAttackTimeout;
+let specialAbilityTimeout;
+let specialAbilityCooldown = false;
+let specialAbilityCooldownInterval = null;
+let specialAbilityQueued = false;
+let playerAttackReady = false;
+let autoAttackDelayTimeout = null;
+let combatPaused = false;
+let companionSpecialBuffTimeout = null;
+let companionSpecialBuffRevert = null;
+let scoutDodgeReady = false;
+let volatileDetonated = false;
+
+let enemyAttackDueAt = null;
+let playerAttackDueAt = null;
+let companionAttackDueAt = null;
+let specialAbilityDueAt = null;
+
+let enemyAttackRemaining = null;
+let playerAttackRemaining = null;
+let companionAttackRemaining = null;
+let specialAbilityRemaining = null;
+
+let combatTimer = null;
+let combatTimerWasRunning = false;
+
+let latestCombatLoot = null;
+let pendingRunSummary = null;
+let runSummaryReadyInCombat = false;
+
+const createRunSummary = (result = 'defeat') => ({
+    playerName: player && player.name ? String(player.name).trim() : '',
+    titleId: typeof getSelectedPlayerTitle === 'function' && getSelectedPlayerTitle()
+        ? getSelectedPlayerTitle().id : null,
+    level: player && typeof player.lvl === 'number' ? player.lvl : 1,
+    hardcore: !!(player && player.hardcore),
+    playerClass: player && player.selectedClass ? player.selectedClass : '',
+    playerPassive: player && player.selectedPassive ? player.selectedPassive : '',
+    curseLevel: (player && Number.isFinite(player.selectedCurseLevel)) ? Math.round(player.selectedCurseLevel) : null,
+    runtime: dungeon && dungeon.statistics ? dungeon.statistics.runtime : 0,
+    floor: dungeon && dungeon.progress ? dungeon.progress.floor : 1,
+    room: dungeon && dungeon.progress ? dungeon.progress.room : 1,
+    kills: dungeon && dungeon.statistics ? dungeon.statistics.kills : 0,
+    bossesDefeated: (dungeon && dungeon.statistics && Number.isFinite(dungeon.statistics.bossesDefeated))
+        ? dungeon.statistics.bossesDefeated
+        : 0,
+    damageDealt: dungeon && dungeon.statistics ? dungeon.statistics.damageDealt : 0,
+    damageTaken: dungeon && dungeon.statistics ? dungeon.statistics.damageTaken : 0,
+    goldEarned: dungeon && dungeon.statistics ? dungeon.statistics.goldEarned : 0,
+    refineStonesCollected: dungeon && dungeon.statistics ? dungeon.statistics.refineStonesCollected : 0,
+    guardianCoresCollected: dungeon && dungeon.statistics ? dungeon.statistics.guardianCoresCollected : 0,
+    lootDrops: (dungeon && dungeon.statistics && dungeon.statistics.lootDrops)
+        ? JSON.parse(JSON.stringify(dungeon.statistics.lootDrops))
+        : null,
+    curseLevelUnlocked: (dungeon && dungeon.statistics && Number.isFinite(dungeon.statistics.latestCurseUnlock))
+        ? Math.round(dungeon.statistics.latestCurseUnlock)
+        : null,
+    result,
+});
+
+const SPECIAL_ABILITY_TRANSLATIONS = {
+    Knight: 'special-ability-knight',
+    Paladin: 'special-ability-paladin',
+    Beastmaster: 'special-ability-beastmaster',
+    Scout: 'special-ability-scout',
+    Rogue: 'special-ability-rogue',
+};
+
+// ========== Status Effects ==========
+const OPEN_WOUNDS_BLEED_DURATION_SECONDS = 5;
+const OPEN_WOUNDS_BLEED_MAX_STACKS = 13;
+const OPEN_WOUNDS_BLEED_MAX_HP_PCT_PER_STACK_PER_SECOND = 0.004; // 0.4%
+const ROGUE_SPECIAL_BLEED_BONUS_PER_STACK = 0.05;
+
+const playerHasOpenWounds = () => {
+    if (!player) {
+        return false;
+    }
+    const passiveName = (typeof PASSIVE_OPEN_WOUNDS !== 'undefined') ? PASSIVE_OPEN_WOUNDS : 'Open Wounds';
+    return (Array.isArray(player.skills) && player.skills.includes(passiveName)) || player.selectedPassive === passiveName;
+};
+
+const ensureEnemyBleedState = () => {
+    if (!enemy) {
+        return null;
+    }
+    if (!enemy.bleed || typeof enemy.bleed !== 'object') {
+        enemy.bleed = { stacks: 0, remainingSeconds: 0 };
+    }
+    if (!Number.isFinite(enemy.bleed.stacks)) {
+        enemy.bleed.stacks = 0;
+    }
+    if (!Number.isFinite(enemy.bleed.remainingSeconds)) {
+        enemy.bleed.remainingSeconds = 0;
+    }
+    enemy.bleed.stacks = Math.max(0, Math.min(OPEN_WOUNDS_BLEED_MAX_STACKS, Math.round(enemy.bleed.stacks)));
+    enemy.bleed.remainingSeconds = Math.max(0, Math.round(enemy.bleed.remainingSeconds));
+    return enemy.bleed;
+};
+
+const applyOpenWoundsBleedOnHit = () => {
+    if (!playerHasOpenWounds()) {
+        return;
+    }
+    const bleed = ensureEnemyBleedState();
+    if (!bleed) {
+        return;
+    }
+    bleed.stacks = Math.min(OPEN_WOUNDS_BLEED_MAX_STACKS, bleed.stacks + 1);
+    bleed.remainingSeconds = OPEN_WOUNDS_BLEED_DURATION_SECONDS;
+};
+
+const tickEnemyBleed = () => {
+    if (!player || !player.inCombat || combatPaused || !enemy || !enemy.stats) {
+        return;
+    }
+    if (!enemy.bleed || typeof enemy.bleed !== 'object') {
+        return;
+    }
+    const bleed = ensureEnemyBleedState();
+    if (!bleed || bleed.stacks <= 0) {
+        return;
+    }
+    if (bleed.remainingSeconds <= 0) {
+        bleed.stacks = 0;
+        bleed.remainingSeconds = 0;
+        return;
+    }
+    if (!Number.isFinite(enemy.stats.hp) || enemy.stats.hp <= 0) {
+        bleed.remainingSeconds = 0;
+        return;
+    }
+
+    const hpMax = Math.max(1, Number(enemy.stats.hpMax) || 1);
+    const rawDamage = hpMax * OPEN_WOUNDS_BLEED_MAX_HP_PCT_PER_STACK_PER_SECOND * bleed.stacks;
+    const damage = Math.max(1, Math.round(rawDamage));
+    const applied = Math.min(enemy.stats.hp, damage);
+    enemy.stats.hp -= applied;
+    if (typeof recordRunDamageDealt === 'function') {
+        recordRunDamageDealt(applied);
+    }
+    bleed.remainingSeconds -= 1;
+
+    enemyLoadStats();
+    hpValidation();
+};
+
+// ========== Enemy affixes ==========
+const currentEnemyHasAffix = (id) => {
+    if (!enemy || typeof enemyHasAffix !== 'function') {
+        return false;
+    }
+    return enemyHasAffix(enemy.affixes, id);
+};
+
+const tickEnemyRegen = () => {
+    if (!player || !player.inCombat || combatPaused || !enemy || !enemy.stats) {
+        return;
+    }
+    if (!currentEnemyHasAffix('regenerating')) {
+        return;
+    }
+    const reserve = typeof ensureEnemyRegenerationReserve === 'function'
+        ? ensureEnemyRegenerationReserve(enemy)
+        : 0;
+    if (reserve <= 0) {
+        return;
+    }
+    if (!Number.isFinite(enemy.stats.hp) || enemy.stats.hp <= 0) {
+        return;
+    }
+    if (enemy.stats.hp >= enemy.stats.hpMax) {
+        return;
+    }
+
+    const hpMax = Math.max(1, Number(enemy.stats.hpMax) || 1);
+    const healAmount = Math.max(1, Math.round(hpMax * AFFIX_REGEN_HP_PCT_PER_SECOND));
+    const healed = Math.min(healAmount, hpMax - enemy.stats.hp, reserve);
+    enemy.stats.hp += healed;
+    enemy.regenerationReserve -= healed;
+    enemyLoadStats();
+};
+
+const applyThornsReflect = (damageDealt) => {
+    if (!player || !player.stats || !currentEnemyHasAffix('thorned')) {
+        return 0;
+    }
+    if (!Number.isFinite(damageDealt) || damageDealt <= 0) {
+        return 0;
+    }
+    const reflected = Math.max(1, Math.round(damageDealt * AFFIX_THORNS_REFLECT_PCT));
+    player.stats.hp -= reflected;
+    if (typeof recordRunDamageTaken === 'function') {
+        recordRunDamageTaken(reflected);
+    }
+    addCombatLog(t('enemy-thorns-damage', {
+        enemy: getDisplayEnemyName(enemy.id, enemy.name),
+        value: nFormatter(reflected)
+    }));
+    return reflected;
+};
+
+// Detonates before the death/loot path so a Volatile enemy can legitimately trade kills.
+const applyVolatileDeath = () => {
+    if (!player || !player.stats || !currentEnemyHasAffix('volatile')) {
+        return 0;
+    }
+    if (volatileDetonated) {
+        return 0;
+    }
+    volatileDetonated = true;
+    const damage = Math.max(1, Math.round(player.stats.hpMax * AFFIX_VOLATILE_PLAYER_HP_PCT));
+    player.stats.hp -= damage;
+    if (typeof recordRunDamageTaken === 'function') {
+        recordRunDamageTaken(damage);
+    }
+    addCombatLog(t('enemy-volatile-death', {
+        enemy: getDisplayEnemyName(enemy.id, enemy.name),
+        value: nFormatter(damage)
+    }));
+    playerLoadStats();
+    return damage;
+};
+
+// ========== Boss phases ==========
+const BOSS_PHASE_THRESHOLDS = { guardian: [0.5], sboss: [0.5, 0.25] };
+const BOSS_PHASE_ATK_MULT = 1.20;
+const BOSS_PHASE_ATKSPD_MULT = 1.15;
+const BOSS_PHASE_ATKSPD_CAP = 2.75;
+
+const ensureEnemyPhaseState = () => {
+    if (!enemy || typeof enemy !== 'object') {
+        return null;
+    }
+    if (!enemy.phase || typeof enemy.phase !== 'object') {
+        enemy.phase = { index: 0 };
+    }
+    if (!Number.isFinite(enemy.phase.index) || enemy.phase.index < 0) {
+        enemy.phase.index = 0;
+    }
+    return enemy.phase;
+};
+
+// Crossing several thresholds in one hit still only grants one enrage per threshold.
+const checkBossPhase = () => {
+    if (!enemy || !enemy.stats || !player || !player.inCombat) {
+        return;
+    }
+    const thresholds = BOSS_PHASE_THRESHOLDS[enemy.condition];
+    if (!thresholds) {
+        return;
+    }
+    const phase = ensureEnemyPhaseState();
+    if (!phase || phase.index >= thresholds.length) {
+        return;
+    }
+    const hpMax = Math.max(1, Number(enemy.stats.hpMax) || 1);
+    const hpPercent = enemy.stats.hp / hpMax;
+    if (enemy.stats.hp <= 0 || hpPercent > thresholds[phase.index]) {
+        return;
+    }
+
+    while (phase.index < thresholds.length && hpPercent <= thresholds[phase.index]) {
+        enemy.stats.atk = Math.round(enemy.stats.atk * BOSS_PHASE_ATK_MULT);
+        enemy.stats.atkSpd = Math.min(BOSS_PHASE_ATKSPD_CAP, enemy.stats.atkSpd * BOSS_PHASE_ATKSPD_MULT);
+        phase.index += 1;
+    }
+
+    if (typeof sfxBuff !== 'undefined' && sfxBuff && typeof sfxBuff.play === 'function') {
+        sfxBuff.play();
+    }
+    addCombatLog(`<span class="crit-enemy">${t('enemy-boss-enrage', {
+        enemy: getDisplayEnemyName(enemy.id, enemy.name)
+    })}</span>`);
+};
+
+const nowMs = () => {    if (typeof performance !== "undefined" && typeof performance.now === "function") {
+        return performance.now();
+    }
+    return Date.now();
+};
+
+const getPlayerAttackButton = () => document.querySelector('#player-attack-btn');
+
+const ENEMY_FIRST_ATTACK_DELAY = 200;
+
+const getEnemyAttackDelay = () => {
+    const atkSpd = enemy && enemy.stats ? enemy.stats.atkSpd : 1;
+    const normalized = Math.max(atkSpd || 0, 0.1);
+    return 1000 / normalized;
+};
+
+const getCompanionAttackDelay = () => {
+    const combatStats = typeof getCompanionCombatStats === 'function'
+        ? getCompanionCombatStats(activeCompanion)
+        : null;
+    const atkSpd = combatStats && combatStats.atkSpd ? combatStats.atkSpd : 1;
+    const normalized = Math.max(atkSpd || 0, 0.1);
+    return 1000 / normalized;
+};
+
+const clearCompanionSpecialBuff = () => {
+    if (companionSpecialBuffTimeout) {
+        clearTimeout(companionSpecialBuffTimeout);
+        companionSpecialBuffTimeout = null;
+    }
+    if (typeof companionSpecialBuffRevert === 'function') {
+        companionSpecialBuffRevert();
+        companionSpecialBuffRevert = null;
+    }
+};
+
+const applyCompanionSpecialBuff = (durationMs = 5000) => {
+    if (!activeCompanion || !activeCompanion.isActive) {
+        return false;
+    }
+
+    clearCompanionSpecialBuff();
+    if (typeof setActiveCompanionCombatModifiers === 'function') {
+        setActiveCompanionCombatModifiers({
+            atkMultiplier: 1.5,
+            atkSpdMultiplier: 1.5,
+        });
+    }
+
+    companionSpecialBuffRevert = () => {
+        if (typeof resetActiveCompanionCombatModifiers === 'function') {
+            resetActiveCompanionCombatModifiers();
+            updateCompanionUI();
+        }
+        companionSpecialBuffRevert = null;
+    };
+
+    companionSpecialBuffTimeout = setTimeout(() => {
+        clearCompanionSpecialBuff();
+    }, durationMs);
+
+    scheduleCompanionAttack();
+    return true;
+};
+
+const clearAutoAttackDelay = () => {
+    if (autoAttackDelayTimeout !== null) {
+        clearTimeout(autoAttackDelayTimeout);
+        autoAttackDelayTimeout = null;
+    }
+};
+
+const scheduleEnemyAttack = (delayOverride) => {
+    if (!player || !player.inCombat) {
+        return;
+    }
+    const baseDelay = typeof delayOverride === "number" ? Math.max(0, delayOverride) : getEnemyAttackDelay();
+    enemyAttackDueAt = nowMs() + baseDelay;
+    if (enemyAttackTimeout) {
+        clearTimeout(enemyAttackTimeout);
+    }
+    enemyAttackTimeout = setTimeout(() => {
+        enemyAttackTimeout = null;
+        enemyAttackDueAt = null;
+        if (!player || !player.inCombat) {
+            return;
+        }
+        if (combatPaused) {
+            enemyAttackRemaining = 0;
+            return;
+        }
+        enemyAttack();
+    }, baseDelay);
+};
+
+const scheduleCompanionAttack = (delayOverride) => {
+    if (!player || !player.inCombat || !activeCompanion || !activeCompanion.isActive) {
+        return;
+    }
+    const baseDelay = typeof delayOverride === "number" ? Math.max(0, delayOverride) : getCompanionAttackDelay();
+    companionAttackDueAt = nowMs() + baseDelay;
+    if (companionAttackTimeout) {
+        clearTimeout(companionAttackTimeout);
+    }
+    companionAttackTimeout = setTimeout(() => {
+        companionAttackTimeout = null;
+        companionAttackDueAt = null;
+        if (!player || !player.inCombat) {
+            return;
+        }
+        if (combatPaused) {
+            companionAttackRemaining = 0;
+            return;
+        }
+        companionAttack();
+    }, baseDelay);
+};
+
+const scheduleSpecialAbilityReset = (delayOverride = 10000) => {
+    const baseDelay = typeof delayOverride === "number" ? Math.max(0, delayOverride) : 10000;
+    specialAbilityDueAt = nowMs() + baseDelay;
+    if (specialAbilityTimeout) {
+        clearTimeout(specialAbilityTimeout);
+    }
+    startSpecialAbilityCooldownTicker();
+    specialAbilityTimeout = setTimeout(() => {
+        specialAbilityTimeout = null;
+        specialAbilityDueAt = null;
+        if (combatPaused) {
+            specialAbilityRemaining = 0;
+            stopSpecialAbilityCooldownTicker();
+            updateSpecialAbilityCooldownDisplay();
+            return;
+        }
+        specialAbilityCooldown = false;
+        updateSpecialAbilityButtonState();
+        stopSpecialAbilityCooldownTicker();
+        updateSpecialAbilityCooldownDisplay();
+    }, baseDelay);
+};
+
+const pauseCombatTimers = () => {
+    if (combatPaused) {
+        return;
+    }
+    if (!player || !player.inCombat) {
+        return;
+    }
+    combatPaused = true;
+    const current = nowMs();
+
+    if (enemyAttackTimeout) {
+        enemyAttackRemaining = Math.max(0, (enemyAttackDueAt || current) - current);
+        clearTimeout(enemyAttackTimeout);
+        enemyAttackTimeout = null;
+    } else {
+        enemyAttackRemaining = null;
+    }
+    enemyAttackDueAt = null;
+
+    if (companionAttackTimeout) {
+        companionAttackRemaining = Math.max(0, (companionAttackDueAt || current) - current);
+        clearTimeout(companionAttackTimeout);
+        companionAttackTimeout = null;
+    } else {
+        companionAttackRemaining = null;
+    }
+    companionAttackDueAt = null;
+
+    if (playerAttackTimeout && !playerAttackReady) {
+        playerAttackRemaining = Math.max(0, (playerAttackDueAt || current) - current);
+    } else {
+        playerAttackRemaining = null;
+    }
+    if (playerAttackTimeout) {
+        clearTimeout(playerAttackTimeout);
+        playerAttackTimeout = null;
+    }
+    playerAttackDueAt = null;
+
+    if (specialAbilityTimeout && specialAbilityCooldown) {
+        specialAbilityRemaining = Math.max(0, (specialAbilityDueAt || current) - current);
+    } else {
+        specialAbilityRemaining = null;
+    }
+    if (specialAbilityTimeout) {
+        clearTimeout(specialAbilityTimeout);
+        specialAbilityTimeout = null;
+    }
+    specialAbilityDueAt = null;
+
+    if (combatTimer) {
+        clearInterval(combatTimer);
+        combatTimer = null;
+        combatTimerWasRunning = true;
+    } else {
+        combatTimerWasRunning = false;
+    }
+
+    clearAutoAttackDelay();
+    stopSpecialAbilityCooldownTicker();
+    updateSpecialAbilityCooldownDisplay();
+};
+
+const resumeCombatTimers = () => {
+    if (!combatPaused) {
+        return;
+    }
+    if (!player || !player.inCombat) {
+        combatPaused = false;
+        enemyAttackRemaining = null;
+        companionAttackRemaining = null;
+        playerAttackRemaining = null;
+        specialAbilityRemaining = null;
+        stopSpecialAbilityCooldownTicker();
+        updateSpecialAbilityCooldownDisplay();
+        return;
+    }
+    combatPaused = false;
+
+    if (combatTimerWasRunning) {
+        combatTimer = setInterval(combatCounter, 1000);
+        combatTimerWasRunning = false;
+    }
+
+    if (enemyAttackRemaining !== null) {
+        scheduleEnemyAttack(enemyAttackRemaining);
+    } else if (!enemyAttackTimeout) {
+        scheduleEnemyAttack();
+    }
+    enemyAttackRemaining = null;
+
+    if (activeCompanion && activeCompanion.isActive) {
+        if (companionAttackRemaining !== null) {
+            scheduleCompanionAttack(companionAttackRemaining);
+        } else if (!companionAttackTimeout) {
+            scheduleCompanionAttack();
+        }
+    }
+    companionAttackRemaining = null;
+
+    if (!playerAttackReady) {
+        if (playerAttackRemaining !== null) {
+            schedulePlayerAttackCooldown(playerAttackRemaining);
+        } else if (!playerAttackTimeout) {
+            schedulePlayerAttackCooldown();
+        }
+    }
+    playerAttackRemaining = null;
+
+    if (specialAbilityCooldown) {
+        if (specialAbilityRemaining !== null) {
+            scheduleSpecialAbilityReset(specialAbilityRemaining);
+        } else if (!specialAbilityTimeout) {
+            scheduleSpecialAbilityReset();
+        }
+    }
+    specialAbilityRemaining = null;
+
+    updateAttackButtonState();
+    updateSpecialAbilityButtonState();
+    if (playerAttackReady) {
+        maybeAutoAttack();
+    }
+};
+
+const updateAttackButtonState = () => {
+    const btn = getPlayerAttackButton();
+    if (!btn) {
+        return;
+    }
+
+    if (!player || !player.inCombat) {
+        btn.disabled = true;
+        btn.textContent = t('attack');
+        btn.setAttribute('data-i18n', 'attack');
+        return;
+    }
+
+    if (playerAttackReady) {
+        btn.disabled = false;
+        btn.textContent = t('attack');
+        btn.setAttribute('data-i18n', 'attack');
+    } else {
+        btn.disabled = true;
+        btn.textContent = t('cooling');
+        btn.setAttribute('data-i18n', 'cooling');
+    }
+};
+
+const stopSpecialAbilityCooldownTicker = () => {
+    if (specialAbilityCooldownInterval) {
+        clearInterval(specialAbilityCooldownInterval);
+        specialAbilityCooldownInterval = null;
+    }
+};
+
+const updateSpecialAbilityCooldownDisplay = () => {
+    const btn = document.querySelector('#special-ability-btn');
+    if (!btn) {
+        return;
+    }
+
+    const showDefaultLabel = () => {
+        applySpecialAbilityLabel(btn);
+    };
+
+    if (!player || !player.inCombat) {
+        showDefaultLabel();
+        return;
+    }
+
+    if (specialAbilityQueued && !specialAbilityCooldown) {
+        const baseLabel = t(getSpecialAbilityTranslationKey());
+        const queuedLabel = t('special-ability-queued');
+        btn.textContent = `${baseLabel} (${queuedLabel})`;
+        btn.setAttribute('aria-label', `${baseLabel}: ${queuedLabel}`);
+        btn.removeAttribute('data-i18n');
+        return;
+    }
+
+    if (!specialAbilityCooldown) {
+        showDefaultLabel();
+        return;
+    }
+
+    let remainingMs = 0;
+    if (specialAbilityDueAt) {
+        remainingMs = Math.max(0, specialAbilityDueAt - nowMs());
+    } else if (specialAbilityRemaining !== null) {
+        remainingMs = Math.max(0, specialAbilityRemaining);
+    }
+
+    const seconds = Math.max(0, Math.ceil(remainingMs / 1000));
+    const baseLabel = t(getSpecialAbilityTranslationKey());
+    btn.textContent = `${baseLabel} (${seconds}s)`;
+    btn.setAttribute('aria-label', btn.textContent);
+    btn.removeAttribute('data-i18n');
+};
+
+const startSpecialAbilityCooldownTicker = () => {
+    stopSpecialAbilityCooldownTicker();
+    if (!specialAbilityCooldown) {
+        updateSpecialAbilityCooldownDisplay();
+        return;
+    }
+    updateSpecialAbilityCooldownDisplay();
+    specialAbilityCooldownInterval = setInterval(() => {
+        if (!specialAbilityCooldown) {
+            stopSpecialAbilityCooldownTicker();
+            updateSpecialAbilityCooldownDisplay();
+            return;
+        }
+        updateSpecialAbilityCooldownDisplay();
+    }, 200);
+};
+
+const updateSpecialAbilityButtonState = () => {
+    const btn = document.querySelector('#special-ability-btn');
+    if (!btn) {
+        return;
+    }
+
+    applySpecialAbilityLabel(btn);
+    btn.title = '';
+    const inCombat = Boolean(player && player.inCombat);
+    const isQueued = inCombat && specialAbilityQueued && !specialAbilityCooldown;
+    const isReady = inCombat && !combatPaused && !specialAbilityCooldown && !isQueued;
+    btn.classList.toggle('is-ready', isReady);
+    btn.classList.toggle('is-queued', isQueued);
+    btn.classList.toggle('is-cooldown', inCombat && specialAbilityCooldown);
+
+    if (!inCombat || combatPaused) {
+        btn.disabled = true;
+        updateSpecialAbilityCooldownDisplay();
+        return;
+    }
+
+    if (specialAbilityCooldown) {
+        btn.disabled = true;
+        btn.title = t('cooling');
+        updateSpecialAbilityCooldownDisplay();
+        return;
+    }
+
+    btn.disabled = false;
+    if (isQueued) {
+        btn.title = t('special-ability-queued');
+    }
+    updateSpecialAbilityCooldownDisplay();
+};
+
+const getPlayerAttackCooldown = () => {
+    const atkSpd = player && player.stats ? player.stats.atkSpd : 1;
+    const normalized = Math.max(atkSpd || 0, 0.1);
+    return 1000 / normalized;
+};
+
+const getSpecialAbilityTranslationKey = () => {
+    if (!player || !player.selectedClass) {
+        return 'special-ability';
+    }
+    const key = SPECIAL_ABILITY_TRANSLATIONS[player.selectedClass];
+    return key || 'special-ability';
+};
+
+const applySpecialAbilityLabel = (btn) => {
+    const translationKey = getSpecialAbilityTranslationKey();
+    const label = t(translationKey);
+    btn.textContent = label;
+    btn.setAttribute('aria-label', label);
+    btn.setAttribute('data-i18n', translationKey);
+};
+
+const setPlayerAttackReady = (ready) => {
+    if (!ready) {
+        clearAutoAttackDelay();
+    }
+    playerAttackReady = !!ready;
+    updateAttackButtonState();
+    updateSpecialAbilityButtonState();
+    if (playerAttackReady) {
+        if (specialAbilityQueued) {
+            useSpecialAbility();
+            return;
+        }
+        maybeAutoAttack();
+    }
+};
+
+const schedulePlayerAttackCooldown = (delayOverride) => {
+    if (playerAttackTimeout) {
+        clearTimeout(playerAttackTimeout);
+        playerAttackTimeout = null;
+    }
+    if (!player || !player.inCombat) {
+        setPlayerAttackReady(false);
+        return;
+    }
+
+    const cooldown = typeof delayOverride === "number" ? Math.max(0, delayOverride) : getPlayerAttackCooldown();
+    playerAttackDueAt = nowMs() + cooldown;
+    playerAttackTimeout = setTimeout(() => {
+        playerAttackTimeout = null;
+        playerAttackDueAt = null;
+        if (!player || !player.inCombat) {
+            setPlayerAttackReady(false);
+            return;
+        }
+        if (combatPaused) {
+            playerAttackRemaining = 0;
+            return;
+        }
+        setPlayerAttackReady(true);
+    }, cooldown);
+};
+
+const maybeAutoAttack = () => {
+    if (!playerAttackReady) {
+        return;
+    }
+    if (!player || !player.inCombat) {
+        return;
+    }
+    if (combatPaused) {
+        return;
+    }
+    if (specialAbilityQueued && !specialAbilityCooldown) {
+        useSpecialAbility();
+        return;
+    }
+
+    if (typeof autoMode !== 'undefined' && autoMode) {
+        if (!specialAbilityCooldown && shouldAutoUseSpecialAbility()) {
+            autoAttackDelayTimeout = setTimeout(() => {
+                autoAttackDelayTimeout = null;
+                if (typeof autoMode !== 'undefined' && autoMode && shouldAutoUseSpecialAbility()) {
+                    useSpecialAbility();
+                } else {
+                    maybeAutoAttack();
+                }
+            }, 200);
+        }
+    }
+
+    const autoAttackEnabled = typeof autoAttack !== 'undefined' ? autoAttack : false;
+    if (!autoAttackEnabled) {
+        return;
+    }
+    if (autoAttackDelayTimeout !== null) {
+        return;
+    }
+    autoAttackDelayTimeout = setTimeout(() => {
+        autoAttackDelayTimeout = null;
+        if (!playerAttackReady) {
+            return;
+        }
+        if (!player || !player.inCombat) {
+            return;
+        }
+        if (combatPaused) {
+            return;
+        }
+        if (typeof autoAttack !== 'undefined' && autoAttack) {
+            playerAttack();
+        }
+    }, 200);
+};
+
+if (typeof window !== 'undefined') {
+    window.maybeAutoAttack = maybeAutoAttack;
+}
+// ========== Validation ==========
+const resolvePlayerDeath = () => {
+    player.stats.hp = 0;
+    playerDead = true;
+    player.deaths++;
+    pendingRunSummary = createRunSummary('defeat');
+    if (player.hardcore) {
+        addCombatLog(t('you-died-hardcore'));
+    } else {
+        addCombatLog(t('you-died-softcore'));
+    }
+    endCombat();
+};
+
+const hpValidation = () => {
+    const deathMessage = player.hardcore
+        ? "Hardcore mode: you lose all <b>inventory</b> and <b>gold</b>."
+        : "You keep your <b>inventory</b> and <b>gold</b>.";
+    // Prioritizes player death before the enemy
+    if (player.stats.hp < 1) {
+        resolvePlayerDeath();
+    } else if (enemy.stats.hp < 1) {
+        // Gives out all the reward and show the claim button
+        enemy.stats.hp = 0;
+        applyVolatileDeath();
+        if (player.stats.hp < 1) {
+            resolvePlayerDeath();
+            return;
+        }
+        enemyDead = true;
+        latestCombatLoot = null;
+        player.kills++;
+        let bestiaryKillResult = null;
+        if (typeof recordBestiaryKill === 'function') {
+            bestiaryKillResult = recordBestiaryKill(enemy.id);
+        }
+        dungeon.statistics.kills++;
+        if (bestiaryKillResult && bestiaryKillResult.damageUnlockUnlocked) {
+            const damageBonus = typeof getEnemyDamageUnlockPercent === 'function' ? getEnemyDamageUnlockPercent(enemy.id) : 1;
+            addCombatLog(t('enemy-damage-unlock', { enemy: getDisplayEnemyName(enemy.id, enemy.name), value: damageBonus }));
+        }
+        if (enemy && (enemy.condition === 'guardian' || enemy.condition === 'sboss')) {
+            if (typeof recordRunBossDefeat === 'function') {
+                recordRunBossDefeat();
+            } else if (dungeon && dungeon.statistics) {
+                if (!Number.isFinite(dungeon.statistics.bossesDefeated)) {
+                    dungeon.statistics.bossesDefeated = 0;
+                }
+                dungeon.statistics.bossesDefeated += 1;
+            }
+        }
+        const timeStamp = new Date(combatSeconds * 1000).toISOString().substring(14, 19);
+        const goldReward = applyForgeMembershipGoldBonus(enemy.rewards.gold);
+        addCombatLog(t('enemy-defeated-reward', { enemy: getDisplayEnemyName(enemy.id, enemy.name), exp: nFormatter(enemy.rewards.exp), gold: nFormatter(goldReward), time: timeStamp }));
+        playerExpGain();
+        if (activeCompanion && activeCompanion.isActive) {
+            const companionExpReward = (enemy.rewards.exp / 10) * (typeof getCompanionExperienceMultiplier === 'function'
+                ? getCompanionExperienceMultiplier()
+                : 1);
+            activeCompanion.gainExperience(companionExpReward);
+        }
+        player.gold += goldReward;
+        if (typeof recordRunGoldEarned === 'function') {
+            recordRunGoldEarned(goldReward);
+        }
+        playerLoadStats();
+        if (enemy.rewards.drop) {
+            const lootOptions = enemy.condition === 'sboss'
+                ? { minRarity: 'Heirloom' }
+                : {};
+            const lootDetails = createEquipmentPrint("combat", lootOptions);
+            if (lootDetails && lootDetails.item) {
+                if (!lootDetails.autoSold) {
+                    latestCombatLoot = {
+                        item: lootDetails.item,
+                        placement: lootDetails.placement,
+                        index: lootDetails.index,
+                        serialized: lootDetails.serialized
+                    };
+                } else {
+                    latestCombatLoot = null;
+                }
+                updateCombatLog();
+            }
+        }
+        if (typeof rollRefineStoneDrop === 'function') {
+            rollRefineStoneDrop('combat');
+        }
+        if (enemy.condition === 'guardian' && typeof grantGuardianCoreDrop === 'function') {
+            grantGuardianCoreDrop(dungeon.progress.floor);
+        }
+        if (enemy.condition === 'sboss') {
+            grantMonarchDepthRewards();
+        }
+
+        // Recover 20% of players health
+        player.stats.hp += Math.round((player.stats.hpMax * 20) / 100);
+        playerLoadStats();
+
+        const defeatedSpecialBoss = enemy && enemy.condition === 'sboss';
+
+        // Close the battle panel
+        endCombat();
+        if (defeatedSpecialBoss) {
+            handleSpecialBossVictory();
+            return;
+        }
+        if (typeof syncPlayerTitleUnlocks === 'function') {
+            syncPlayerTitleUnlocks({ announce: true, log: addCombatLog });
+        }
+        bindClaimButton();
+        autoClaim();
+    } else {
+        checkBossPhase();
+    }
+}
+
+// ========== Attack Functions ==========
+const playerAttack = () => {
+    if (!player.inCombat || !playerAttackReady || combatPaused) {
+        return;
+    }
+    setPlayerAttackReady(false);
+    if (playerAttackTimeout) {
+        clearTimeout(playerAttackTimeout);
+        playerAttackTimeout = null;
+        playerAttackDueAt = null;
+    }
+    if (player.inCombat) {
+        sfxAttack.play();
+    }
+
+    // Calculates the damage and attacks the enemy
+    let crit;
+    let damage = player.stats.atk * (player.stats.atk / (player.stats.atk + enemy.stats.def));
+    // Randomizes the damage by 90% - 110%
+    let dmgRange = 0.9 + Math.random() * 0.2;
+    damage = damage * dmgRange;
+    // Check if the attack is a critical hit
+    if (Math.floor(Math.random() * 100) < player.stats.critRate) {
+        crit = true;
+        dmgtype = t('crit-damage');
+        damage = Math.round(damage * (1 + (player.stats.critDmg / 100)));
+    } else {
+        crit = false;
+        dmgtype = t('damage');
+        damage = Math.round(damage);
+    }
+
+    // Skill effects
+    objectValidation();
+    if (player.skills.includes("Remnant Razor")) {
+        // Attacks deal extra 9% of enemies' current health on hit
+        damage += Math.round((9 * enemy.stats.hp) / 100);
+    }
+    if (player.skills.includes("Titan's Will")) {
+        // Attacks deal extra 4.5% of your maximum health on hit
+        damage += Math.round((4.5 * player.stats.hpMax) / 100);
+    }
+    if (player.skills.includes("Devastator")) {
+        // Deal 30% more damage but you lose 30% base attack speed
+        damage = Math.round(damage + ((30 * damage) / 100));
+    }
+    if (typeof applyEnemyDamageUnlock === 'function') {
+        damage = applyEnemyDamageUnlock(enemy.id, damage);
+    }
+
+    // Lifesteal formula
+    let lifesteal = Math.round(damage * (player.stats.vamp / 100));
+
+    // Enemy dodge chance
+    let dodged = false;
+    if (Math.random() < enemy.stats.dodge / 100) {
+        addCombatLog(t('dodged-attack-enemy', { enemy: getDisplayEnemyName(enemy.id, enemy.name) }));
+        damage = 0;
+        lifesteal = 0;
+        dodged = true;
+    }
+
+    if (!dodged) {
+        applyOpenWoundsBleedOnHit();
+    }
+
+    // Apply the calculations to combat
+    enemy.stats.hp -= damage;
+    if (typeof recordRunDamageDealt === 'function') {
+        recordRunDamageDealt(damage);
+    }
+    player.stats.hp += lifesteal;
+    if (!dodged) {
+        const lifestealText = lifesteal > 0 ? t('player-vamp-heal', { value: nFormatter(lifesteal) }) : '';
+        let logMsg = t('player-attack-hit', {
+            player: player.name,
+            enemy: getDisplayEnemyName(enemy.id, enemy.name),
+            value: nFormatter(damage),
+            type: dmgtype,
+            lifesteal: lifestealText
+        });
+        if (crit) {
+            logMsg = `<span class="crit-player">${logMsg}</span>`;
+        }
+        addCombatLog(logMsg);
+    }
+    if (!dodged && damage > 0) {
+        applyThornsReflect(damage);
+    }
+    hpValidation();
+    playerLoadStats();
+    enemyLoadStats();
+
+    // Damage effect
+    let enemySprite = document.querySelector("#enemy-sprite");
+    enemySprite.classList.add("animation-shake");
+    setTimeout(() => {
+        enemySprite.classList.remove("animation-shake");
+    }, 200);
+
+    // Damage numbers
+    const dmgContainer = document.querySelector("#dmg-container");
+    const dmgNumber = document.createElement("p");
+    dmgNumber.classList.add("dmg-numbers");
+    if (crit) {
+        dmgNumber.style.color = "gold";
+        dmgNumber.innerHTML = nFormatter(damage) + "!";
+    } else {
+        dmgNumber.innerHTML = nFormatter(damage);
+    }
+    dmgContainer.appendChild(dmgNumber);
+    setTimeout(() => {
+        dmgContainer.removeChild(dmgContainer.lastElementChild);
+    }, 370);
+
+    // Attack cooldown timer
+    if (player.inCombat) {
+        schedulePlayerAttackCooldown();
+    }
+}
+
+// Companion Attack
+const companionAttack = () => {
+    if (!player.inCombat || combatPaused) {
+        return;
+    }
+    if (player.inCombat) {
+        sfxAttack.play();
+    }
+
+    // Calculates the damage and attacks the enemy
+    let crit;
+    const combatStats = typeof getCompanionCombatStats === 'function'
+        ? getCompanionCombatStats(activeCompanion)
+        : {
+            atk: activeCompanion.atk,
+            atkSpd: activeCompanion.atkSpd,
+            critRate: activeCompanion.critRate,
+            critDmg: activeCompanion.critDmg,
+        };
+    let damage = combatStats.atk * (combatStats.atk / (combatStats.atk + enemy.stats.def));
+    // Randomizes the damage by 90% - 110%
+    let dmgRange = 0.9 + Math.random() * 0.2;
+    damage = damage * dmgRange;
+    // Check if the attack is a critical hit
+    if (Math.floor(Math.random() * 100) < combatStats.critRate) {
+        crit = true;
+        dmgtype = t('crit-damage');
+        damage = Math.round(damage * (1 + (combatStats.critDmg / 100)));
+    } else {
+        crit = false;
+        dmgtype = t('damage');
+        damage = Math.round(damage);
+    }
+
+    // Enemy dodge chance
+    let dodged = false;
+    if (Math.random() < enemy.stats.dodge / 100) {
+        addCombatLog(t('dodged-attack-companion', { enemy: getDisplayEnemyName(enemy.id, enemy.name), companion: activeCompanion.name }));
+        damage = 0;
+        dodged = true;
+    }
+
+    // Apply the calculations to combat
+    enemy.stats.hp -= damage;
+    if (typeof recordRunDamageDealt === 'function') {
+        recordRunDamageDealt(damage);
+    }
+    if (!dodged) {
+        let logMsg = t('companion-attack-hit', { companion: activeCompanion.name, enemy: getDisplayEnemyName(enemy.id, enemy.name), value: nFormatter(damage), type: dmgtype });
+        if (crit) {
+            logMsg = `<span class="crit-player">${logMsg}</span>`;
+        }
+        addCombatLog(logMsg);
+    }
+    hpValidation();
+    playerLoadStats();
+    enemyLoadStats();
+
+    // Damage effect
+    let enemySprite = document.querySelector("#enemy-sprite");
+    enemySprite.classList.add("animation-shake");
+    setTimeout(() => {
+        enemySprite.classList.remove("animation-shake");
+    }, 200);
+
+    // Damage numbers
+    const dmgContainer = document.querySelector("#dmg-container");
+    const dmgNumber = document.createElement("p");
+    dmgNumber.classList.add("dmg-numbers");
+    if (crit) {
+        dmgNumber.style.color = "gold";
+        dmgNumber.innerHTML = nFormatter(damage) + "!";
+    } else {
+        dmgNumber.innerHTML = nFormatter(damage);
+    }
+    dmgContainer.appendChild(dmgNumber);
+    setTimeout(() => {
+        dmgContainer.removeChild(dmgContainer.lastElementChild);
+    }, 370);
+
+    // Attack Timer
+    if (player.inCombat) {
+        scheduleCompanionAttack();
+    }
+}
+
+const enemyAttack = () => {
+    if (!player.inCombat || combatPaused) {
+        return;
+    }
+    if (player.inCombat) {
+        sfxAttack.play();
+    }
+
+    // Calculates the damage and attacks the player
+    let damage = enemy.stats.atk * (enemy.stats.atk / (enemy.stats.atk + player.stats.def));
+    let lifesteal = Math.round(enemy.stats.atk * (enemy.stats.vamp / 100));
+    // Randomizes the damage by 90% - 110%
+    let dmgRange = 0.9 + Math.random() * 0.2;
+    damage = damage * dmgRange;
+    // Check if the attack is a critical hit
+    let crit = false;
+    if (Math.floor(Math.random() * 100) < enemy.stats.critRate) {
+        crit = true;
+        dmgtype = t('crit-damage');
+        damage = Math.round(damage * (1 + (enemy.stats.critDmg / 100)));
+    } else {
+        crit = false;
+        dmgtype = t('damage');
+        damage = Math.round(damage);
+    }
+
+    // Player dodge chance
+    let dodged = false;
+    if (Math.random() < player.stats.dodge / 100) {
+        addCombatLog(t('dodged-attack-player', { player: player.name }));
+        dodged = true;
+    } else if (scoutDodgeReady) {
+        addCombatLog(t('scout-dodged-attack', { player: player.name }));
+        dodged = true;
+        scoutDodgeReady = false;
+    }
+    if ( dodged ) {
+        damage = 0;
+        lifesteal = 0;
+    }
+
+    // Skill effects
+    if (player.skills.includes("Paladin's Heart")) {
+        // You receive 25% less damage
+        damage = Math.round(damage - ((25 * damage) / 100));
+    }
+
+    // Apply the calculations
+    player.stats.hp -= damage;
+    if (typeof recordRunDamageTaken === 'function') {
+        recordRunDamageTaken(damage);
+    }
+    // Aegis Thorns skill
+    objectValidation();
+    let reflectedDamage = 0;
+    if (player.skills.includes("Aegis Thorns")) {
+        // Enemies receive 30% of the damage they dealt
+        reflectedDamage = Math.round((30 * damage) / 100);
+        enemy.stats.hp -= reflectedDamage;
+        if (typeof recordRunDamageDealt === 'function') {
+            recordRunDamageDealt(reflectedDamage);
+        }
+    }
+    enemy.stats.hp += lifesteal;
+    if (!dodged) {
+        const lifestealText = lifesteal > 0 ? t('enemy-vamp-heal', { value: nFormatter(lifesteal) }) : '';
+        const thornsText = reflectedDamage > 0 ? t('aegis-thorns-reflect', { value: nFormatter(reflectedDamage) }) : '';
+        let logMsg = t('enemy-attack-hit', {
+            enemy: getDisplayEnemyName(enemy.id, enemy.name),
+            player: player.name,
+            value: nFormatter(damage),
+            type: dmgtype,
+            lifesteal: `${lifestealText}${thornsText}`
+        });
+        if (crit) {
+            logMsg = `<span class="crit-enemy">${logMsg}</span>`;
+        }
+        addCombatLog(logMsg);
+    }
+    hpValidation();
+    playerLoadStats();
+    enemyLoadStats();
+
+    // Damage effect
+    let playerPanel = document.querySelector('#playerPanel');
+    playerPanel.classList.add("animation-shake");
+    setTimeout(() => {
+        playerPanel.classList.remove("animation-shake");
+    }, 200);
+
+    // Attack Timer
+    if (player.inCombat) {
+        scheduleEnemyAttack();
+    }
+}
+
+// ========== Combat Backlog ==========
+const MAX_COMBAT_LOGS = 50
+const combatBacklog = [];
+
+// Add a log to the combat backlog
+const addCombatLog = (message) => {
+    combatBacklog.push(message)
+    if (combatBacklog.length > MAX_COMBAT_LOGS) {
+        combatBacklog.shift()
+    }
+    updateCombatLog()
+}
+
+const handleClaimButtonClick = () => {
+    sfxConfirm.play();
+
+    if (enemy.condition === "guardian") {
+        incrementRoom();
+        clearFloorBuffs();
+        addDungeonLog(t('moved-to-next-floor'));
+    } else if (enemy.condition === "door") {
+        addDungeonLog(t('moved-to-next-room'));
+    }
+
+    let dimDungeon = document.querySelector('#dungeon-main');
+    dimDungeon.style.filter = "brightness(100%)";
+    bgmDungeon.play();
+
+    dungeon.status.event = false;
+    combatPanel.style.display = "none";
+    enemyDead = false;
+    latestCombatLoot = null;
+    combatBacklog.length = 0;
+    findCompanionAfterCombat(enemy.lvl);
+    if (typeof window !== 'undefined' && typeof window.showLevelUpModalIfPending === 'function') {
+        window.showLevelUpModalIfPending();
+    } else if (typeof showLevelUpModalIfPending === 'function') {
+        showLevelUpModalIfPending();
+    }
+};
+
+const bindClaimButton = () => {
+    const battleButton = document.querySelector('#battleButton');
+    if (battleButton) {
+        battleButton.onclick = handleClaimButtonClick;
+    }
+};
+
+const handleRunSummaryButtonClick = () => {
+    if (typeof showEndgameScreen === 'function') {
+        sfxConfirm.play();
+        runSummaryReadyInCombat = false;
+        showEndgameScreen(pendingRunSummary);
+    }
+};
+
+const bindRunSummaryButton = () => {
+    const battleButton = document.querySelector('#battleButton');
+    if (battleButton) {
+        battleButton.onclick = handleRunSummaryButtonClick;
+    }
+};
+
+const grantMonarchDepthRewards = () => {
+    if (typeof getMonarchDepthRewards !== 'function') {
+        return;
+    }
+    const rewards = getMonarchDepthRewards(dungeon.progress.floor);
+    if (rewards.tier <= 0) {
+        return;
+    }
+    addCombatLog(t('monarch-depth-bonus', {
+        floor: dungeon.progress.floor,
+        heirlooms: rewards.extraHeirlooms,
+        stones: rewards.refineStones,
+    }));
+    for (let i = 0; i < rewards.extraHeirlooms; i++) {
+        createEquipmentPrint('combat', { minRarity: 'Heirloom' });
+    }
+    if (rewards.refineStones > 0 && typeof addRefineStones === 'function') {
+        addRefineStones(rewards.refineStones, 'combat');
+    }
+};
+
+const handleSpecialBossVictory = () => {
+    if (typeof setScreenWakeLockActive === 'function') setScreenWakeLockActive(false);
+    // Persist titles, Curse unlocks and the stopped run together at the end of this handler.
+    if (typeof recordPlayerMonarchVictory === 'function') recordPlayerMonarchVictory({ persist: false });
+    if (typeof maybeUnlockNextCurseLevel === 'function') {
+        maybeUnlockNextCurseLevel(CURSE_UNLOCK_TRIGGER_MONARCH, { persist: false });
+    }
+    pendingRunSummary = createRunSummary('victory');
+    runSummaryReadyInCombat = true;
+    addCombatLog(t('combat-victory-monarch-defeated'));
+    dungeon.status.exploring = false;
+    dungeon.status.paused = true;
+    dungeon.status.event = false;
+    enemyDead = false;
+    latestCombatLoot = null;
+
+    if (typeof dungeonTimer !== 'undefined' && dungeonTimer) {
+        clearInterval(dungeonTimer);
+        dungeonTimer = null;
+    }
+    if (typeof playTimer !== 'undefined' && playTimer) {
+        clearInterval(playTimer);
+        playTimer = null;
+    }
+	updateCombatLog();
+    if (typeof saveData === 'function') saveData();
+};
+
+const hasSellableCombatLoot = () => {
+    return Boolean(latestCombatLoot && latestCombatLoot.item && typeof latestCombatLoot.item.value === 'number');
+};
+
+const renderSellLootButton = () => {
+    if (!hasSellableCombatLoot()) {
+        return '';
+    }
+    const sellLabel = typeof t === 'function' ? t('sell') : 'Sell';
+    const goldValue = nFormatter(Math.max(0, latestCombatLoot.item.value));
+    return `<button id="sellLootButton" class="combat-sell-button" aria-label="${sellLabel}"><span data-i18n="sell">${sellLabel}</span><i class="fas fa-coins" style="color: #FFD700;"></i>${goldValue}</button>`;
+};
+
+const sellLatestCombatLoot = () => {
+    if (!hasSellableCombatLoot()) {
+        return;
+    }
+    const loot = latestCombatLoot;
+    let removed = false;
+    if (loot.placement === 'inventory' && player && player.inventory && Array.isArray(player.inventory.equipment)) {
+        let targetIndex = typeof loot.index === 'number' ? loot.index : -1;
+        if (targetIndex >= 0 && player.inventory.equipment[targetIndex] === loot.serialized) {
+            player.inventory.equipment.splice(targetIndex, 1);
+            removed = true;
+        } else {
+            const fallbackIndex = player.inventory.equipment.lastIndexOf(loot.serialized);
+            if (fallbackIndex >= 0) {
+                player.inventory.equipment.splice(fallbackIndex, 1);
+                removed = true;
+            }
+        }
+    } else if (loot.placement === 'equipped' && player && Array.isArray(player.equipped)) {
+        let targetIndex = typeof loot.index === 'number' ? loot.index : -1;
+        if (targetIndex >= 0 && player.equipped[targetIndex] === loot.item) {
+            player.equipped.splice(targetIndex, 1);
+            removed = true;
+        } else {
+            const fallbackIndex = player.equipped.indexOf(loot.item);
+            if (fallbackIndex >= 0) {
+                player.equipped.splice(fallbackIndex, 1);
+                removed = true;
+            }
+        }
+    } else if (loot.placement === 'companionCharm' && player && player.companionCharm) {
+        if (player.companionCharm === loot.item || JSON.stringify(player.companionCharm) === loot.serialized) {
+            player.companionCharm = null;
+            removed = true;
+        }
+    }
+
+    if (!removed) {
+        console.warn('Unable to locate latest combat loot for sale.');
+        latestCombatLoot = null;
+        updateCombatLog();
+        return;
+    }
+
+    player.gold += loot.item.value;
+    if (typeof recordRunGoldEarned === 'function') {
+        recordRunGoldEarned(loot.item.value);
+    }
+    sfxSell.play();
+    latestCombatLoot = null;
+    const sellLabel = typeof t === 'function' ? t('sell') : 'Sell';
+    addCombatLog(`<span class="combat-sell-log"><i class="fas fa-coins" style="color: #FFD700;"></i>${sellLabel}: +${nFormatter(loot.item.value)}</span>`);
+    playerLoadStats();
+    if (typeof updateCompanionUI === 'function') {
+        updateCompanionUI();
+    }
+    saveData();
+handleClaimButtonClick();
+};
+
+const bindSellLootButton = () => {
+    if (!hasSellableCombatLoot()) {
+        return;
+    }
+    const sellBtn = document.getElementById('sellLootButton');
+    if (sellBtn) {
+        sellBtn.onclick = sellLatestCombatLoot;
+    }
+};
+
+// Displays every combat activity
+const updateCombatLog = () => {
+    let combatLogBox = document.getElementById("combatLogBox");
+    if (!combatLogBox) return;
+
+    combatLogBox.innerHTML = "";
+
+    // Determine log flow direction (default: bottom)
+    const logFlow = (localStorage.getItem('logFlow') || 'bottom');
+    const messages = (logFlow === 'top') ? [...combatBacklog].reverse() : combatBacklog;
+
+    for (let message of messages) {
+        let logElement = document.createElement("p");
+        logElement.innerHTML = message;
+        combatLogBox.appendChild(logElement);
+    }
+
+    // Append decision button according to flow preference
+    const appendDecisionPanel = (html) => {
+        let panel = document.createElement("div");
+        panel.className = "decision-panel";
+        panel.innerHTML = html;
+        if (logFlow === 'top') {
+            // Insert right after the newest log (first child)
+            if (combatLogBox.firstChild) {
+                combatLogBox.insertBefore(panel, combatLogBox.children[1] || null);
+            } else {
+                combatLogBox.appendChild(panel);
+            }
+        } else {
+            combatLogBox.appendChild(panel);
+        }
+    };
+
+    if (enemyDead) {
+        const decisionButtons = [];
+        decisionButtons.push(`<button id="battleButton" data-i18n="claim">${t('claim')}</button>`);
+        if (hasSellableCombatLoot()) {
+            decisionButtons.push(renderSellLootButton());
+        }
+        appendDecisionPanel(decisionButtons.join(''));
+        bindClaimButton();
+        bindSellLootButton();
+    }
+
+    if (playerDead || runSummaryReadyInCombat) {
+        appendDecisionPanel(`<button id="battleButton" data-i18n="run-summary">${t('run-summary')}</button>`);
+        bindRunSummaryButton();
+    }
+
+    // Adjust scroll to match flow
+    if (logFlow === 'top') {
+        combatLogBox.scrollTop = 0;
+    } else {
+        combatLogBox.scrollTop = combatLogBox.scrollHeight;
+    }
+}
+
+// Combat Timer
+let combatSeconds = 0;
+
+const isAutoSpecialFeatureActive = () => {
+    if (typeof autoMode === 'undefined' || typeof autoSpecialAbility === 'undefined') {
+        return false;
+    }
+    return autoMode && autoSpecialAbility;
+};
+
+const shouldAutoUseSpecialAbility = () => {
+    if (!player || !player.inCombat) {
+        return false;
+    }
+    if (!isAutoSpecialFeatureActive()) {
+        return false;
+    }
+    if (specialAbilityCooldown) {
+        return false;
+    }
+    if (!playerAttackReady) {
+        return false;
+    }
+    if (player.selectedClass === "Paladin") {
+        const hpMax = Math.max(1, player.stats.hpMax || 1);
+        const hpRatio = player.stats.hp / hpMax;
+        if (hpRatio > 0.4) {
+            return false;
+        }
+    }
+    if (player.selectedClass === "Rogue" && playerHasOpenWounds()) {
+        const bleedState = ensureEnemyBleedState();
+        if (bleedState.stacks < 4) {
+            return false;
+        }
+    }
+    return true;
+};
+
+const startCombat = (battleMusic) => {
+    currentBattleMusic = battleMusic;
+    bgmDungeon.pause();
+    sfxEncounter.play();
+        currentBattleMusic.play();
+    player.inCombat = true;
+    if (typeof setScreenWakeLockActive === 'function') setScreenWakeLockActive(true);
+    combatPaused = false;
+    scoutDodgeReady = false;
+    volatileDetonated = false;
+    if (typeof ensureEnemyAffixState === 'function') {
+        ensureEnemyAffixState();
+    }
+    ensureEnemyPhaseState();
+    clearCompanionSpecialBuff();
+    if (playerAttackTimeout) {
+        clearTimeout(playerAttackTimeout);
+        playerAttackTimeout = null;
+    }
+    playerAttackDueAt = null;
+    playerAttackRemaining = null;
+    if (enemyAttackTimeout) {
+        clearTimeout(enemyAttackTimeout);
+        enemyAttackTimeout = null;
+    }
+    enemyAttackDueAt = null;
+    enemyAttackRemaining = null;
+    if (companionAttackTimeout) {
+        clearTimeout(companionAttackTimeout);
+        companionAttackTimeout = null;
+    }
+    companionAttackDueAt = null;
+    companionAttackRemaining = null;
+    if (specialAbilityTimeout) {
+        clearTimeout(specialAbilityTimeout);
+        specialAbilityTimeout = null;
+    }
+    specialAbilityCooldown = false;
+    specialAbilityQueued = false;
+    specialAbilityDueAt = null;
+    specialAbilityRemaining = null;
+    combatTimerWasRunning = false;
+    runSummaryReadyInCombat = false;
+
+    // Reset per-enemy status effects
+    if (enemy && enemy.bleed) {
+        delete enemy.bleed;
+    }
+
+    // Add companion involvement
+    scheduleCompanionAttack();
+
+    // Starts the timer for player and enemy attacks along with combat timer
+    scheduleEnemyAttack(getEnemyAttackDelay() + ENEMY_FIRST_ATTACK_DELAY);
+    applyCombatHudLayout();
+
+    playerLoadStats();
+    enemyLoadStats();
+
+    dungeon.status.event = true;
+    combatPanel.style.display = "flex";
+
+    window.setTimeout(() => setPlayerAttackReady(true), 200);
+    combatTimer = setInterval(combatCounter, 1000);
+}
+
+const endCombat = () => {
+    currentBattleMusic.stop();
+    sfxCombatEnd.play();
+    player.inCombat = false;
+    if (typeof setScreenWakeLockActive === 'function') setScreenWakeLockActive(!playerDead && !dungeon.status.paused);
+    combatPaused = false;
+    clearCompanionSpecialBuff();
+    if (playerAttackTimeout) {
+        clearTimeout(playerAttackTimeout);
+        playerAttackTimeout = null;
+    }
+    playerAttackDueAt = null;
+    playerAttackRemaining = null;
+    if (enemyAttackTimeout) {
+        clearTimeout(enemyAttackTimeout);
+        enemyAttackTimeout = null;
+    }
+    enemyAttackDueAt = null;
+    enemyAttackRemaining = null;
+    if (companionAttackTimeout) {
+        clearTimeout(companionAttackTimeout);
+        companionAttackTimeout = null;
+    }
+    companionAttackDueAt = null;
+    companionAttackRemaining = null;
+    if (specialAbilityTimeout) {
+        clearTimeout(specialAbilityTimeout);
+        specialAbilityTimeout = null;
+    }
+    specialAbilityCooldown = false;
+    specialAbilityQueued = false;
+    specialAbilityDueAt = null;
+    specialAbilityRemaining = null;
+    stopSpecialAbilityCooldownTicker();
+    updateSpecialAbilityCooldownDisplay();
+    setPlayerAttackReady(false);
+    clearAutoAttackDelay();
+    scoutDodgeReady = false;
+    // Skill validation
+
+    // Stops every timer in combat
+    if (combatTimer) {
+        clearInterval(combatTimer);
+        combatTimer = null;
+    }
+    combatTimerWasRunning = false;
+
+    if (enemy && enemy.bleed) {
+        delete enemy.bleed;
+    }
+    volatileDetonated = false;
+    combatSeconds = 0;
+}
+
+const combatCounter = () => {
+    combatSeconds++;
+    tickEnemyRegen();
+    tickEnemyBleed();
+}
+
+const useSpecialAbility = () => {
+    if (!player || !player.inCombat || specialAbilityCooldown || combatPaused) {
+        return;
+    }
+    if (!playerAttackReady) {
+        specialAbilityQueued = true;
+        clearAutoAttackDelay();
+        updateSpecialAbilityButtonState();
+        return;
+    }
+    specialAbilityQueued = false;
+    setPlayerAttackReady(false);
+    if (playerAttackTimeout) {
+        clearTimeout(playerAttackTimeout);
+        playerAttackTimeout = null;
+        playerAttackDueAt = null;
+        playerAttackRemaining = null;
+    }
+    if (player.inCombat) {
+        schedulePlayerAttackCooldown();
+    }
+    if (player.selectedClass === "Paladin") {
+        sfxBuff.play();
+        const healAmount = Math.round(player.stats.hpMax * 0.8);
+        const actualHeal = Math.min(healAmount, player.stats.hpMax - player.stats.hp);
+        player.stats.hp = Math.min(player.stats.hp + healAmount, player.stats.hpMax);
+        addCombatLog(t('special-ability-heal', { player: player.name, hp: nFormatter(actualHeal) }));
+        hpValidation();
+        playerLoadStats();
+    } else if (player.selectedClass === "Beastmaster") {
+        const buffApplied = applyCompanionSpecialBuff();
+        if (buffApplied) {
+            sfxBuff.play();
+            addCombatLog(t('special-ability-companion-boost', { player: player.name, companion: activeCompanion.name }));
+        } else {
+            sfxDeny.play();
+            addCombatLog(t('special-ability-no-companion'));
+        }
+    } else if (player.selectedClass === "Scout") {
+        scoutDodgeReady = true;
+        sfxUnpause.play();
+        addCombatLog(t('special-ability-scout-dodge', { player: player.name }));
+    } else {
+        sfxAttack.play();
+
+        let crit;
+        let baseAtk = player.stats.atk * 1.5;
+        if (player.selectedClass === "Rogue") {
+            const bleedState = ensureEnemyBleedState();
+            const bleedStacks = (bleedState && bleedState.stacks) || 0;
+            const stackMultiplier = 1 + (bleedStacks * ROGUE_SPECIAL_BLEED_BONUS_PER_STACK);
+            baseAtk = player.stats.atk * 1.1;
+            baseAtk = baseAtk * stackMultiplier;
+        }
+        let damage = baseAtk * (baseAtk / (baseAtk + enemy.stats.def));
+        // Randomize the damage by 90% - 110%
+        let dmgRange = 0.9 + Math.random() * 0.2;
+        damage = damage * dmgRange;
+
+        // Check if the attack is a critical hit
+        if (Math.floor(Math.random() * 100) < player.stats.critRate) {
+            crit = true;
+            dmgtype = t('crit-damage');
+            damage = Math.round(damage * (1 + (player.stats.critDmg / 100)));
+        } else {
+            crit = false;
+            dmgtype = t('damage');
+            damage = Math.round(damage);
+        }
+
+        // Skill effects
+        objectValidation();
+        if (player.skills.includes("Remnant Razor")) {
+            // Attacks deal extra 9% of enemies' current health on hit
+            damage += Math.round((9 * enemy.stats.hp) / 100);
+        }
+        if (player.skills.includes("Titan's Will")) {
+            // Attacks deal extra 4.5% of your maximum health on hit
+            damage += Math.round((4.5 * player.stats.hpMax) / 100);
+        }
+        if (player.skills.includes("Devastator")) {
+            // Deal 30% more damage but you lose 30% base attack speed
+            damage = Math.round(damage + ((30 * damage) / 100));
+        }
+        if (typeof applyEnemyDamageUnlock === 'function') {
+            damage = applyEnemyDamageUnlock(enemy.id, damage);
+        }
+
+        // Lifesteal formula
+        let lifesteal = Math.round(damage * (player.stats.vamp / 100));
+
+        // Enemy dodge chance
+        let dodged = false;
+        if (Math.random() < enemy.stats.dodge / 100) {
+            addCombatLog(t('dodged-attack-enemy', { enemy: getDisplayEnemyName(enemy.id, enemy.name) }));
+            damage = 0;
+            lifesteal = 0;
+            dodged = true;
+        }
+
+        if (!dodged) {
+            applyOpenWoundsBleedOnHit();
+        }
+
+        // Apply calculations
+        enemy.stats.hp -= damage;
+        if (typeof recordRunDamageDealt === 'function') {
+            recordRunDamageDealt(damage);
+        }
+        player.stats.hp += lifesteal;
+        if (!dodged) {
+            const lifestealText = lifesteal > 0 ? t('player-vamp-heal', { value: nFormatter(lifesteal) }) : '';
+            let logMsg = t('special-ability-attack-hit', {
+                player: player.name,
+                value: nFormatter(damage),
+                type: dmgtype,
+                lifesteal: lifestealText
+            });
+            if (crit) {
+                logMsg = `<span class="crit-player">${logMsg}</span>`;
+            }
+            addCombatLog(logMsg);
+        }
+        if (!dodged && damage > 0) {
+            applyThornsReflect(damage);
+        }
+        hpValidation();
+        playerLoadStats();
+        enemyLoadStats();
+
+        // Damage effect
+        let enemySprite = document.querySelector("#enemy-sprite");
+        enemySprite.classList.add("animation-shake");
+        setTimeout(() => {
+            enemySprite.classList.remove("animation-shake");
+        }, 200);
+
+        // Damage numbers
+        const dmgContainer = document.querySelector("#dmg-container");
+        const dmgNumber = document.createElement("p");
+        dmgNumber.classList.add("dmg-numbers");
+        if (crit) {
+            dmgNumber.style.color = "gold";
+            dmgNumber.innerHTML = nFormatter(damage) + "!";
+        } else {
+            dmgNumber.innerHTML = nFormatter(damage);
+        }
+        dmgContainer.appendChild(dmgNumber);
+        setTimeout(() => {
+            dmgContainer.removeChild(dmgContainer.lastElementChild);
+        }, 370);
+
+        // If the special ability kills the enemy, reset the cooldown immediately
+        if (enemy.stats.hp <= 0 || enemyDead) {
+            if (specialAbilityTimeout) {
+                clearTimeout(specialAbilityTimeout);
+                specialAbilityTimeout = null;
+            }
+            specialAbilityCooldown = false;
+            specialAbilityDueAt = null;
+            specialAbilityRemaining = null;
+            updateSpecialAbilityButtonState();
+            stopSpecialAbilityCooldownTicker();
+            updateSpecialAbilityCooldownDisplay();
+            return;
+        }
+    }
+
+    specialAbilityCooldown = true;
+    specialAbilityDueAt = null;
+    specialAbilityRemaining = null;
+    scheduleSpecialAbilityReset(10000);
+    updateSpecialAbilityButtonState();
+}
+
+const showCombatInfo = () => {
+    if (!player.inCombat) {
+        if (specialAbilityTimeout) {
+            clearTimeout(specialAbilityTimeout);
+            specialAbilityTimeout = null;
+        }
+        specialAbilityCooldown = false;
+        specialAbilityQueued = false;
+        specialAbilityDueAt = null;
+        specialAbilityRemaining = null;
+        stopSpecialAbilityCooldownTicker();
+        updateSpecialAbilityCooldownDisplay();
+    }
+    // Re-evaluate enemy name in case language changed after spawn
+    enemy.name = getBaseEnemyName(enemy.id);
+    const autoAttackToggleHidden = typeof hideAutoAttackToggle !== 'undefined' && hideAutoAttackToggle;
+    const autoAttackEnabled = typeof autoAttack === 'undefined' ? false : autoAttack;
+    const autoAttackCheckedAttr = autoAttackEnabled ? 'checked' : '';
+    const autoModeEnabled = typeof autoMode === 'undefined' ? false : autoMode;
+    const autoModeActiveClass = autoModeEnabled ? ' active' : '';
+    const autoModePressed = autoModeEnabled ? 'true' : 'false';
+    const autoModeControlVisible = autoModeEnabled
+        || (
+            typeof autoModeUnlocked !== 'undefined'
+            && autoModeUnlocked
+            && typeof autoModeBtnVisible !== 'undefined'
+            && autoModeBtnVisible
+        );
+    const combatAutoModeControl = autoModeControlVisible
+        ? `
+        <button id="combat-auto-mode-btn" class="${autoModeActiveClass.trim()}" type="button" aria-pressed="${autoModePressed}" aria-label="${t('auto-mode')}" title="${t('auto-mode')}">
+            <i class="fas fa-play" aria-hidden="true"></i><span class="sr-only" data-i18n="auto-mode">${t('auto-mode')}</span>
+        </button>`
+        : '';
+    const defaultEnemySpriteSrc = `./assets/sprites/${enemy.image.name}.webp`;
+    const enemySpriteSrc = (typeof getBestiaryEnemySpriteSrc === 'function')
+        ? (getBestiaryEnemySpriteSrc(enemy.id, enemy.image.name) || defaultEnemySpriteSrc)
+        : defaultEnemySpriteSrc;
+    const enemyAffixes = typeof normalizeAffixList === 'function' ? normalizeAffixList(enemy.affixes) : [];
+    const hasRegenerationReserve = enemyAffixes.indexOf('regenerating') !== -1;
+    const regenerationReserve = hasRegenerationReserve && typeof ensureEnemyRegenerationReserve === 'function'
+        ? ensureEnemyRegenerationReserve(enemy)
+        : 0;
+    const regenerationReserveMax = hasRegenerationReserve && typeof getEnemyRegenerationReserveMax === 'function'
+        ? getEnemyRegenerationReserveMax(enemy.stats.hpMax)
+        : 0;
+    const regenerationReservePercent = regenerationReserveMax > 0
+        ? (regenerationReserve / regenerationReserveMax) * 100
+        : 0;
+    const enemyAffixBadges = enemyAffixes.length === 0 ? '' : `
+            <div class="enemy-affix-row">${enemyAffixes.map((affixId) => {
+                const affixLabel = getAffixName(affixId);
+                const affixTooltip = getAffixDescription(affixId);
+                if (affixId === 'regenerating') {
+                    return `<span class="enemy-affix-badge affix-regenerating${regenerationReserve <= 0 ? ' is-empty' : ''}"
+                        id="enemy-regeneration-reserve" role="progressbar"
+                        style="--regeneration-reserve-percent: ${regenerationReservePercent}%"
+                        title="${affixTooltip} ${t('enemy-regeneration-reserve')}"
+                        aria-label="${t('enemy-regeneration-reserve')}" aria-valuemin="0"
+                        aria-valuenow="${regenerationReserve}" aria-valuemax="${regenerationReserveMax}">
+                        ${affixLabel}</span>`;
+                }
+                return `<span class="enemy-affix-badge affix-${affixId}" title="${affixTooltip}">${affixLabel}</span>`;
+            }).join('')}</div>`;
+    document.querySelector('#combatPanel').innerHTML = `
+    <div class="content">
+        <div class="battle-info-panel center" id="enemyPanel">
+            <p>${enemy.name} Lv.${enemy.lvl} <span class="enemy-type-badge enemy-type-${enemy.type.toLowerCase()}">${t('enemy-type-' + enemy.type.toLowerCase())}</span></p>${enemyAffixBadges}
+            <div class="battle-bar empty-bar hp bb-hp">
+                <div class="battle-bar dmg bb-hp" id="enemy-hp-dmg"></div>
+                <div class="battle-bar current bb-hp" id="enemy-hp-battle">
+                    &nbsp${nFormatter(enemy.stats.hp)}/${nFormatter(enemy.stats.hpMax)}(${enemy.stats.hpPercent}%)
+                </div>
+            </div>
+            <div id="dmg-container"></div>
+            <img src="${enemySpriteSrc}" alt="${enemy.name}" width="${enemy.image.size}" id="enemy-sprite">
+        </div>
+        <div class="battle-info-panel primary-panel" id="playerPanel">
+            <p id="player-combat-info"></p>
+            <div class="battle-bar empty-bar bb-hp">
+                <div class="battle-bar dmg bb-hp" id="player-hp-dmg"></div>
+                <div class="battle-bar current bb-hp" id="player-hp-battle">
+                    &nbsp${nFormatter(player.stats.hp)}/${nFormatter(player.stats.hpMax)}(${player.stats.hpPercent}%)
+                </div>
+            </div>
+            <div class="battle-bar empty-bar bb-xb">
+                <div class="battle-bar current bb-xb" id="player-exp-bar">exp</div>
+            </div>
+            <div class="attack-controls">
+                <button id="player-attack-btn" data-i18n="attack">${t('attack')}</button>
+                <div class="attack-controls-secondary">
+                    <label class="auto-attack-toggle" ${autoAttackToggleHidden ? 'hidden' : ''}>
+                        <input type="checkbox" id="auto-attack-combat-toggle" ${autoAttackCheckedAttr}>
+                        <span data-i18n="auto-attack">${t('auto-attack')}</span>
+                    </label>
+                    ${combatAutoModeControl}
+                </div>
+            </div>
+            <button id="special-ability-btn" type="button" data-i18n="special-ability">${t('special-ability')}</button>
+        </div>
+        <div class="logBox primary-panel">
+            <div id="combatLogBox"></div>
+        </div>
+    </div>
+    `;
+    const attackBtn = document.querySelector('#player-attack-btn');
+    if (attackBtn) {
+        attackBtn.addEventListener('click', () => {
+            playerAttack();
+        });
+    }
+    const combatAutoModeBtn = document.querySelector('#combat-auto-mode-btn');
+    if (combatAutoModeBtn) {
+        combatAutoModeBtn.addEventListener('click', () => {
+            if (typeof window !== 'undefined' && typeof window.toggleAutoMode === 'function') {
+                window.toggleAutoMode();
+            }
+        });
+    }
+    const autoAttackToggle = document.querySelector('#auto-attack-combat-toggle');
+    if (autoAttackToggle) {
+        autoAttackToggle.addEventListener('change', (event) => {
+            const enabled = event.target.checked;
+            if (typeof autoAttack !== 'undefined') {
+                autoAttack = enabled;
+            }
+            try {
+                localStorage.setItem('autoAttack', enabled);
+            } catch (err) {
+                console.warn('Failed to persist auto-attack preference', err);
+            }
+            if (enabled) {
+                maybeAutoAttack();
+            } else {
+                clearAutoAttackDelay();
+            }
+        });
+    }
+    document.querySelector('#special-ability-btn').addEventListener('click', useSpecialAbility);
+    updateAttackButtonState();
+    updateSpecialAbilityButtonState();
+}
+
+// Pause combat timers and mute sounds when the app loses focus
+document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+        pauseCombatTimers();
+        if (typeof Howler !== "undefined" && Howler && typeof Howler.mute === "function") {
+            Howler.mute(true);
+        }
+    } else {
+        if (typeof Howler !== "undefined" && Howler && typeof Howler.mute === "function") {
+            Howler.mute(false);
+        }
+        resumeCombatTimers();
+    }
+});
+
+document.addEventListener("pause", () => {
+    pauseCombatTimers();
+    if (typeof Howler !== "undefined" && Howler && typeof Howler.mute === "function") {
+        Howler.mute(true);
+    }
+}, false);
+
+document.addEventListener("resume", () => {
+    if (typeof Howler !== "undefined" && Howler && typeof Howler.mute === "function") {
+        Howler.mute(false);
+    }
+    resumeCombatTimers();
+}, false);
+
+if (typeof window !== "undefined" && window.Capacitor && window.Capacitor.App && typeof window.Capacitor.App.addListener === "function") {
+    window.Capacitor.App.addListener("appStateChange", ({ isActive }) => {
+        if (isActive) {
+            if (typeof Howler !== "undefined" && Howler && typeof Howler.mute === "function") {
+                Howler.mute(false);
+            }
+            resumeCombatTimers();
+        } else {
+            pauseCombatTimers();
+            if (typeof Howler !== "undefined" && Howler && typeof Howler.mute === "function") {
+                Howler.mute(true);
+            }
+        }
+    });
+}

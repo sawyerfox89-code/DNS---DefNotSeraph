@@ -1,0 +1,774 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script>
+      if (navigator.onLine) {
+        const analyticsScript = document.createElement('script');
+        analyticsScript.async = true;
+        analyticsScript.src =
+          'https://www.googletagmanager.com/gtag/js?id=G-CLN0X1XD8N';
+        document.head.appendChild(analyticsScript);
+        window.dataLayer = window.dataLayer || [];
+        function gtag() {
+          dataLayer.push(arguments);
+        }
+        gtag('js', new Date());
+        gtag('config', 'G-CLN0X1XD8N');
+      }
+    </script>
+    <script>
+      if (window.location.hostname === 'emojiminesweeper.vercel.app') {
+        const target = new URL('https://thumbfeed.com/emoji-minesweeper/help');
+        target.search = window.location.search;
+        target.hash = window.location.hash;
+        window.location.replace(target);
+      }
+    </script>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="author" content="Michael Kolesidis" />
+    <title>Emoji Minesweeper Help</title>
+    <meta
+      name="description"
+      content="Learn how to play Emoji Minesweeper, including rules, controls, emoji themes, difficulty levels, stats, and records."
+    />
+    <link rel="canonical" href="https://thumbfeed.com/emoji-minesweeper/help" />
+    <meta
+      property="og:url"
+      content="https://thumbfeed.com/emoji-minesweeper/help"
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Thumbfeed" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content="Emoji Minesweeper Help" />
+    <meta
+      property="og:description"
+      content="Learn how to play Emoji Minesweeper, including rules, controls, emoji themes, difficulty levels, stats, and records."
+    />
+    <meta
+      property="og:image"
+      content="https://thumbfeed.com/emoji-minesweeper/emoji-minesweeper.png"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Emoji Minesweeper game preview" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:domain" content="thumbfeed.com" />
+    <meta
+      name="twitter:url"
+      content="https://thumbfeed.com/emoji-minesweeper/help"
+    />
+    <meta name="twitter:title" content="Emoji Minesweeper Help" />
+    <meta
+      name="twitter:description"
+      content="Learn how to play Emoji Minesweeper, including rules, controls, emoji themes, difficulty levels, stats, and records."
+    />
+    <meta
+      name="twitter:image"
+      content="https://thumbfeed.com/emoji-minesweeper/emoji-minesweeper.png"
+    />
+    <meta name="twitter:image:alt" content="Emoji Minesweeper game preview" />
+    <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
+    <script type="module" crossorigin src="./assets/modulepreload-polyfill-P2Xu9kJm.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/help-D4UAj8tg.css">
+  </head>
+  <body>
+    <header>
+      <img src="assets/logo.svg" alt="Emoji Minesweeper logo and wordmark" />
+      <h1>Emoji Minesweeper Help</h1>
+    </header>
+    <div id="help-page">
+      <div>
+        <img src="./assets/win_mines_v8c-Cb9IskOi.png" alt="Win mines" />
+        <img src="./assets/win_flowers_v8c-BNF1xHU-.png" alt="Win flowers" />
+      </div>
+
+      <p>
+        Emoji Minesweeper is a <strong>logic puzzle game</strong>, a variant of
+        the classic
+        <a href="https://en.wikipedia.org/wiki/Minesweeper_(video_game)"
+          >minesweeper game</a
+        >
+        reimagined and implemented using <strong>emoji</strong>! It features a
+        <strong>grid of clickable squares</strong>, with hidden
+        <strong>mines</strong> (or flowers) scattered throughout the board. Safe
+        squares have <strong>numbers</strong> telling you how many mines touch
+        the square. If there is no number, the square doesn't touch any mine.
+        You can use the number clues to solve the game by opening all of the
+        safe squares. If you click on a mine you <strong>lose</strong> the game!
+      </p>
+
+      <p>
+        Emoji Minesweeper <strong>always makes the first click safe</strong>.
+        You open squares with the <strong>left mouse button</strong> and put
+        flags on mines with the <strong>right mouse button</strong> (or with
+        long press on touchscreens). You can also chord with the left mouse
+        button or middle mouse button once a numbered square has the correct
+        number of adjacent flags.
+      </p>
+
+      <p>
+        The game ends when all safe squares have been opened
+        (<strong>win</strong>) or when a square containing a mine is opened
+        (<strong>loss</strong>). If you win, the empty square get filled with
+        happy faces 😄, and if you lose they get filled with sad faces 😵.
+      </p>
+
+      <p>
+        There are <strong>four levels</strong> (beginner, intermediate, expert,
+        and custom) and <strong>six themes</strong> (mine 💣, flower 🌺,
+        mushroom 🍄, bear 🐻, surf 🏄, and Japan 🏯) to choose from.
+      </p>
+
+      <p>Lastly, players can choose between light ☀️ and dark 🌔 mode.</p>
+
+      <h2>How to Play</h2>
+
+      <img src="./assets/idle_v8c-BERyyLTx.png" alt="Idle" />
+
+      <p>
+        This is the user interface of Emoji Minesweeper. Such a colorful
+        amalgamation of emoji! On the top, you can see a grid of squares: the
+        board. The black square button emoji 🔲 means that the square has not
+        been opened yet. <strong>Left-click on any square to open it</strong>,
+        and start the game. You don't have to worry about your first move, as we
+        have made sure that your first square can never contain a mine (actually
+        it can, but if that's the case, we relocate the mine to another square
+        so fast that you don't even realize it - you can thank us later). Right
+        below the board you can find three counters.
+      </p>
+
+      <p>
+        On the left you can find the <strong>mine counter</strong> 💣. It shows
+        the number of mines on the board without flags (we will talk about
+        flagging shortly).
+      </p>
+
+      <p>
+        In the middle, next to the abacus 🧮 you can find the
+        <strong>moves counter</strong>. It keeps track of how many moves you
+        have made since the beginning of each game. By <em>moves</em> we mean
+        all the clicks (left and right) or taps you have made on the board.
+      </p>
+
+      <p>
+        Finally, on the right, you can find an ⌛ hourglass and, more
+        importantly, the <strong>time counter</strong>, keeping track of time:
+        seconds passed since you opened the first square. Now let's go back to
+        our game.
+      </p>
+
+      <img src="data:image/png;base64,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" alt="Board" />
+
+      <p>
+        After you click on a square, you will get something like this. When you
+        open a square that does not touch any mines, it will be opened and the
+        adjacent squares will automatically be opened in all directions until
+        reaching squares that contain numbers. A common strategy for starting
+        games is to
+        <strong
+          >randomly click until you get a big opening with lots of
+          numbers</strong
+        >.
+      </p>
+
+      <p>
+        The empty squares ⬜️ are safe squares that do not touch any mines. Some
+        safe squares have numbers telling you how many mines touch the square.
+        The numbered squares can be either 1️⃣, 2️⃣, 3️⃣, 4️⃣, 5️⃣, 6️⃣, 7️⃣, 8️⃣. Why
+        don't we have nine as well? Because
+        <strong>each square can be touched by eight squares at most</strong>.
+        Most squares are touched by eight other squares. If a square is located
+        on the border of the board, it is touched by six other squares (as one
+        of its sides is not touched by anything), and if a square is located in
+        one of the four corners of the board, it is touched by only three other
+        squares. Let's see an example.
+      </p>
+
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGUAAABlCAMAAABjot39AAAAz1BMVEX///8Apu0Ape309PTNzc3o9v4esO8AAACL1PaxsbH29fYdHR3r9/02uPCJ0/ac2vea2feLi4v4+Pjo5+eEhITd3d13zfUps++y4vm45PoDqe6ampoar+/K6/vr6+vt+P7g4OC2traurq4Xru/Hx8cQre/Y2NjPz8/f8/xxy/XG6vtBu/EJq+73/P/5+flMv/Lx+v7h9PzX8PzT7vyg3PiY2Pd8z/ZbxfMyt/B7e3thYWErKysICAgDAwOp4PhtyvQste8isu+ZmZnN7fy+5/o9+szpAAACmElEQVRo3u2aa1PaUBCGN4vQlFxEigmkmHCLggaFqqTeUNv+/9/Ukw4zOx1zkujJZhzN843hhWcUyNnlBSqj25DS3UXMZiomQNHAaPxVyngEgiPHbaXiOkdQKAD+5Lgh5XjiAwyGKGU4gPyA4GQGGcxOwLRQk4KWmR8Q7O2BnOTevqdl4PXzA6cFLDZqGaCdH7h+gwURX1iyA50CFh3/f44zexHSTdRzA2+w4MUawEGJhQJKFryYA0BH9rdQQMWC1g8Q7EssFFCxoHsKEgsF1C02yCwUULfoeRa9DIs7mF+t5BYKqL360dQy5RYKqH5erEBqoYC6xcyzmLXl41oqeY/9DOTXZAqoWqaXGecLBZQsghdHYW6g827OfYYZhmse458tK5uT+Wf+HedtKedF15MgPRAAlGjxv0nwy9uS/N6dIeGu55e0JTVuv2Rw2yhnSxo/ZFkexjAr41N5IJ7LuOmlcGOIuw7gVxlXGGG5n3RTmdwnlu9KV0uyGKN2I4X2yCCL4paUWA7TLYdkUdiSWCy0BDFaaAnistASxG+xoQqLzm2hJYjTQksQs4UGVH6LWVs+sSVgttASxGqhJYjJQrzurHxf5z7DDMMzj1U1W/LPydXN/Pz7C/8uVndJdZdU/ndKiPxdEkaxrW+eNN4uyRosAWC98Ji6JFpvBKtHji6JbuxYu8jQJdF+E1xvLkVkg2xdEj5vf8cabkRER8YuyQs1sjB1SQLUcJr8Wx1k6ZJoYOsDwPwZub7nJ8nSYessSALbiNOC4T9Jf4qMFoyuSMJm8exlIgkRkdHyuAKAphPH8VnE1SXhcA6CZcJqGzF1Sdhq0gPNFjJ1Sd4+PfBPyNUlYbjQd9hPjF0SEnWXVHdJIlDFb+Eq5C9PIqb1hYXa4wAAAABJRU5ErkJggg==" alt="Section" />
+
+      <p>
+        Let's focus on the 1️⃣ square in the middle. It is touched by eight other
+        squares (oh, by the way, diagonal squares count as well). We can observe
+        that all its surrounding squares <strong>but one</strong> have been
+        opened and are safe. On its left, we can see three empty squares and on
+        its top, bottom, and right we can see four numbered squares and a closed
+        one. Since its number is 1️⃣, it has to be touched by exactly one mine.
+        <strong
+          >Thus, we can safely assume that the closed square will contain a
+          mine</strong
+        >.
+      </p>
+
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABlCAMAAACMYLbDAAABMlBMVEX///8Apu0Ape3Nzc0esO+L1Pb09PSxsbHn9f34MS719fXo9v2c2vc2uPDs+P3jnYnjm4eK0/Z3zfUps+/9/v+y4vnxz8a45PoEqe7K6/sar+/4LSv4NjPr9/2J0/bpfW/t+P3/+/v5+flwy/Xr6+vg4ODY2NjPz8/Gxsa2traurq44ufAYru9Bu/EJq+7svK//+PgQre/3/f/i9Pzf8/yf3Pjx+v7X8PzT7vzG6vtbxfP+8O8Uru8Nre78v778np75VlT5QT/g8/yb2fea2ff89fRQwPJJvfEyt/D+6+v+3Nz60tDnqJf7enip4Ph7z/b8mJf6XVv5R0X4ODb0+/59z/UCqO764t/91tXvxbn8t7f7gYD6c3Hpe23N7fy+5/qW2Pfxz8X7s7LqnI7qjH73MzCvChwfAAADJklEQVRo3u2a+1cSURDH745sQYbyMlCURHyLKL4yUsGKHkCgYpqpvfv//4UusaephruLTsPpKN/fOHx3P2d2996d4YvqlabuGDXVdsQm/B01EVNdGmYW7hq1MKO0RiNRX0dFI6OqK8P04qy5ktnFaaXiY2DUWFx1YVBz88pF83NqKAiWURAc8jYoNTDgBtHfjiQsFyVGPA3dQMJguQjCXgb7OhAAIBBiuCrEhj9PsZzK5H8/h8HAgcCLdRWLAIEQAwMCLzeUUs9JJcTAgMDSI6V13wBBAwMC0cfKAEEDG5JSBgga+BDbCEED/3LFn25uUQg1sG58LhscohBqYK6T4CSBEAMbYqwEDX3IjYT04ul6pc/xjECIgQfJbru8T9DAgWjpF9+uoRI0/JfveIFuRabv8u4gl9wbRE9Dj3ph+a6+ral7Rv2aTwY7CueTQX9HDToGNsRb/MvlqJx2Y/BvvFb6c23liQuEPwRpnQ6HQmfKLP5i1HoQGh7+dlBdVQbxtxUHcvl9/+L9awaE7n8U8nA8kBwvdS6HPwQhJBBIJvffkHJ4QxCFaOlyiu/+Koc3BFGIU84ePtHsIYhCHE6zVKxgObwhiEKwnCMshzsEUQhyxg+r14DYV4EkA0fnFYQwhiDz5WoeFk/TSos5BFEI3pBzfL44bSqF4L0oVtKcxehRCS4SMYguAteHDEQXcbGHG5cE5LJZOsA9Swjy9Qsp4p8/XaEVUyvBGILEIDjjyEHojEMhQu94AQiKQiT7Lm8IfwhqQ0IIkeqFq7Va7Swt3NWvlsvlVTNCfj6Rn7T6SdDtTYLCAr8SAYgnQZArhO1G1BJNgpbia/qo9cyJTBKE44vWcUYgCcIPjtajIJIEOfPL5KfGtrY0QCoJAl/9Q8GCt9pig1wSlMhbCJFJgrTAgmzrmkZALAnSgp3WPrLhA6Hf6pERi0ilDshQ9ZwgBPI/GSM7IAeB3CYypCAnqbUWIw8gWEnmWB/ijxQKheWcUBIE2Q2ltdbSVj0nkwSBz48HTvhAJglKbOKBH3eFkiDIZ2xHqahcEgSofhJk7CBvVxIk+k+1XukHvC6vbM04WjAAAAAASUVORK5CYII=" alt="Flag" />
+
+      <p>
+        In order to make our life easier, and keep track of the squares
+        containing mines, we can <strong>right-click</strong> on these squares
+        and flag them 🚩 using a red flag.
+      </p>
+
+      <img src="./assets/too_many_flags_v8-BEgbp_iJ.png" alt="Too many flags" />
+
+      <p>
+        Be careful, because if you flag more squares than the total number of
+        mines, you won't be able to finish the game, until you unflag some
+        squares. Fortunately, we've got you covered on that too, as the
+        <strong>mine counter will turn red</strong> if you do so.
+      </p>
+
+      <img src="./assets/x_mark_v8-BWl9z8Fk.png" alt="X Marked" />
+
+      <p>
+        If you click on a mine you lose the game. If you had wrongly flagged any
+        squares as mines they will be marked with an ❌, to help you identify
+        your mistakes.
+      </p>
+
+      <img src="./assets/loss_mines_v8-1oYMAqxY.png" alt="Loss mine" />
+
+      <p>Yeah, losing looks like this.</p>
+
+      <img src="./assets/loss_flowers_v8-C0HVpn7n.png" alt="Loss flower" />
+
+      <p>Or like this.</p>
+
+      <img src="./assets/loss_mushroom_v8-DQbzex3O.png" alt="Loss mushroom" />
+
+      <p>
+        Or like this. Not too bad, huh? In order to win a game, you need to open
+        all the safe squares. When you win or lose a game you need to start a
+        new one. You can achieve that by clicking on the 🆕 button or by
+        pressing the
+        <em>N key</em>.
+      </p>
+
+      <img src="./assets/stats_v8-Db5ggR4u.png" alt="Stats" />
+
+      <p>
+        In order to keep track of how good (or bad) you are doing, the game
+        keeps your stats. To open the stats modal, click the 📊 button. Stats
+        include metrics such as games played, games won, percentage of wins,
+        best time, best moves, total time, and total moves, and are kept
+        separately for beginner, intermediate, and expert. Custom levels and
+        debug mode do not save stats; if you try to open stats there, the game
+        shows a short message instead of opening the modal. Don't worry if you
+        are not doing that well, as you can always clear your data by clicking
+        on the
+        <em>Clear</em> button, located inside the stats modal. You can also
+        toggle the stats modal by pressing the <em>S key</em>.
+      </p>
+
+      <img src="./assets/new_record_v8-C5eRu964.png" alt="New Record" />
+
+      <p>
+        If you do a new best time or win the game by fewer moves than ever
+        before, not only are your stats updated accordingly, but empty squares
+        become the partying emoji 🥳. The respective counters turn gold as well.
+        In these examples, the player achieved both a new time record and a
+        moves record, thus both counters have turned gold.
+      </p>
+
+      <p>
+        There are four difficulty levels, with different board sizes and numbers
+        of mines. Along with the classic and predetermined beginner,
+        intermediate, and expert levels, there's a custom level as well, giving
+        players the ability to set the dimensions of the board, as well as the
+        number of mines. Custom levels allow you to create boards as large as
+        100x100. Mines must cover at least 10% of the squares. If the number of
+        mines you choose falls below the minimum requirement, it will
+        automatically adjust to meet the necessary threshold. If a custom
+        configuration exactly matches a standard level, such as 9x9 with 10
+        mines, the game switches to that standard level instead of creating a
+        custom level.
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Level</th>
+            <th>Dimensions</th>
+            <th>Mines</th>
+            <th>% of Mines</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Beginner</td>
+            <td>9x9</td>
+            <td>10</td>
+            <td>~12.34%</td>
+          </tr>
+          <tr>
+            <td>Intermediate</td>
+            <td>16x16</td>
+            <td>40</td>
+            <td>~15.63%</td>
+          </tr>
+          <tr>
+            <td>Expert</td>
+            <td>30x16</td>
+            <td>99</td>
+            <td>~20.63%</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>
+        You can use the level buttons 1️⃣2️⃣3️⃣*️⃣ to switch between levels. You can
+        also use the <em>keyboard keys 1, 2, 3, and 4</em>. Pressing
+        <em>4</em> switches to the saved custom level, while pressing
+        <em>5</em> opens the custom level modal. Intermediate, expert, and
+        custom are desktop-only on small/mobile screens; the game shows a short
+        message if those controls are used on a screen that is too narrow.
+      </p>
+      <p>
+        If you click the <strong>*️⃣</strong> button, the custom level modal will
+        appear.
+      </p>
+
+      <img src="./assets/custom_modal_v8-Cf6WpZx5.png" alt="Custom modal" />
+
+      <p>
+        Here you can choose the width, the height, and the number of mines for
+        your desired custom level. When opened with the <em>5</em> key, the
+        cursor starts in the columns input. Press <em>Enter</em> to move to
+        rows, <em>Enter</em> again to move to mines, and <em>Enter</em> once
+        more to submit. You can also click Submit, and your custom level will
+        appear!
+      </p>
+
+      <img src="./assets/custom_v8-Djjglmby.png" alt="Custom level" />
+
+      <p>
+        This is a custom level featuring 9 columns, 15 rows, and 14 mines. Quite
+        long, isn't it?
+      </p>
+
+      <h3>End modal</h3>
+
+      <img src="./assets/end_stats_v8b-BYWnvA5W.png" alt="End modal" />
+
+      <p>
+        When a game is won, a modal containing stats about the current game
+        appears. If you close it with the Close button or by clicking outside
+        it, clicking or tapping anywhere inside the board opens it again. Let's
+        see what's included:
+      </p>
+
+      <h4>Time</h4>
+      <p>
+        The time it took to finish the game in seconds, from opening the first
+        square until the last. It is the same time visible in the time counter,
+        but now it is not rounded and is displayed in precision with up to three
+        decimal digits.
+      </p>
+
+      <h4>3BV</h4>
+      <p>
+        3BV is the minimum number of clicks required to complete a board without
+        using flags. The higher it is, the more difficult the game is.
+      </p>
+
+      <h4>3BV/s</h4>
+      <p>
+        3BV divided by the amount of seconds needed to finish the game. It
+        indicates the amount of 3BV that a player solves per second and is meant
+        as a speed-measuring statistic. For an expert game, a 3BV/s of 2 is
+        considered to be high, while a 3BV/s of 3 is considered to be very high.
+        For an intermediate game, a 3BV/s of 3 is considered to be high, while a
+        3BV/s of 4 is considered to be very high. The world record 3BV/s for
+        intermediate and expert are 7.89 and 6.11 respectively.
+      </p>
+
+      <h4>Moves</h4>
+      <p>
+        How many moves you have made from the beginning of the game until its
+        end. Every click over the area of the board counts, even those clicks
+        which don't make sense in Minesweeper, like clicking in an already
+        opened opening, or a right-click on a number. The clicks that make sense
+        are known as active clicks, while those that don't make any sense are
+        known as wasted clicks.
+      </p>
+
+      <h4>Efficiency</h4>
+      <p>
+        Efficiency is the 3BV of a board divided by the number of moves (clicks
+        or taps) used to solve it. The fewer clicks used, the higher the
+        efficiency. An efficiency of 100% means you solved a 3BV 50 board in 50
+        clicks. The only way to gain efficiency is to chord. Efficiency is lost
+        by placing flags, wasting clicks, or clicking cells that would be
+        revealed by an opening. By combining NF technique and smart chording you
+        can get more than 100% efficiency.
+      </p>
+
+      <h3>Themes</h3>
+      <p>
+        The game features six themes with different emoji sets to choose from.
+        Apart from the classic mine theme 💣 and the peaceful and relaxing
+        flower theme 🌺, you can find a mushroom theme 🍄, a bear theme 🐻, a
+        surf theme 🏄, and a Japan theme 🏯. You can use the theme button
+        💣/🌺/🍄/🐻/🏄/🏯 to switch to the next theme, or use the
+        <em>left and right arrows</em> on your keyboard. On desktop, right-click
+        the theme button to open a small theme menu and choose directly. On
+        mobile, tap switches to the next theme and long press opens the theme
+        menu. These are the rest of the themes:
+      </p>
+
+      <img src="./assets/win_mushroom_v8-DcyWdvA7.png" alt="Win mushroom theme" />
+
+      <p>The mushroom theme.</p>
+
+      <img src="./assets/win_bear_v8-PAucEAq1.png" alt="Win bear theme" />
+
+      <p>The bear theme.</p>
+
+      <img src="./assets/win_surf_v8-BnlOAEcg.png" alt="Win surf theme" />
+
+      <p>The surf theme.</p>
+
+      <img src="./assets/win_japan_v8-cntGN8iK.png" alt="Win Japan theme" />
+
+      <p>
+        And the Japan theme. I bet you can't decide which one to pick! Your
+        level and theme preferences are saved in your computer, so your next
+        game always starts with the lastly used configuration.
+      </p>
+
+      <img src="./assets/help_v8b-CkqQawHe.png" alt="Help modal" />
+
+      <p>
+        If you forget the basic controls you can click the help button ❔ to
+        toggle the help modal. You can also toggle the help modal by pressing
+        the
+        <em>H</em> key.
+      </p>
+
+      <p>The 🔈 button toggles game sound.</p>
+
+      <img
+        src="./assets/dark_win_flowers_v8-V121ncRk.png"
+        alt="Dark mode win flowers theme"
+      />
+      <img
+        src="./assets/dark_loss_flowers_v8-C5zPVUiC.png"
+        alt="Dark mode loss flowers theme"
+      />
+
+      <p>
+        Clicking on the <strong>☀️/🌔</strong> button allows players to choose
+        between light and dark mode. You can also switch between dark and light
+        by pressing the <em>D</em> key. Quite useful for those long night
+        sessions!
+      </p>
+
+      <p>
+        Lastly, we should mention the concept of <strong>chording</strong>. When
+        an uncovered square with a number has exactly the correct number of
+        adjacent squares flagged, left-clicking or middle-clicking it will
+        uncover all unmarked adjacent squares. This is called a
+        <strong>chord</strong>. It is a basic technique that allows players to
+        clear squares using flags, and the reason why flagging styles are often
+        more efficient than non-flagging ones.
+      </p>
+
+      <h3>Keyboard Mode</h3>
+      <p>
+        On desktop, press <em>K</em> to toggle keyboard mode. Every square
+        displays its cell number; unopened cells show the number normally, while
+        flagged cells and opened numbered cells keep a dimmed number so you can
+        still target them. Type a cell number, then press <em>Enter</em> to open
+        that square. If the addressed square is already open and numbered,
+        <em>Enter</em> attempts a chord. Type a cell number and press
+        <em>F</em> to flag or unflag that square. Press <em>Esc</em> to clear
+        the typed number if you make a mistake. While keyboard mode is active,
+        number keys are used for cell entry, so <em>1</em>, <em>2</em>,
+        <em>3</em>, and <em>4</em> do not change levels.
+      </p>
+
+      <h3>Summary</h3>
+      <ul>
+        <li><strong>Left-click</strong> to open a square</li>
+        <li>
+          <strong>Right-click</strong> to flag a square (that you think contains
+          a mine)
+        </li>
+        <li>
+          <strong>Left-click</strong> an open numbered square for chording
+        </li>
+        <li>
+          <strong>Middle-click</strong> an open numbered square for chording
+        </li>
+        <li>💣 Mines counter</li>
+        <li>🧮 Moves counter</li>
+        <li>⌛ Time counter</li>
+        <li>🆕 restarts the game</li>
+        <li>
+          1️⃣2️⃣3️⃣*️⃣ buttons switch between <strong>levels</strong> (beginner,
+          intermediate, expert, and custom)
+        </li>
+        <li>📊 button toggles the <strong>stats modal</strong></li>
+        <li>
+          💣/🌺/🍄/🐻/🏄/🏯 button switches between
+          <strong>themes</strong> (mine, flower, mushroom, bear, surf, and
+          Japan); right-click or long press opens the theme menu
+        </li>
+        <li>❔ button toggles the <strong>help modal</strong></li>
+        <li>🔊 button toggles <strong>sound</strong></li>
+        <li>☀️/🌔 button toggles <strong>dark mode</strong></li>
+        <li>
+          There is an <strong>Easter egg</strong> in the game, can you find it?
+        </li>
+      </ul>
+
+      <h3>Keyboard Controls</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Key</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Ν</td>
+            <td>New game (current level and theme)</td>
+          </tr>
+          <tr>
+            <td>S</td>
+            <td>Open/close stats modal</td>
+          </tr>
+          <tr>
+            <td>1</td>
+            <td>Switch to beginner level</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>Switch to intermediate level</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>Switch to expert level</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td>Switch to custom level</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td>Open custom level modal</td>
+          </tr>
+          <tr>
+            <td>K</td>
+            <td>Toggle keyboard mode</td>
+          </tr>
+          <tr>
+            <td>Number + Enter</td>
+            <td>Open/chord that numbered cell</td>
+          </tr>
+          <tr>
+            <td>Number + F</td>
+            <td>Flag/unflag that numbered cell</td>
+          </tr>
+          <tr>
+            <td>Left Arrow</td>
+            <td>Switch to next theme</td>
+          </tr>
+          <tr>
+            <td>Right Arrow</td>
+            <td>Switch to previous theme</td>
+          </tr>
+          <tr>
+            <td>H</td>
+            <td>Open/close help modal</td>
+          </tr>
+          <tr>
+            <td>M</td>
+            <td>Mute/unmute sound</td>
+          </tr>
+          <tr>
+            <td>D</td>
+            <td>Toggle dark mode</td>
+          </tr>
+          <tr>
+            <td>Esc</td>
+            <td>Close open modal</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>More Screenshots</h3>
+
+      <h4>Intermediate Level</h4>
+      <img src="./assets/intermediate_v8-DUNgU4KC.png" alt="Intermediate Level" />
+
+      <h4>Expert Level</h4>
+      <img src="./assets/expert_v8-BC7x9n-x.png" alt="Expert Level" />
+
+      <h3>Emoji</h3>
+      <p>The following emoji are used throughout the game:</p>
+      <p id="emoji-list">
+        🔲 ⬜️ 🔳 ⬛ 🆕 1️⃣ 2️⃣ 3️⃣ 4️⃣ 5️⃣ 6️⃣ 7️⃣ 8️⃣ *️⃣ 📊 ↕️ ↔️ 🚩 ⌛ 🧮 ❔ ❌ 🥳 ☀️
+        🌔
+      </p>
+
+      <h3>Themes & Emoji Sets</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Theme</th>
+            <th>Game Title</th>
+            <th>Emoji Set</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Mine</td>
+            <td>Emoji Minesweeper</td>
+            <td>💣 💥 😄 😵</td>
+          </tr>
+          <tr>
+            <td>Flower</td>
+            <td>Emoji Flower Field</td>
+            <td>🌺 🐛 😊 😔</td>
+          </tr>
+          <tr>
+            <td>Mushroom</td>
+            <td>Emoji Shroom Picker</td>
+            <td>🍄 🦄 😎 😵‍💫</td>
+          </tr>
+          <tr>
+            <td>Bear</td>
+            <td>Emoji Bearspotting</td>
+            <td>🐻 🐾 🌳 🪵</td>
+          </tr>
+          <tr>
+            <td>Surf</td>
+            <td>Emoji Surfsweeper</td>
+            <td>🏄 🦑 🌊 🦈</td>
+          </tr>
+          <tr>
+            <td>Japan</td>
+            <td>絵文字マインスイーパー</td>
+            <td>🏯 👺 🌸 😖</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Emoji Font</h3>
+      <p>
+        The emoji font used in the game is the
+        <strong>Segoe UI Emoji font</strong> that can be found
+        <a
+          href="https://web.archive.org/web/20240420021127/https://learn.microsoft.com/en-us/typography/font-list/segoe-ui-emoji"
+          target="_blank"
+          >here</a
+        >. If you are running Windows 11, this font family is already installed
+        on your computer. If you are running Linux, you can install and use the
+        Segoe UI font family by following these
+        <a
+          href="https://web.archive.org/web/20240221061513/https://vyshnav.xyz/blog/windows-11-emojis-on-linux"
+          target="_blank"
+          >instructions</a
+        >.
+      </p>
+
+      <h3>Emoji History</h3>
+
+      <img src="./assets/pocket_bell_emoji.png" alt="Pocket Bell Emoji" />
+
+      <p>
+        The first ever modern emoji existed on a device that came even before
+        phones. In 1995, Japanese Telecom Company NTT DoCoMo made the first
+        emoji available on its Pocket Bell pager model. As you can see, Emoji
+        Minesweeper is using some of these very first emoji!
+      </p>
+
+      <p>
+        You can find more information about the history of emoji
+        <a
+          href="https://web.archive.org/web/20230116030836/https://gem-ship-blog.com/blog/the-story-behind-emojis-1"
+          target="_blank"
+          >here</a
+        >.
+      </p>
+
+      <h3>International Campaign to Ban Landmines</h3>
+
+      <img src="./assets/icbl_logo.svg" alt="ICBL Logo" />
+
+      <p>
+        Antipersonnel landmines are explosive devices designed to be detonated
+        by the presence, proximity, or contact of a person. Placed under or on
+        the ground, they can lie dormant for years and even decades until a
+        person or animal triggers their detonating mechanism.
+      </p>
+
+      <p>
+        Incapable of distinguishing between the footfall of a soldier and that
+        of a child, antipersonnel mines cannot be aimed. They indiscriminately
+        kill or injure civilians, aid workers, peacekeepers, and soldiers alike.
+        They pose a threat to the safety of civilians during conflicts and long
+        afterwards.
+      </p>
+
+      <p>
+        The
+        <a href="http://www.icbl.org/" target="_blank"
+          >International Campaign to Ban Landmines (ICBL)</a
+        >
+        is a coalition of non-governmental organizations whose stated objective
+        is a world free of anti-personnel mines and cluster munitions, where
+        mine and cluster munitions survivors see their rights respected and can
+        lead fulfilling lives.
+        <strong
+          >We urge you to visit their website, get informed, and support their
+          work in any way possible.</strong
+        >
+      </p>
+
+      <p>
+        The ICBL, in close partnership with a small number of states, the ICRC,
+        and the UN, put in motion what was later known as the “Ottawa Process”
+        that led to the adoption of the
+        <a
+          href="https://web.archive.org/web/20240511072517/https://www.icbl.org/en-gb/the-treaty/treaty-status.aspx"
+          target="_blank"
+          >Mine Ban Treaty</a
+        >
+        in September 1997. The Mine Ban Treaty, which includes a comprehensive
+        ban on all antipersonnel mines as well as several measures to redress
+        the harm from past use, was adopted in Oslo (Norway) in September 1997,
+        and opened for signature on 3 December 1997 in Ottawa (Canada).
+      </p>
+
+      <h3>License</h3>
+
+      <a href="https://www.gnu.org/licenses/agpl-3.0.html">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/0/06/AGPLv3_Logo.svg"
+          height="100px"
+          style="max-width: 100%"
+          alt="GNU Affero General Public License logo"
+        />
+      </a>
+
+      <p>
+        Copyright (c) Michael Kolesidis<br />
+        Licensed under the
+        <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank"
+          >GNU Affero General Public License v3.0</a
+        >.
+      </p>
+
+      <a href="https://thumbfeed.com">
+        <img
+          class="site-logo-img"
+          src="assets/thumbfeed-logo-inline.svg"
+          alt="Thumbfeed logo"
+        />
+      </a>
+    </div>
+  </body>
+</html>

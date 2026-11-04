@@ -1,0 +1,191 @@
+export const GAMEMODES = {
+    "*": {
+        "settings": {
+            "gravitySpeed": 950,
+            "lockDelay": 600,
+            "maxLockMovements": 15,
+            "nextPieces": 5,
+            "allowLockout": false,
+            "preserveARR": true,
+            "allowHold": true,
+            "infiniteHold": false,
+            "allowQueueModify": false,
+            "allspin": false,
+            "allspinminis": false,
+            "history": false,
+            "sidebar": ["time", "apm", "pps"],
+            "stride": false,
+            "clearDelay": 0,
+            "randomiser": "7-bag",
+            "kicktable": "SRS+",
+            "readysetgo": true,
+            "garbageTravelTime": 0.5
+        },
+        "handling": {},
+        "displayName": "Unset",
+        "objectiveText": "",
+        "goalStat": "",
+        "target": "",
+        "result": "",
+        
+        "music": "",
+        "compmusic": "",
+        "startBoard": "",
+        "effects": []
+    },
+    "custom": {
+        "displayName": "Zen / Custom"
+    },
+    "sprint": {
+        "displayName": "Sprint",
+        "objectiveText": "Lines",
+        "goalStat": "clearlines",
+        "target": "requiredLines",
+        "result": "time",
+        "settings": {
+            "requiredLines": 40,
+            "stride":true
+        }
+    },
+    "ultra": {
+        "displayName": "Ultra",
+        "objectiveText": "Score",
+        "goalStat": "time",
+        "target": "timeLimit",
+        "result": "score",
+        "settings": {
+            "timeLimit": 120,
+            "sidebar": ["time", "score", "pps"]
+        }
+    },
+    "attacker": {
+        "displayName": "Attacker",
+        "objectiveText": "Damage",
+        "goalStat": "attack",
+        "target": "requiredAttack",
+        "result": "time",
+        "settings": {
+            "requiredAttack": 100
+        }
+    },
+    "digger": {
+        "displayName": "Digger",
+        "objectiveText": "Remaining",
+        "goalStat": "cleargarbage",
+        "target": "requiredGarbage",
+        "result": "time",
+        "settings": {
+            "requiredGarbage": 100,
+            "sidebar": ["time", "dss", "pps"]
+        }
+    },
+    "survival": {
+        "displayName": "Survival",
+        "objectiveText": "received",
+        "goalStat": "clearlines",
+        "target": "gameEnd",
+        "result": "time",
+        "settings": {
+            "survivalRate": 60,
+            "sidebar": ["time", "lpm", "pps"],
+            "readysetgo": false
+        }
+    },
+    "backfire": {
+        "displayName": "Backfire",
+        "objectiveText": "Sent",
+        "goalStat": "attack",
+        "target": "requiredAttack",
+        "result": "time",
+        "settings": {
+            "requiredAttack": 100,
+            "backfireMulti": 1
+        }
+    },
+    "combo": {
+        "displayName": "4w / Combo",
+        "objectiveText": "Time",
+        "goalStat": "time",
+        "target": "combobreak",
+        "result": "maxCombo",
+        "settings": {
+            "allspin": true,
+            "allspinminis": false,
+            "sidebar": ["combo", "pps"],
+            "readysetgo": false
+        }
+    },
+    "lookahead": {
+        "displayName": "Lookahead",
+        "objectiveText": "Lines",
+        "goalStat": "clearlines",
+        "target": "requiredLines",
+        "result": "time",
+        "settings": {
+            "requiredLines": 40,
+            "lookAheadPieces": 3,
+            "gravitySpeed": 1001,
+            "sidebar": ["time", "kpp", "pps"]
+        }
+    },
+    "race": {
+        "displayName": "Race",
+        "objectiveText": "Level",
+        "goalStat": "tgm_level",
+        "target": "raceTarget",
+        "result": "grade",
+        "settings": {
+            "raceTarget": 999,
+            "gravitySpeed": 0,
+            "clearDelay": 420,
+            "nextPieces": 3,
+            "maxLockMovements": 8,
+            "randomiser": "tgm"
+        }
+    },
+    "zenith": {
+        "displayName": "Climb",
+        "objectiveText": "Altitude",
+        "goalStat": "altitude",
+        "target": "requiredAltitude",
+        "result": "time",
+        "settings": {
+            "requiredAltitude": 1650,
+            "gravitySpeed": 950,
+            "allspin": true,
+            "allspinminis": true,
+            "garbageTravelTime": 1
+        }
+    },
+    "puzzle": {
+        "displayName": "PC Puzzle",
+        "objectiveText": "PC",
+        "settings": {
+            "gravitySpeed": 1001,
+        }
+    },
+    "classic": {
+        "displayName": "Classic",
+        "objectiveText": "Score",
+        "goalStat": "score",
+        "target": "clearlines",
+        "result": "score",
+        "settings": {
+            "requiredLines": 999,
+            "gravitySpeed": 999,
+            "lockDelay": 30,
+            "maxLockMovements": 1,
+            "nextPieces": 1,
+            "allowHold": false,
+            "sidebar": ["clearlines", "score"],
+            "clearDelay": 500,
+            "randomiser": "classic",
+            "kicktable": "NRS"
+        },
+        "handling": {
+            "das": 200,
+            "arr": 100,
+            "sdarr": 150
+        }
+    }
+}

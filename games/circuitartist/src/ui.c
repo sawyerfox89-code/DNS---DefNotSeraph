@@ -1,0 +1,542 @@
+#include "ui.h"
+
+#include <lauxlib.h>
+#include <lua.h>
+#include <raylib.h>
+#include <rlgl.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "common.h"
+#include "font.h"
+#include "game_registry.h"
+#include "i18n.h"
+#include "log.h"
+#include "msg.h"
+#include "paths.h"
+#include "profiler.h"
+#include "script.h"
+#include "shaders.h"
+#include "sound.h"
+#include "stb_ds.h"
+#include "stdio.h"
+#include "steam.h"
+#include "ui.h"
+#include "uifont.h"
+#include "utils.h"
+#include "wabout.h"
+#include "wdialog.h"
+#include "win_blueprint.h"
+#include "win_bpdetail.h"
+#include "win_clipboard.h"
+#include "win_customlvl.h"
+#include "win_level.h"
+#include "win_main.h"
+#include "win_msg.h"
+#include "win_mtext.h"
+#include "win_progress.h"
+#include "win_pubform.h"
+#include "win_settings.h"
+#include "win_wiki.h"
+#include "win_workshop.h"
+#include "win_workshopdet.h"
+#include "wnumber.h"
+#include "wtext.h"
+
+#ifdef CA_DESKTOP
+#include "modal.h"
+#endif
+
+#if defined(PLATFORM_WEB)
+#include <emscripten/emscripten.h>
+#endif
+
+typedef struct {
+  bool push; /* push or pop */
+  WindowEnum win;
+} WinCmd;
+
+static struct {
+  WindowEnum* window;      // Active window/screen.
+  MouseCursorType cursor;  // Current mouse cursor type.
+  bool close_requested;    // If true, will try to close the game.
+  bool should_close;       // If True, app will close next frame.
+  int hit_count;           // UI hitbox counter for fg/bg
+  bool debug;              // Debug flag, for profiling and others.
+  bool demo;               // Wether it's demo version.
+  double frame_time;       /* Time spend in the frame */
+  lua_State* L;            /* Game lua environment (non-sandboxed)*/
+  char* lua_error; /* Lua error message: Causes app to go in crash mode */
+  GameRegistry* registry;
+  double previous_time;
+  WinCmd* frame_cmds;
+} C = {0};
+
+static void ui_draw_mouse();
+static void ui_close();
+
+static void flush_win_cmd() {
+  int n = arrlen(C.frame_cmds);
+  for (int i = 0; i < n; i++) {
+    WinCmd cmd = C.frame_cmds[i];
+    if (cmd.push) {
+      arrput(C.window, cmd.win);
+    } else {
+      WindowEnum we = C.window[arrlen(C.window) - 1];
+      if (we == WINDOW_PUBFORM) win_pubform_on_close();
+      if (we == WINDOW_BPDETAIL) win_bpdetail_on_close();
+      if (we == WINDOW_WORKSHOP) win_workshop_on_close();
+      if (we == WINDOW_WORKSHOPDET) win_workshopdet_on_close();
+      arrpop(C.window);
+    }
+  }
+  arrsetlen(C.frame_cmds, 0);
+}
+
+void ui_winpush(WindowEnum win) {
+  WinCmd cmd = {.push = true, .win = win};
+  arrput(C.frame_cmds, cmd);
+  //  arrput(C.window, win);
+}
+void ui_winpop() {
+  WinCmd cmd = {.push = false, .win = 99};
+  arrput(C.frame_cmds, cmd);
+  //  arrpop(C.window);
+}
+
+void ui_inc_hit_count() { C.hit_count++; };
+
+int ui_get_hit_count() { return C.hit_count; };
+
+void ui_crash(const char* error) { C.lua_error = clone_string(error); }
+
+// Sets the window/taskbar icon on Windows and Linux. On macOS the icon comes
+// from the .app bundle (see MACOS_BUNDLE in CMakeLists.txt) and GLFW warns if
+// we try, so skip it there.
+static void setup_app_icons() {
+#ifdef __APPLE__
+  return;
+#endif
+  Image icons[4] = {
+      load_image_asset("imgs/icon2.png"),  /* 16x16 */
+      load_image_asset("imgs/icon24.png"), /* 24x24 */
+      load_image_asset("imgs/icon32.png"), /* 32x32 */
+      load_image_asset("imgs/icon48.png"), /* 48x48*/
+  };
+  SetWindowIcons(icons, 4);
+  UnloadImage(icons[0]);
+  UnloadImage(icons[1]);
+  UnloadImage(icons[2]);
+  UnloadImage(icons[3]);
+}
+
+void ui_init() {
+  C.demo = false;
+  C.debug = false;
+#ifdef WITH_STEAM
+  if (!FileExists("../DONT_LOG_ON_STEAM.txt")) {
+    SteamInit();
+  }
+#endif
+
+  /* The minimum must be done here so we can display errors */
+  int screen_width = 640 * 2;
+  int screen_height = 320 * 2;
+#if defined(PLATFORM_WEB)
+  SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
+#else
+  SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
+#endif
+
+  InitWindow(screen_width, screen_height, "Circuit Artist");
+  init_common_globals();
+  setup_app_icons();
+  InitAudioDevice();
+  init_i18n();
+  init_game_registry();
+  sound_init();
+
+  load_art_font_asset("imgs/font5x7.png");
+  uifont_load();
+
+  if (C.lua_error) return;
+  BeginDrawing();
+  // Added this black rectangle here so the screen first appears as a black
+  // window rather than a black window with a white square in the center
+  // (windows) before window is maximized.
+  DrawRectangle(0, 0, 2000, 2000, BLACK);
+  EndDrawing();
+  SetWindowState(FLAG_WINDOW_MAXIMIZED);
+  widgets_init();
+  HideCursor();
+  msg_init();
+  win_pubform_init();
+  win_progress_init();
+  about_init();
+  text_modal_init();
+  win_mtext_init();
+  win_customlvl_init();
+  win_blueprint_init();
+  profiler_init();
+#ifdef CA_DESKTOP
+  modal_init();
+#endif
+  win_wiki_init();
+  shaders_init();
+  win_level_init();
+  win_main_init();
+  win_clipboard_init();
+  win_workshop_init();
+  win_workshopdet_init();
+  win_main_open();
+  win_bpdetail_init();
+  win_msg_init();
+  win_settings_init();
+  flush_win_cmd();
+}
+
+void ui_destroy() {
+  uifont_unload();
+  win_main_destroy();
+#ifdef CA_DESKTOP
+  modal_destroy();
+#endif
+#ifdef WITH_STEAM
+  SteamShutdown();
+#endif
+}
+
+static void ui_close() { C.should_close = true; }
+
+static void ui_error_mode() {
+  if (WindowShouldClose() || IsKeyPressed(KEY_ESCAPE) ||
+      IsKeyPressed(KEY_ENTER)) {
+    C.should_close = true;
+  }
+  BeginDrawing();
+  ClearBackground(DARKBLUE);
+  rlPushMatrix();
+  rlScalef(2, 2, 1);
+  draw_text_box(C.lua_error, (Rectangle){20, 20, 400, 0}, CA_WHITE, NULL);
+  rlPopMatrix();
+  EndDrawing();
+}
+
+static void ui_update_debug() {
+  if (IsKeyPressed(KEY_F10)) {
+    C.debug = !C.debug;
+  }
+}
+
+/* Default frame control logic used in raylib.
+ *
+ * Can cause stutter due to the inacuracy of WaitTime(), making you drop a
+ * few frames.
+ */
+static void frame_control_default() {
+  double target_fps = 60;
+  SwapScreenBuffer();
+  double current_time = GetTime();
+  double update_draw_time = current_time - C.previous_time;
+  double wait_time = (1.0 / target_fps) - update_draw_time;
+  if (wait_time > 0.0) {
+    WaitTime(wait_time);
+    current_time = GetTime();
+  }
+  double delta_time = current_time - C.previous_time;
+  C.frame_time = delta_time;
+  C.previous_time = current_time;
+  PollInputEvents();
+}
+
+/*
+ * Uses busy-wait to wait part of remaining time interval.
+ *
+ * The issue is that WaitTime() function is not reliable: it can oscilate in
+ * function of the OS (ie the wait time might be bigger than what asked).
+ * The solution is to use WaitTime() for part of the interval and do a busy
+ * wait for the remaining 2ms of the frame time.
+ */
+static void frame_control_spin() {
+  double target_fps = 60;
+  SwapScreenBuffer();
+  double current_time = GetTime();
+  double update_draw_time = current_time - C.previous_time;
+  double wait_time = (1.0 / target_fps) - update_draw_time;
+  if (wait_time < 0) wait_time = 0;
+  double eps = 0.002;
+  double target = wait_time + current_time;
+  if (target - current_time > eps) {
+    WaitTime(target - current_time - eps);
+    current_time = GetTime();
+  }
+  // busy - wait
+  while (current_time < target) {
+    current_time = GetTime();
+  }
+  double delta_time = current_time - C.previous_time;
+  C.frame_time = delta_time;
+  C.previous_time = current_time;
+  PollInputEvents();
+}
+
+/* Frame control for when VSYNC is active.
+ *
+ * For MacOS this is tricky because you might end up with more frames than
+ * your monitor. In practice with the ProMotion thing you get 120FPS, which
+ * means more extra work on rendering.
+ * */
+static void frame_control_vsync() {
+  SwapScreenBuffer();
+  double current_time = GetTime();
+  double delta_time = current_time - C.previous_time;
+  C.frame_time = delta_time;
+  C.previous_time = current_time;
+  PollInputEvents();
+}
+
+#ifdef CA_WEB
+/* On web the browser paces us via requestAnimationFrame, so there is nothing
+ * to wait/spin on: just swap, measure the elapsed time and poll input.
+ * raylib is built with SUPPORT_CUSTOM_FRAME_CONTROL, so EndDrawing() does
+ * none of this for us. */
+static void frame_control_web() {
+  SwapScreenBuffer();
+  double current_time = GetTime();
+  double delta_time = current_time - C.previous_time;
+  /* rAF stops while the tab is hidden; don't let the sim jump on return. */
+  if (delta_time > 0.1) delta_time = 0.1;
+  C.frame_time = delta_time;
+  C.previous_time = current_time;
+  PollInputEvents();
+}
+static void update_draw_frame_web(void) {
+  if (ui_get_should_close()) {
+    // save_level_progress();
+    return;
+  }
+  if (C.lua_error) {
+    ui_error_mode();
+  } else {
+    ui_update_frame();
+  }
+  frame_control_web();
+}
+#endif
+
+void ui_run() {
+  C.previous_time = GetTime();  // Previous time measure
+#ifndef CA_WEB
+  while (true) {
+    if (ui_get_should_close()) {
+      // save_level_progress();
+      break;
+    }
+    if (C.lua_error) {
+      ui_error_mode();
+    } else {
+      ui_update_frame();
+    }
+
+    /* 3 different strategies for frame control */
+    frame_control_spin();
+    // frame_control_default();
+    // frame_control_vsync();
+  }
+#else
+  emscripten_set_main_loop(update_draw_frame_web, 0, 1);
+#endif
+}
+
+void ui_reset_hit_count() {
+  // Resets the hit count for the frame.
+  C.hit_count = 0;
+  profiler_reset();
+}
+
+void ui_update_frame() {
+  // X button in the UI
+  if (WindowShouldClose()) {
+    C.close_requested = true;
+  }
+
+  if (C.close_requested) {
+    C.close_requested = false;
+    win_main_ask_for_save_and_proceed(ui_close);
+  }
+
+#ifdef WITH_STEAM
+  SteamRunFrame();
+#endif
+
+  ui_reset_hit_count();
+  widgets_set_sound(is_paint_sound_on());
+  // *** Update Step ***
+  // Assigining here because the variable can change during the update.
+  C.cursor = MOUSE_ARROW;
+  int update_window = ui_get_window();
+  ui_update_debug();
+  profiler_tic("GameUpdate");
+#ifdef CA_DEV
+  script_update();
+#endif
+  msg_update();
+  if (update_window == WINDOW_TEXT) text_modal_update();
+  if (update_window == WINDOW_NUMBER) number_modal_update();
+  if (update_window == WINDOW_BLUEPRINT) win_blueprint_update();
+  if (update_window == WINDOW_MAIN) win_main_update();
+  if (update_window == WINDOW_CLIPBOARD) win_clipboard_update();
+  if (update_window == WINDOW_ABOUT) about_update();
+  if (update_window == WINDOW_DIALOG) dialog_update();
+  if (update_window == WINDOW_LOG) win_log_update();
+  if (update_window == WINDOW_WIKI) win_wiki_update();
+  if (update_window == WINDOW_LEVEL) win_level_update();
+  if (update_window == WINDOW_MSG) win_msg_update();
+  if (update_window == WINDOW_MTEXT) win_mtext_update();
+  if (update_window == WINDOW_PUBFORM) win_pubform_update();
+  if (update_window == WINDOW_PROGRESS) win_progress_update();
+  if (update_window == WINDOW_BPDETAIL) win_bpdetail_update();
+  if (update_window == WINDOW_CUSTOM_LEVEL) win_customlvl_update();
+  if (update_window == WINDOW_WORKSHOP) win_workshop_update();
+  if (update_window == WINDOW_WORKSHOPDET) win_workshopdet_update();
+  if (update_window == WINDOW_SETTINGS) win_settings_update();
+  profiler_tac();
+
+  // We stop the app here if should_close is flagged.
+  if (C.should_close) {
+    return;
+  }
+
+  // *** Draw Step ***
+  BeginDrawing();
+  profiler_tic("GameDraw");
+  for (int i = 0; i < arrlen(C.window); i++) {
+    WindowEnum window = C.window[i];
+    if (window == WINDOW_MAIN) win_main_draw();
+    if (window == WINDOW_CLIPBOARD) win_clipboard_draw();
+    if (window == WINDOW_TEXT) text_modal_draw();
+    if (window == WINDOW_NUMBER) number_modal_draw();
+    if (window == WINDOW_ABOUT) about_draw();
+    if (window == WINDOW_DIALOG) dialog_draw();
+    if (window == WINDOW_LOG) win_log_draw();
+    if (window == WINDOW_WIKI) win_wiki_draw();
+    if (window == WINDOW_LEVEL) win_level_draw();
+    if (window == WINDOW_BLUEPRINT) win_blueprint_draw();
+    if (window == WINDOW_MSG) win_msg_draw();
+    if (window == WINDOW_MTEXT) win_mtext_draw();
+    if (window == WINDOW_PUBFORM) win_pubform_draw();
+    if (window == WINDOW_PROGRESS) win_progress_draw();
+    if (window == WINDOW_BPDETAIL) win_bpdetail_draw();
+    if (window == WINDOW_CUSTOM_LEVEL) win_customlvl_draw();
+    if (window == WINDOW_WORKSHOP) win_workshop_draw();
+    if (window == WINDOW_WORKSHOPDET) win_workshopdet_draw();
+    if (window == WINDOW_SETTINGS) win_settings_draw();
+  }
+  msg_draw();
+  ui_draw_mouse();
+  profiler_tac();
+  if (C.debug) {
+    profiler_draw();
+    //    my_draw_fps(420, 80, C.frame_time);
+  }
+  EndDrawing();
+  flush_win_cmd();
+}
+
+void ui_draw_mouse() {
+  // Doesn't draw if cursor is not on screen.
+  // raylib's IsCursorOnScreen() starts false and only flips on enter/leave
+  // events, which never fire when the window (or web page) opens with the
+  // pointer already over it. So mouse movement inside the window also counts
+  // as being on screen; a real enter/leave change always wins. The bounds
+  // check matters while dragging, when movement is reported outside too.
+  static bool inside = false;
+  static bool last_on = false;
+  bool on = IsCursorOnScreen();
+  Vector2 pos = GetMousePosition();
+  Vector2 delta = GetMouseDelta();
+  bool in_bounds = pos.x >= 0 && pos.y >= 0 && pos.x < GetScreenWidth() &&
+                   pos.y < GetScreenHeight();
+  if (on != last_on) {
+    inside = on;
+  } else if ((delta.x != 0 || delta.y != 0) && in_bounds) {
+    inside = true;
+  }
+  last_on = on;
+  if (!inside) {
+    return;
+  }
+
+  Rectangle source = rect_mouse_arrow;
+  switch (C.cursor) {
+    case MOUSE_SWITCH: {
+      source = rect_mouse_switch;
+      break;
+    }
+    case MOUSE_POINTER: {
+      source = rect_mouse_pointer;
+      break;
+    }
+    case MOUSE_RESIZE: {
+      source = rect_mouse_resize;
+      break;
+    }
+    case MOUSE_MOVE: {
+      source = rect_mouse_movecross;
+      break;
+    }
+    case MOUSE_SELECTION: {
+      source = rect_mouse_cross2;
+      break;
+    }
+    case MOUSE_ARROW: {
+      source = rect_mouse_arrow;
+      break;
+    }
+    case MOUSE_PEN: {
+      source = rect_mouse_pen_alone;
+      break;
+    }
+    case MOUSE_PICKER: {
+      source = rect_mouse_picker;
+      break;
+    }
+    case MOUSE_BUCKET: {
+      source = rect_mouse_bucket;
+      break;
+    }
+    case MOUSE_CLOCK: {
+      source = rect_mouse_clock;
+      break;
+    }
+  };
+  int s = ui_get_scale();
+  Rectangle target = {
+      .x = pos.x - 16 * s,
+      .y = pos.y - 16 * s,
+      .width = 32 * s,
+      .height = 32 * s,
+  };
+  DrawTexturePro(ui_get_sprites(), source, target, (Vector2){.x = 0, .y = 0},
+                 0.0f, CA_WHITE);
+}
+
+bool ui_get_should_close() { return C.should_close; }
+
+void ui_set_cursor(MouseCursorType cursor) { C.cursor = cursor; }
+void ui_set_close_requested() { C.close_requested = true; }
+
+WindowEnum ui_get_window() {
+  int n = arrlen(C.window);
+  if (n == 0) return WINDOW_NONE;
+  return C.window[n - 1];
+}
+
+double ui_get_frame_time() { return C.frame_time; }
+
+WindowEnum ui_wintop() { return ui_get_window(); }
+lua_State* ui_L() { return C.L; }
+
+void ui_sound_click() {
+  if (is_paint_sound_on()) play_sound_click();
+}

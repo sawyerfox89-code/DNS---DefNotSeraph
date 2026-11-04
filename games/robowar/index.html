@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+  <title>JSRoboWar</title>
+
+  <meta charset="utf-8" />
+
+  <link type="text/css" rel="stylesheet" media="screen" href="screen.css"/>
+
+  <script type="text/javascript" src="js/third-party/jquery-1.4.2.min.js"></script>
+  <script type="text/javascript" src="js/third-party/raphael-1.4.3.min.js"></script>
+  <script type="text/javascript" src="js/third-party/underscore-1.0.4.min.js"></script>
+  <script type="text/javascript" src="js/third-party/base.js"></script>
+  <script type="text/javascript" src="js/jsrobowar.js"></script>
+  <script type="text/javascript" src="js/gui.js"></script>
+
+  <!-- Tidbit form Dive Into HTML5 -->
+  <!--[if lt IE 9]>
+  <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+</head>
+<body>
+
+<div id="nav">
+  <h1>JSRoboWar</h1>
+  <ul>
+    <li><a href="#play">Arena</a></li>
+    <li><a href="#docs">Docs</a></li>
+    <li><a href="#about">About</a></li>
+  </ul>
+</div>
+
+<div id="container">
+
+  <section id="play">
+
+    <div id="game">
+      <div id="arena"></div>
+      <div>
+        <div id="scoreboard"></div>
+        <div id="controls">
+          <button id="start">Battle</button>
+          <button id="stop">Halt</button>
+          <br/>
+          <input type="checkbox" id="sound" autocomplete="off"/>
+          <label for="sound">Enable sound</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="clearfix"></div>
+
+    <section id="editor">
+      <hr/>
+      <h2>Robot X</h2>
+      <div id="errors"></div>
+      <div id="editors"></div>
+    </section>
+
+    <fieldset id="choices">
+      <legend>Load a robot:</legend>
+      <ol></ol>
+    </fieldset>
+
+  </section>
+
+  <section id="docs">
+    <p>See <a href="https://github.com/statico/jsrobowar/blob/master/robowar.pdf">RoboWar
+        Instructions (PDF)</a></p>
+  </section>
+
+  <section id="about">
+
+    <h2>About RoboWar</h2>
+    <p>
+      RoboWar is an virtual arena where programmed robots fight to the death using
+      a variety of weapons and techniques. The robots are programmed using a <a
+      href="http://en.wikipedia.org/wiki/Stack-oriented_programming_language">stack-oriented
+      programming language</a> called RoboTalk. The robots are also configured
+      using a set of hardware features, and the sum of the features determines
+      the robot's class.
+    </p>
+    <p>
+      According to <a href="http://en.wikipedia.org/wiki/RoboWar">Wikipedia's
+      article on RoboWar</a>, "25 RoboWar tournaments were held in the past
+      between 1989 until roughly 2003, when tournaments became intermittent and
+      many of the major coders moved on." You can still download the original
+      RoboWar application and pit tournament-winning robots against each other.
+      A random selection of those robots have been made available JSRoboWar.
+    </p>
+
+    <h2>About JSRoboWar</h2>
+    <p>
+      JSRoboWar is a from-scratch port of RoboWar to JavaScript. JSRoboWar
+      supports most of the functionality of the original except for teamplay,
+      custom icons and sounds, lasers (which are deprecated anyway), debugging,
+      and a Hardware Depot (every bot has the same large feature set).
+      It uses the <a href="http://raphaeljs.com/">Raphaël JavaScript
+      Library</a> to draw to an HTML5 canvas.
+    </p>
+    <p>
+      I wrote JSRoboWar as a programming exercise. I'm not devoting a lot of
+      time to developing it, but feel free to <a
+        href="http://github.com/statico/jsrobowar">fork it on GitHub</a> and
+      send me patches.
+    </p>
+
+    <h2>Links of Interest</h2>
+    <ul>
+      <li><a href="http://en.wikipedia.org/wiki/RoboWar">RoboWar on Wikipedia</a></li>
+      <li><a href="http://robowar.sourceforge.net/RoboWar5/index.html">RoboWar 5</a> - Download the original Mac Classic application as well as the new Windows port</li>
+      <li><a href="http://stephan.kochen.nl/proj/robowarx/">RoboWarX</a> - An implementation in C#</li>
+      <li><a href="http://www.stanford.edu/~pch/robowar/tutorial/Tutorial.html">Paul Hansen's RoboWar Tutorial</a> - A great source for RoboTalk with lots of simple, sample bots</li>
+      <li><a href="http://github.com/statico/jsrobowar">JSRoboWar on GitHub</a> - The source code for what you're looking at</li>
+    </ul>
+
+  </section>
+
+</div>
+
+<div id="footer">
+Original RoboWar by David Harris and Lucas Dixon.
+<br/>
+JSRoboWar by Ian Langworth. Source code available at
+<a href="http://github.com/statico/jsrobowar">github.com/statico/jsrobowar</a>
+</div>
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-290526-10']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+</body>
+</html>
+

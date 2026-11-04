@@ -1,0 +1,139 @@
+const MIN_CURSE_LEVEL = 1;
+const MAX_STANDARD_CURSE_LEVEL = 10;
+const MAX_CURSE_LEVEL = 15;
+const MAX_EQUIPMENT_LEVEL = 100;
+const MIN_EQUIPMENT_TIER = 1;
+const MAX_EQUIPMENT_TIER = MAX_CURSE_LEVEL;
+const PROGRESSION_SCALING_FACTOR = 10;
+const STANDARD_CURSE_UNLOCK_FLOOR = 10;
+const CURSE_UNLOCK_TRIGGER_FLOOR = 'floor';
+const CURSE_UNLOCK_TRIGGER_MONARCH = 'monarch';
+const MONARCH_DEPTH_BASE_FLOOR = 20;
+const MONARCH_DEPTH_FLOOR_STEP = 5;
+const MONARCH_DEPTH_MAX_TIER = 5;
+const MONARCH_DEPTH_REFINE_STONES_PER_TIER = 2;
+
+const clampCurseLevel = (value) => {
+    let level = Number(value);
+    if (!Number.isFinite(level)) {
+        level = MIN_CURSE_LEVEL;
+    }
+    level = Math.round(level);
+    return Math.min(MAX_CURSE_LEVEL, Math.max(MIN_CURSE_LEVEL, level));
+};
+
+const getEnemyScalingFromCurseLevel = (curseLevel) => (
+    1 + (clampCurseLevel(curseLevel) / PROGRESSION_SCALING_FACTOR)
+);
+
+const getCurseLevelFromEnemyScaling = (enemyScaling) => {
+    const scaling = Number(enemyScaling);
+    if (!Number.isFinite(scaling)) {
+        return MIN_CURSE_LEVEL;
+    }
+    return clampCurseLevel((scaling - 1) * PROGRESSION_SCALING_FACTOR);
+};
+
+const normalizePlayerCurseProgress = (playerData) => {
+    if (!playerData || typeof playerData !== 'object') {
+        return playerData;
+    }
+
+    const rawMaximum = playerData.maxUnlockedCurseLevel;
+    const hasSavedMaximum = rawMaximum !== undefined
+        && rawMaximum !== null
+        && rawMaximum !== ''
+        && Number.isFinite(Number(rawMaximum));
+    const selectedLevel = clampCurseLevel(playerData.selectedCurseLevel);
+    const maxUnlockedLevel = hasSavedMaximum
+        ? clampCurseLevel(rawMaximum)
+        : selectedLevel;
+
+    playerData.maxUnlockedCurseLevel = maxUnlockedLevel;
+    playerData.selectedCurseLevel = Math.min(selectedLevel, maxUnlockedLevel);
+    return playerData;
+};
+
+const clampEquipmentLevel = (value) => {
+    let level = Number(value);
+    if (!Number.isFinite(level)) {
+        level = 1;
+    }
+    level = Math.round(level);
+    return Math.min(MAX_EQUIPMENT_LEVEL, Math.max(1, level));
+};
+
+const clampEquipmentTier = (value) => {
+    let tier = Number(value);
+    if (!Number.isFinite(tier)) {
+        tier = MIN_EQUIPMENT_TIER;
+    }
+    tier = Math.round(tier);
+    return Math.min(MAX_EQUIPMENT_TIER, Math.max(MIN_EQUIPMENT_TIER, tier));
+};
+
+const getEquipmentTierFromEnemyScaling = (enemyScaling) => (
+    clampEquipmentTier(getCurseLevelFromEnemyScaling(enemyScaling))
+);
+
+const getEnemyScalingFromEquipmentTier = (tier) => (
+    1 + (clampEquipmentTier(tier) / PROGRESSION_SCALING_FACTOR)
+);
+
+const getCurseLevelRange = () => Array.from(
+    { length: MAX_CURSE_LEVEL - MIN_CURSE_LEVEL + 1 },
+    (_, index) => index + MIN_CURSE_LEVEL,
+);
+
+const getNextCurseUnlockLevel = ({
+    maxUnlockedCurseLevel,
+    selectedCurseLevel,
+    floor,
+    trigger = CURSE_UNLOCK_TRIGGER_FLOOR,
+    maxCurseLevel = MAX_CURSE_LEVEL,
+}) => {
+    const normalizedMaximum = Math.max(MIN_CURSE_LEVEL, Math.round(Number(maxCurseLevel)) || MIN_CURSE_LEVEL);
+    const maxUnlocked = Math.min(normalizedMaximum, Math.max(MIN_CURSE_LEVEL, Math.round(Number(maxUnlockedCurseLevel)) || MIN_CURSE_LEVEL));
+    const selectedLevel = Math.min(normalizedMaximum, Math.max(MIN_CURSE_LEVEL, Math.round(Number(selectedCurseLevel)) || MIN_CURSE_LEVEL));
+
+    if (maxUnlocked >= normalizedMaximum || selectedLevel !== maxUnlocked) {
+        return null;
+    }
+
+    const requiresMonarchVictory = maxUnlocked >= MAX_STANDARD_CURSE_LEVEL;
+    if (requiresMonarchVictory) {
+        return trigger === CURSE_UNLOCK_TRIGGER_MONARCH ? maxUnlocked + 1 : null;
+    }
+
+    return Number(floor) >= STANDARD_CURSE_UNLOCK_FLOOR && trigger === CURSE_UNLOCK_TRIGGER_FLOOR
+        ? maxUnlocked + 1
+        : null;
+};
+
+const getMonarchDepthTier = (floor) => {
+    const tier = Math.floor((Number(floor) - MONARCH_DEPTH_BASE_FLOOR) / MONARCH_DEPTH_FLOOR_STEP);
+    return Number.isFinite(tier) ? Math.min(MONARCH_DEPTH_MAX_TIER, Math.max(0, tier)) : 0;
+};
+
+const getMonarchDepthRewards = (floor) => {
+    const tier = getMonarchDepthTier(floor);
+    return {
+        tier,
+        extraHeirlooms: tier,
+        refineStones: tier * MONARCH_DEPTH_REFINE_STONES_PER_TIER,
+        nextTierFloor: tier < MONARCH_DEPTH_MAX_TIER
+            ? MONARCH_DEPTH_BASE_FLOOR + ((tier + 1) * MONARCH_DEPTH_FLOOR_STEP)
+            : null,
+    };
+};
+
+const getCurseUnlockHint = (maxUnlockedCurseLevel) => {
+    const current = clampCurseLevel(maxUnlockedCurseLevel);
+    if (current >= MAX_CURSE_LEVEL) {
+        return { key: 'curse-all-unlocked', params: {} };
+    }
+    return {
+        key: current >= MAX_STANDARD_CURSE_LEVEL ? 'curse-next-unlock-monarch' : 'curse-next-unlock-floor',
+        params: { current, next: current + 1, floor: STANDARD_CURSE_UNLOCK_FLOOR },
+    };
+};

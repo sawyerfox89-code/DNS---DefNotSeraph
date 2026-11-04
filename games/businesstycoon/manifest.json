@@ -1,0 +1,21 @@
+{
+  "name": "Business Tycoon — AI Office Simulator",
+  "short_name": "Business Tycoon",
+  "description": "Build and manage your dream AI startup. Free browser game.",
+  "start_url": "./",
+  "display": "standalone",
+  "theme_color": "#e07030",
+  "background_color": "#0d0b0e",
+  "icons": [
+    {
+      "src": "og-image.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "og-image.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

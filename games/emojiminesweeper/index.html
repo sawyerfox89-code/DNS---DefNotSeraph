@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=%VITE_GA_ID%"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag('js', new Date());
+
+      gtag('config', '%VITE_GA_ID%');
+    </script>
+    <script>
+      if (window.location.hostname === 'emojiminesweeper.vercel.app') {
+        const target = new URL('https://thumbfeed.com/emoji-minesweeper/');
+        const pathname = window.location.pathname
+          .replace(/^\/emoji-minesweeper\/?/, '')
+          .replace(/^\/+/, '');
+        target.pathname += pathname;
+        target.search = window.location.search;
+        target.hash = window.location.hash;
+        window.location.replace(target);
+      }
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- HTML Meta Tags -->
+    <title>Emoji Minesweeper: Minesweeper made with Emoji!</title>
+    <meta
+      name="description"
+      content="Play Emoji Minesweeper online, a cheerful twist on classic Minesweeper with colorful emoji themes, difficulty levels, stats, and records!"
+    />
+    <meta name="author" content="Michael Kolesidis" />
+    <meta name="theme-color" content="#ffffff" />
+
+    <!-- Facebook Meta Tags -->
+    <meta
+      property="og:url"
+      content="https://thumbfeed.com/emoji-minesweeper/"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Thumbfeed" />
+    <meta property="og:locale" content="en_US" />
+    <meta
+      property="og:title"
+      content="Emoji Minesweeper: Minesweeper made with Emoji!"
+    />
+    <meta
+      property="og:description"
+      content="Play Emoji Minesweeper online, a cheerful twist on classic Minesweeper with colorful emoji themes, difficulty levels, stats, and records!"
+    />
+    <meta
+      property="og:image"
+      content="https://thumbfeed.com/emoji-minesweeper/emoji-minesweeper.png"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Emoji Minesweeper game preview" />
+
+    <!-- Twitter Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:domain" content="thumbfeed.com" />
+    <meta
+      name="twitter:url"
+      content="https://thumbfeed.com/emoji-minesweeper/"
+    />
+    <meta
+      name="twitter:title"
+      content="Emoji Minesweeper: Minesweeper made with Emoji!"
+    />
+    <meta
+      name="twitter:description"
+      content="Play Emoji Minesweeper online, a cheerful twist on classic Minesweeper with colorful emoji themes, difficulty levels, stats, and records!"
+    />
+    <meta
+      name="twitter:image"
+      content="https://thumbfeed.com/emoji-minesweeper/emoji-minesweeper.png"
+    />
+    <meta name="twitter:image:alt" content="Emoji Minesweeper game preview" />
+
+    <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
+    <link rel="canonical" href="https://thumbfeed.com/emoji-minesweeper/" />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="assets/apple-touch-icon.png"
+    />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": ["VideoGame", "WebApplication"],
+        "name": "Emoji Minesweeper",
+        "url": "https://thumbfeed.com/emoji-minesweeper/",
+        "image": "https://thumbfeed.com/emoji-minesweeper/emoji-minesweeper.png",
+        "description": "Play Emoji Minesweeper online, a cheerful twist on classic Minesweeper with colorful emoji themes, difficulty levels, stats, and records.",
+        "author": {
+          "@type": "Person",
+          "name": "Michael Kolesidis"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Thumbfeed",
+          "url": "https://thumbfeed.com/"
+        },
+        "applicationCategory": "Game",
+        "genre": ["Puzzle", "Minesweeper"],
+        "gamePlatform": "Web browser",
+        "operatingSystem": "Any",
+        "playMode": "SinglePlayer",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    </script>
+    <script type="module" crossorigin src="./assets/main-DlIwwj-A.js"></script>
+    <link rel="modulepreload" crossorigin href="./assets/modulepreload-polyfill-P2Xu9kJm.js">
+    <link rel="stylesheet" crossorigin href="./assets/main-Bc6ok1WM.css">
+  </head>
+  <body>
+    <a href="https://thumbfeed.com" class="site-logo">
+      <img
+        id="desktop-logo"
+        class="site-logo-img"
+        src="assets/thumbfeed-logo-inline.svg"
+        alt="Thumbfeed logo"
+      />
+      <img
+        id="mobile-logo"
+        class="site-logo-img"
+        src="assets/thumbfeed-logo.svg"
+        alt="Thumbfeed logo"
+      />
+    </a>
+    <noscript>
+      <main>
+        <h1>Emoji Minesweeper</h1>
+        <p>
+          Play Emoji Minesweeper online, a cheerful twist on classic Minesweeper
+          with colorful emoji themes, difficulty levels, stats, and records.
+        </p>
+      </main>
+    </noscript>
+    <p style="display: none" id="p5_loading"></p>
+  </body>
+</html>

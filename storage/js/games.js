@@ -91,7 +91,7 @@ function filterGames() {
 
     let shown = 0;
     sorted.forEach(a => {
-        const visible = gameName(a).includes(search) && (genre === 'all' || gameGenre(a) === genre);
+        const visible = gameName(a).includes(search) && (genre === 'all' || gameGenre(a) === genre || (genre === 'opensource' && a.querySelector('.button').dataset.oss === 'true'));
         a.style.display = visible ? '' : 'none';
         a.querySelector('.button').style.display = '';
         if (visible) shown++;

@@ -1,0 +1,250 @@
+export const SFXLIST = [
+    {
+        "name": "allclear.mp3",
+        "path": "assets/sfx/allclear.mp3"
+    },
+    {
+        "name": "btb_1.mp3",
+        "path": "assets/sfx/btb_1.mp3"
+    },
+    {
+        "name": "clearbtb.mp3",
+        "path": "assets/sfx/clearbtb.mp3"
+    },
+    {
+        "name": "clearline.mp3",
+        "path": "assets/sfx/clearline.mp3"
+    },
+    {
+        "name": "clearquad.mp3",
+        "path": "assets/sfx/clearquad.mp3"
+    },
+    {
+        "name": "clearspin.mp3",
+        "path": "assets/sfx/clearspin.mp3"
+    },
+    {
+        "name": "damage_alert.mp3",
+        "path": "assets/sfx/damage_alert.mp3"
+    },
+    {
+        "name": "failure.mp3",
+        "path": "assets/sfx/failure.mp3"
+    },
+    {
+        "name": "finish.mp3",
+        "path": "assets/sfx/finish.mp3"
+    },
+    {
+        "name": "garbage_in_large.mp3",
+        "path": "assets/sfx/garbage_in_large.mp3"
+    },
+    {
+        "name": "garbage_in_small.mp3",
+        "path": "assets/sfx/garbage_in_small.mp3"
+    },
+    {
+        "name": "harddrop.mp3",
+        "path": "assets/sfx/harddrop.mp3"
+    },
+    {
+        "name": "hold.mp3",
+        "path": "assets/sfx/hold.mp3"
+    },
+    {
+        "name": "menutap.mp3",
+        "path": "assets/sfx/menutap.mp3"
+    },
+    {
+        "name": "menuclick.mp3",
+        "path": "assets/sfx/menuclick.mp3"
+    },
+    {
+        "name": "move.mp3",
+        "path": "assets/sfx/move.mp3"
+    },
+    {
+        "name": "retry.mp3",
+        "path": "assets/sfx/retry.mp3"
+    },
+    {
+        "name": "rotate.mp3",
+        "path": "assets/sfx/rotate.mp3"
+    },
+    {
+        "name": "spin.mp3",
+        "path": "assets/sfx/spin.mp3"
+    },
+    {
+        "name": "thunder.mp3",
+        "path": "assets/sfx/thunder.mp3"
+    },
+    {
+        "name": "topout.mp3",
+        "path": "assets/sfx/topout.mp3"
+    },
+    {
+        "name": "undo.mp3",
+        "path": "assets/sfx/undo.mp3"
+    },
+    {
+        "name": "redo.mp3",
+        "path": "assets/sfx/redo.mp3"
+    },
+    {
+        "name": "personalbest.mp3",
+        "path": "assets/sfx/personalbest.mp3"
+    },
+    {
+        "name": "pbstart.mp3",
+        "path": "assets/sfx/pbstart.mp3"
+    },
+    {
+        "name": "pbend.mp3",
+        "path": "assets/sfx/pbend.mp3"
+    },
+    {
+        "name": "garbagerise.mp3",
+        "path": "assets/sfx/garbagerise.mp3"
+    },
+    {
+        "name": "garbagesmash.mp3",
+        "path": "assets/sfx/garbagesmash.mp3"
+    },
+    {
+        "name": "speed_up.mp3",
+        "path": "assets/sfx/speed_up.mp3"
+    },
+    {
+        "name": "speed_down.mp3",
+        "path": "assets/sfx/speed_down.mp3"
+    },
+    {
+        "name": "levelup.mp3",
+        "path": "assets/sfx/levelup.mp3"
+    },
+    {
+        "name": "zenith_levelup.mp3",
+        "path": "assets/sfx/zenith_levelup.mp3"
+    },
+    {
+        "name": "zenith_speedrun_start.mp3",
+        "path": "assets/sfx/zenith_speedrun_start.mp3"
+    },
+    {
+        "name": "zenith_speedrun_end.mp3",
+        "path": "assets/sfx/zenith_speedrun_end.mp3"
+    },
+    {
+        "name": "z.mp3",
+        "path": "assets/sfx/piece/z.mp3"
+    },
+    {
+        "name": "s.mp3",
+        "path": "assets/sfx/piece/s.mp3"
+    },
+    {
+        "name": "l.mp3",
+        "path": "assets/sfx/piece/l.mp3"
+    },
+    {
+        "name": "j.mp3",
+        "path": "assets/sfx/piece/j.mp3"
+    },
+    {
+        "name": "t.mp3",
+        "path": "assets/sfx/piece/t.mp3"
+    },
+    {
+        "name": "o.mp3",
+        "path": "assets/sfx/piece/o.mp3"
+    },
+    {
+        "name": "i.mp3",
+        "path": "assets/sfx/piece/i.mp3"
+    },
+    {
+        "name": "combo_1.mp3",
+        "path": "assets/sfx/combo/combo_1.mp3"
+    },
+    {
+        "name": "combo_10.mp3",
+        "path": "assets/sfx/combo/combo_10.mp3"
+    },
+    {
+        "name": "combo_11.mp3",
+        "path": "assets/sfx/combo/combo_11.mp3"
+    },
+    {
+        "name": "combo_12.mp3",
+        "path": "assets/sfx/combo/combo_12.mp3"
+    },
+    {
+        "name": "combo_13.mp3",
+        "path": "assets/sfx/combo/combo_13.mp3"
+    },
+    {
+        "name": "combo_14.mp3",
+        "path": "assets/sfx/combo/combo_14.mp3"
+    },
+    {
+        "name": "combo_15.mp3",
+        "path": "assets/sfx/combo/combo_15.mp3"
+    },
+    {
+        "name": "combo_16.mp3",
+        "path": "assets/sfx/combo/combo_16.mp3"
+    },
+    {
+        "name": "combo_2.mp3",
+        "path": "assets/sfx/combo/combo_2.mp3"
+    },
+    {
+        "name": "combo_3.mp3",
+        "path": "assets/sfx/combo/combo_3.mp3"
+    },
+    {
+        "name": "combo_4.mp3",
+        "path": "assets/sfx/combo/combo_4.mp3"
+    },
+    {
+        "name": "combo_5.mp3",
+        "path": "assets/sfx/combo/combo_5.mp3"
+    },
+    {
+        "name": "combo_6.mp3",
+        "path": "assets/sfx/combo/combo_6.mp3"
+    },
+    {
+        "name": "combo_7.mp3",
+        "path": "assets/sfx/combo/combo_7.mp3"
+    },
+    {
+        "name": "combo_8.mp3",
+        "path": "assets/sfx/combo/combo_8.mp3"
+    },
+    {
+        "name": "combo_9.mp3",
+        "path": "assets/sfx/combo/combo_9.mp3"
+    },
+    {
+        "name": "hyperalert",
+        "path": "assets/sfx/hyperalert.mp3"
+    },
+    {
+        "name": "countdown5",
+        "path": "assets/sfx/countdown5.mp3"
+    },
+    {
+        "name": "countdown4",
+        "path": "assets/sfx/countdown4.mp3"
+    },
+    {
+        "name": "go",
+        "path": "assets/sfx/go.mp3"
+    },
+    {
+        "name": "offset",
+        "path": "assets/sfx/offset.mp3"
+    }
+]

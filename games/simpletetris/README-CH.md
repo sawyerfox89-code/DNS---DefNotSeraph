@@ -1,0 +1,245 @@
+# 经典俄罗斯方块
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![GitHub Stars](https://img.shields.io/github/stars/NickScherbakov/very-simple-tetris-created-by-Copilot?style=social)](https://github.com/NickScherbakov/very-simple-tetris-created-by-Copilot) [![GitHub Forks](https://img.shields.io/github/forks/NickScherbakov/very-simple-tetris-created-by-Copilot?style=social)](https://github.com/NickScherbakov/very-simple-tetris-created-by-Copilot/fork) [![GitHub Pages](https://img.shields.io/badge/Play%20Now-GitHub%20Pages-brightgreen)](https://nickscherbakov.github.io/very-simple-tetris-created-by-Copilot/) [![PWA Ready](https://img.shields.io/badge/PWA-Ready-blue)](https://nickscherbakov.github.io/very-simple-tetris-created-by-Copilot/) ![Languages](https://img.shields.io/badge/Languages-EN%20%7C%20RU%20%7C%20ZH%20%7C%20AR-orange) [![Made with Copilot](https://img.shields.io/badge/Made%20with-GitHub%20Copilot-8957e5)](https://github.com/features/copilot)
+
+使用 HTML、CSS 和 JavaScript 实现的经典俄罗斯方块游戏。
+
+![俄罗斯方块游戏](./Tetris_logo.png)
+
+[我们的线上版本](https://nickscherbakov.github.io/very-simple-tetris-created-by-Copilot/)
+
+## 📱 在移动设备上玩
+
+扫描二维码在手机上即刻开始游戏：
+
+![玩俄罗斯方块](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://nickscherbakov.github.io/very-simple-tetris-created-by-Copilot/)
+
+> 💡 **提示：** 将游戏添加到主屏幕以获得原生应用体验！游戏支持离线 PWA。
+
+## 描述
+
+这个经典俄罗斯方块游戏的实现不仅涵盖原作的主要元素，还加入了现代化增强功能：
+
+- 七种标准方块（I, J, L, O, S, T, Z）
+- 随等级提升而加快的难度
+- 带有软降/硬降奖励的计分系统
+- 显示下一个方块
+- 可开启/关闭的网格选项
+- 分析玩家失误的自适应学习引擎
+- 适用于手机和平板的触控按键
+- 高分和网格偏好可跨会话保存
+
+## 特点
+
+- 流畅的动画和灵敏的键盘控制
+- 暂停/恢复功能
+- 实时显示分数、级别和已消除的行数
+- 预览下一块
+- 带高光效果的可自定义网格
+- “AI Insight” 面板解释策略变化
+- 针对触控设备的屏幕按键
+- 通过 localStorage 保留高分和网格偏好
+
+## 🎮 操作控制
+
+### 键盘
+| 按键 | 动作 |
+|-----|------|
+| ← → | 左右移动方块 |
+| ↑ | 旋转方块 |
+| ↓ | 软降（更快下降） |
+| 空格 | 硬降（瞬间放置） |
+| P | 暂停 / 恢复 |
+| G | 切换网格覆盖 |
+| M | 静音 / 取消静音 |
+| T | 接管控制（AI 对战 AI 模式） |
+
+### 触控（移动设备）
+- **左右滑动** — 移动方块
+- **点击** — 旋转
+- **向下滑动** — 硬降
+- 所有控制的屏幕按钮
+
+### AI 对战 AI 模式
+- **AI 对战 AI 模式按钮** — 开始 AI 竞争
+- **T 键 / 接管控制按钮** — 干预 AI 游戏
+- **退出 AI 模式按钮** — 返回正常游戏
+
+## 计分系统
+
+- 1 行：40 × 级别
+- 2 行：100 × 级别
+- 3 行：300 × 级别
+- 4 行：1200 × 级别
+- 软降落：每个格子 +1 分
+- 硬降落：每个格子 +2 分
+
+## 🛠️ 技术栈
+
+| 技术 | 用途 |
+|-----|------|
+| HTML5 Canvas | 游戏渲染 |
+| CSS3 | 响应式 UI、动画、主题 |
+| Vanilla JavaScript | 游戏逻辑、ES 模块 |
+| Web Audio API | 程序化声音生成 |
+| Service Worker | 离线 PWA 支持 |
+| LocalStorage | 持久化数据（分数、主题、回放） |
+| Web Share API | 移动设备上的原生分享 |
+| Vibration API | 触觉反馈 |
+
+**零外部依赖** — 所有内容都使用原生 Web API 构建。
+
+## AI 对战 AI 游戏模式
+
+**新功能！**观看两个AI玩家相互竞争的激动人心的游戏模式，展示先进战略思维和自适应学习。
+
+### 运作方式
+
+1. **AI 竞争**：两个独立的AI引擎相互对抗，每个引擎都学习并适应棋盘状态
+2. **实时分析**：每个AI实时显示其思考过程和战略规划
+3. **玩家学习**：通过观察复杂的AI决策过程来提升自己的俄罗斯方块技能
+4. **玩家干预**：随时使用'T'键或"接管控制"按钮接管游戏
+
+### AI 对战 AI 功能
+
+- **双AI系统**：两个独立的AI玩家，具有独立的学习算法
+- **战略分析**：每个AI分析棋盘并解释其推理过程
+- **视觉反馈**：彩色编码UI显示哪个AI处于活跃状态（红色AI 1 vs 蓝色AI 2）
+- **教育价值**：通过观察AI游戏玩法学习先进的俄罗斯方块策略的完美方式
+- **无缝集成**：瞬间在正常游戏玩法和AI对战AI模式之间切换
+
+### 控制（AI 对战 AI 模式）
+
+- **AI 对战 AI 模式按钮**：开始AI对战AI游戏
+- **T 键**：从当前AI玩家手中接管控制权
+- **接管控制按钮**：干预AI游戏的替代方式
+- **退出AI模式按钮**：返回正常游戏玩法
+
+此模式非常适合想要：
+- 通过观看AI游戏学习先进的俄罗斯方块策略的玩家
+- 了解不同的AI方法如何处理各种棋盘情况
+- 在关键时刻练习从AI手中接管游戏
+- 体验AI对战AI竞争的教育价值
+
+## 自适应学习 AI
+
+内置训练器会观察你每一次落子：凡是导致出现空洞或堆出高塔的方块都会更频繁地出现，而帮助你稳定局面的方块则会减少。它不会改变方块下落速度，确保游戏公平。在对局过程中，**AI Insight** 面板会提示当前的策略重点；当你顶满失败后，它会解释自己如何抓住你的失误，帮助你在下一局调整策略。
+
+## 安装和启动
+
+1. 克隆仓库或下载项目文件
+2. 在任何现代浏览器中打开 `index.html`
+3. 点击 "开始游戏" 按钮开始玩
+
+## 📁 项目结构
+
+```
+├── index.html                  # 主 HTML 文件
+├── tetris.js                   # 主游戏入口点（ES 模块）
+├── style.css                   # 核心样式
+├── sw.js                       # Service Worker
+├── manifest.json               # PWA 清单
+├── css/
+│   ├── betting-panel.css       # 投注 UI 样式
+│   ├── language.css            # 语言选择样式
+│   ├── share.css               # 分享 UI 样式
+│   └── team-tournament.css     # 锦标赛样式
+├── js/
+│   ├── achievements.js         # 成就系统
+│   ├── betting.js              # 投注系统
+│   ├── currency.js             # TetriCoins 货币
+│   ├── i18n.js                 # 国际化
+│   ├── language-selector.js    # 语言 UI
+│   ├── pwa.js                  # PWA 注册
+│   ├── team-tournament.js      # 锦标赛逻辑
+│   ├── team-tournament-ui.js   # 锦标赛 UI
+│   └── modules/
+│       ├── core/               # 核心游戏逻辑
+│       ├── rendering/          # Canvas 渲染
+│       ├── input/              # 输入处理
+│       ├── ai/                 # AI 系统
+│       ├── audio/              # 声音引擎
+│       └── game/               # 游戏系统（计分、UI、主题、回放）
+├── icons/                      # PWA 图标
+├── tetris-textbook*.md         # 游戏教程
+├── tetris-strategist*.md       # 策略指南
+└── README*.md                  # 文档（EN、RU、CH）
+```
+
+## 🤝 贡献
+
+我们欢迎贡献！请参阅 [CONTRIBUTING.md](CONTRIBUTING.md) 获取指南。
+
+### 贡献者快速入门
+1. Fork 此仓库
+2. 在浏览器中打开 `index.html`（无需构建步骤！）
+3. 进行更改
+4. 提交 Pull Request
+
+### 适合新手的任务
+- 🌐 为新语言添加翻译（日语、韩语、西班牙语等）
+- 🎨 创建新的视觉主题
+- 🔊 添加新的声音模式
+- 📝 改进文档
+- 🐛 报告和修复错误
+
+查看 [ROADMAP.md](ROADMAP.md) 获取更多想法。
+
+## AI 重建提示
+
+### AI 助手的提示
+
+使用 HTML、CSS 和 JavaScript 创建经典俄罗斯方块游戏实现，具有以下规范：
+
+1. **游戏结构**：
+   - 创建带有主游戏画布（300x600px）的 HTML 文件用于俄罗斯方块板
+   - 添加次要画布（100x100px）显示下一个方块
+   - 设置显示分数、级别和消除行数的区域
+   - 包括开始/重新开始按钮和网格切换按钮
+   - 添加控制指南部分
+
+2. **游戏机制**：
+   - 实现 10x20 网格的游戏板
+   - 创建 7 种标准方块形状（I, J, L, O, S, T, Z），各有不同颜色
+   - 设置方块移动（左、右、下）、旋转和碰撞检测
+   - 实现软降落（更快下降）和硬降落（立即放置）
+   - 添加行消除和适当的计分
+   - 实现级别进展（每 10 行）和速度增加
+   - 包括当方块堆到顶部时的游戏结束检测
+   - 添加暂停功能
+
+3. **视觉元素**：
+   - 使用深色主题（游戏区域黑色背景）
+   - 为每个方块块添加闪光效果
+   - 实现可切换开/关的可选网格显示
+   - 创建开始屏幕、暂停屏幕和游戏结束屏幕，显示适当的信息
+   - 确保下一块预览在其画布中居中显示即将出现的方块
+
+4. **控制**：
+   - 方向键用于移动（左、右、下）和旋转（上）
+   - 空格键用于硬降落
+   - P 键用于暂停/恢复
+   - G 键用于切换网格可见性
+
+5. **计分系统**：
+   - 1 行：40 × 级别分
+   - 2 行：100 × 级别分
+   - 3 行：300 × 级别分
+   - 4 行：1200 × 级别分
+   - 软降落：每个格子 1 分奖励
+   - 硬降落：每个格子 2 分奖励
+
+使用原生 JavaScript 和 Canvas API 进行渲染实现游戏，确保流畅的游戏玩法和适当的动画时间。该实现应该响应迅速，无需外部库即可在现代浏览器中工作。
+
+## 作者
+
+[您的名字] - [个人资料或联系方式链接]
+
+## 许可证
+
+本项目使用 [指定许可证，例如 MIT 许可证] 授权 - 详见 LICENSE 文件。
+
+## 语言版本
+
+本文档的英文版本请查看 [README.md](README.md)
+俄文版本请查看 [README-RU.md](README-RU.md)

@@ -1,0 +1,73 @@
+#ifndef CA_UI_H
+#define CA_UI_H
+#include <lua.h>
+
+#include "paths.h"
+#include "raylib.h"
+#include "stdbool.h"
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+typedef enum {
+  MOUSE_ARROW,
+  MOUSE_PEN,
+  MOUSE_BUCKET,
+  MOUSE_PICKER,
+  MOUSE_SELECTION,
+  MOUSE_SWITCH,
+  MOUSE_MOVE,
+  MOUSE_RESIZE,
+  MOUSE_POINTER,
+  MOUSE_CLOCK,
+} MouseCursorType;
+
+// Available windows/screens
+typedef enum {
+  WINDOW_NONE,
+  WINDOW_MAIN,
+  WINDOW_ABOUT,
+  WINDOW_TEXT,
+  WINDOW_NUMBER,
+  WINDOW_MSG,
+  WINDOW_DIALOG,
+  WINDOW_WIKI,
+  WINDOW_CLIPBOARD,
+  WINDOW_LOG,
+  WINDOW_LEVEL,
+  WINDOW_BLUEPRINT,
+  WINDOW_MTEXT,
+  WINDOW_PUBFORM,
+  WINDOW_PROGRESS,
+  WINDOW_BPDETAIL,
+  WINDOW_CUSTOM_LEVEL,
+  WINDOW_WORKSHOP,
+  WINDOW_WORKSHOPDET,
+  WINDOW_SETTINGS,
+} WindowEnum;
+
+void ui_init();
+void ui_update_frame();
+void ui_destroy();
+bool ui_get_should_close();
+void ui_winpush(WindowEnum newWindow);
+void ui_winpop();
+WindowEnum ui_wintop();
+WindowEnum ui_get_window();
+void ui_inc_hit_count();
+int ui_get_hit_count();
+void ui_set_cursor(MouseCursorType cursor);
+void ui_set_close_requested();
+void ui_run();
+void ui_crash(const char* err);
+double ui_get_frame_time();
+void ui_handle_lua_error(lua_State* L);
+void ui_sound_click();
+void ui_reset_hit_count();
+
+#if defined(__cplusplus)
+}
+#endif
+
+#endif
