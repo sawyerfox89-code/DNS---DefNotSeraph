@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+<defs>
+<linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a1022"/><stop offset=".6" stop-color="#5e2147"/><stop offset="1" stop-color="#8f3b63"/></linearGradient>
+<radialGradient id="glow" cx=".8" cy=".2" r=".5"><stop offset="0" stop-color="#ffc4dd" stop-opacity=".35"/><stop offset="1" stop-color="#ffc4dd" stop-opacity="0"/></radialGradient>
+<g id="p"><path d="M0 -14 C8 -14 12 -4 0 10 C-12 -4 -8 -14 0 -14Z" fill="#ffb7d5"/></g>
+<g id="f"><use href="#p"/><use href="#p" transform="rotate(72)"/><use href="#p" transform="rotate(144)"/><use href="#p" transform="rotate(216)"/><use href="#p" transform="rotate(288)"/><circle r="4" fill="#ff6fa8"/></g>
+</defs>
+<rect width="1920" height="1080" fill="url(#g)"/>
+<rect width="1920" height="1080" fill="url(#glow)"/>
+<path d="M1920 80 C1700 160 1560 120 1400 230 C1300 300 1180 300 1060 380" stroke="#24101c" stroke-width="22" fill="none" stroke-linecap="round"/>
+<path d="M1560 140 C1520 220 1460 260 1380 300" stroke="#24101c" stroke-width="12" fill="none" stroke-linecap="round"/>
+<g opacity=".95">
+<use href="#f" transform="translate(1700 150) scale(2.2)"/><use href="#f" transform="translate(1610 105) scale(1.6)"/><use href="#f" transform="translate(1480 210) scale(2)"/><use href="#f" transform="translate(1390 290) scale(1.5)"/><use href="#f" transform="translate(1300 270) scale(1.9)"/><use href="#f" transform="translate(1160 340) scale(1.4)"/><use href="#f" transform="translate(1080 390) scale(1.8)"/><use href="#f" transform="translate(1820 110) scale(1.5)"/><use href="#f" transform="translate(1540 160) scale(1.3)"/>
+</g>
+<g opacity=".7">
+<use href="#p" transform="translate(900 520) rotate(30)"/><use href="#p" transform="translate(700 760) rotate(-40)"/><use href="#p" transform="translate(1250 700) rotate(80)"/><use href="#p" transform="translate(420 380) rotate(10)"/><use href="#p" transform="translate(1500 900) rotate(-70)"/><use href="#p" transform="translate(260 880) rotate(55)"/><use href="#p" transform="translate(1080 940) rotate(-15)"/><use href="#p" transform="translate(560 600) rotate(120)"/><use href="#p" transform="translate(1700 620) rotate(20)"/>
+</g>
+</svg>

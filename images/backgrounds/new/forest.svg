@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+<defs>
+<linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0c1f17"/><stop offset=".5" stop-color="#1d3b2a"/><stop offset="1" stop-color="#0a1510"/></linearGradient>
+<radialGradient id="moon" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#e8f3d6"/><stop offset=".6" stop-color="#e8f3d6" stop-opacity=".25"/><stop offset="1" stop-color="#e8f3d6" stop-opacity="0"/></radialGradient>
+<path id="t" d="M0 -220 L60 -100 L35 -100 L90 0 L60 0 L120 110 L-120 110 L-60 0 L-90 0 L-35 -100 L-60 -100Z"/>
+</defs>
+<rect width="1920" height="1080" fill="url(#g)"/>
+<circle cx="1450" cy="240" r="220" fill="url(#moon)"/><circle cx="1450" cy="240" r="70" fill="#e8f3d6"/>
+<g fill="#2b5a3e" opacity=".55"><use href="#t" transform="translate(150 700) scale(1.2)"/><use href="#t" transform="translate(420 720) scale(1.5)"/><use href="#t" transform="translate(700 690) scale(1.1)"/><use href="#t" transform="translate(980 730) scale(1.4)"/><use href="#t" transform="translate(1260 700) scale(1.2)"/><use href="#t" transform="translate(1540 730) scale(1.5)"/><use href="#t" transform="translate(1820 700) scale(1.2)"/></g>
+<g fill="#16301f"><use href="#t" transform="translate(40 880) scale(1.8)"/><use href="#t" transform="translate(330 900) scale(2.1)"/><use href="#t" transform="translate(640 870) scale(1.7)"/><use href="#t" transform="translate(1170 900) scale(2)"/><use href="#t" transform="translate(1480 880) scale(1.8)"/><use href="#t" transform="translate(1790 900) scale(2.2)"/></g>
+<rect y="1000" width="1920" height="80" fill="#0a1510"/>
+<g fill="#d8ff7a"><circle cx="520" cy="560" r="3" opacity=".8"/><circle cx="880" cy="620" r="2.5" opacity=".6"/><circle cx="1100" cy="520" r="3" opacity=".9"/><circle cx="300" cy="480" r="2" opacity=".6"/><circle cx="1640" cy="560" r="2.5" opacity=".7"/><circle cx="760" cy="440" r="2" opacity=".5"/></g>
+</svg>

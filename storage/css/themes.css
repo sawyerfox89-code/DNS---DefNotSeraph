@@ -167,3 +167,71 @@
     --hover-color: rgb(40, 37, 37);
     --text-glow: rgb(167, 165, 165);
 }
+
+/* ---- new themes ---- */
+
+:root.theme-synthwave {
+    --background-image: url('/DNS---DefNotSeraph/images/backgrounds/new/synthwave.svg');
+    --font-family: 'PixelifySans', 'Ubuntu', sans-serif;
+    --text-color: #ffd3f1;
+    --border-color1: #ff2a6d;
+    --border-color2: #05d9e8;
+    --background-color: #2b0a4a;
+    --hover-color: #4a1170;
+    --text-glow: #ff2a6d;
+}
+
+:root.theme-sakura {
+    --background-image: url('/DNS---DefNotSeraph/images/backgrounds/new/sakura.svg');
+    --font-family: 'Raleway', sans-serif;
+    --text-color: #ffe1ee;
+    --border-color1: #ff8fbf;
+    --border-color2: #7a2b52;
+    --background-color: #4a1a36;
+    --hover-color: #6b2850;
+    --text-glow: #ff6fa8;
+}
+
+:root.theme-forest {
+    --background-image: url('/DNS---DefNotSeraph/images/backgrounds/new/forest.svg');
+    --font-family: 'Ubuntu', sans-serif;
+    --text-color: #d9f0c4;
+    --border-color1: #6fae5a;
+    --border-color2: #24432f;
+    --background-color: #16301f;
+    --hover-color: #23472f;
+    --text-glow: #9bd35a;
+}
+
+:root.theme-ocean {
+    --background-image: url('/DNS---DefNotSeraph/images/backgrounds/new/ocean.svg');
+    --font-family: 'Ubuntu', sans-serif;
+    --text-color: #c9f6ff;
+    --border-color1: #2fc4dd;
+    --border-color2: #0b4a63;
+    --background-color: #06304a;
+    --hover-color: #0a4566;
+    --text-glow: #3ad7f0;
+}
+
+:root.theme-neon {
+    --background-image: url('/DNS---DefNotSeraph/images/backgrounds/new/neon.svg');
+    --font-family: 'Inconsolata', 'Ubuntu', sans-serif;
+    --text-color: #e6fdff;
+    --border-color1: #00e5ff;
+    --border-color2: #b400ff;
+    --background-color: #0b0d1a;
+    --hover-color: #171a33;
+    --text-glow: #00e5ff;
+}
+
+:root.theme-royal {
+    --background-image: url('/DNS---DefNotSeraph/images/backgrounds/new/royal.svg');
+    --font-family: 'Raleway', sans-serif;
+    --text-color: #f7e08a;
+    --border-color1: #c9971c;
+    --border-color2: #5c430d;
+    --background-color: #15110a;
+    --hover-color: #2a2110;
+    --text-glow: #c9971c;
+}

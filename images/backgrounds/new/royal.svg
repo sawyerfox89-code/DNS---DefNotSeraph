@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+<defs>
+<radialGradient id="g" cx=".5" cy=".45" r=".75"><stop offset="0" stop-color="#1c1609"/><stop offset="1" stop-color="#050403"/></radialGradient>
+<linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7e08a"/><stop offset=".5" stop-color="#c9971c"/><stop offset="1" stop-color="#8a6512"/></linearGradient>
+<pattern id="art" width="160" height="160" patternUnits="userSpaceOnUse"><path d="M80 0 L160 80 L80 160 L0 80Z" fill="none" stroke="#c9971c" stroke-width="1.2" opacity=".18"/><path d="M80 30 L130 80 L80 130 L30 80Z" fill="none" stroke="#c9971c" stroke-width="1" opacity=".12"/></pattern>
+</defs>
+<rect width="1920" height="1080" fill="url(#g)"/>
+<rect width="1920" height="1080" fill="url(#art)"/>
+<g fill="none" stroke="url(#gold)" stroke-width="3" opacity=".7"><rect x="60" y="60" width="1800" height="960"/><rect x="80" y="80" width="1760" height="920" stroke-width="1.5"/></g>
+<g fill="url(#gold)" opacity=".8"><path d="M60 60 l50 0 l-50 50Z"/><path d="M1860 60 l-50 0 l50 50Z"/><path d="M60 1020 l50 0 l-50 -50Z"/><path d="M1860 1020 l-50 0 l50 -50Z"/></g>
+</svg>
