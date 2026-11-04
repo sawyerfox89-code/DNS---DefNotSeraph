@@ -1,0 +1,27 @@
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>collision course | Seraph</title>
+        <link rel="shortcut icon" href="../../../images/ico.ico">
+        <style>
+            html, body { margin: 0; height: 100%; background-color: black; color: white; }
+            #credit { position: fixed; bottom: 4px; left: 8px; font: 12px sans-serif; opacity: 0.6; z-index: 5; }
+            #credit a { color: white; }
+        </style>
+    </head>
+    <body>
+        <div style="width:100%;height:100%;max-width:100%">
+            <div id="game"></div>
+        </div>
+        <div id="credit">collision course by Donnie Russell · freeware, redistributable unmodified · <a href="https://github.com/retrobrews/gba-games" target="_blank">source</a></div>
+        <script>
+            EJS_player = "#game";
+            EJS_core = "gba";
+            EJS_color = "#000000";
+            EJS_startOnLoaded = true;
+            EJS_pathtodata = "../../../storage/emulatorjs/data/";
+            EJS_gameUrl = "collisioncourse.gba";
+        </script>
+        <script src="../../../storage/emulatorjs/data/loader.js"></script>
+    </body>
+</html>
