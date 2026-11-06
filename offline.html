@@ -186,7 +186,7 @@
           <br>
           <br>
           <h2 style="font-size: 30px;">downloaded games</h2>
-          <div class="button-container">
+          <div class="button-container" id="offlineLibrary">
 
           </div>
           
@@ -198,55 +198,7 @@
               
       </div>
 
-      <script>
-            document.addEventListener('DOMContentLoaded', () => {
-                const games = JSON.parse(localStorage.getItem('downloadedGames')) || [];
-                const container = document.querySelector('.button-container'); 
-                games.forEach(game => {
-                    const gameButton = document.createElement('a');
-                    gameButton.setAttribute('href', '/DNS---DefNotSeraph/games/' + game.directory);
-                    gameButton.innerHTML = `
-                        <div class="button" style="background-image: url('${game.thumbnail}');" data-genre="platformer">
-                            <h2>${game.name}</h2>
-                            <span class="delete-button" data-game="${game.directory}">✖</button>
-                        </div>
-                    `;
-                    container.appendChild(gameButton);
-                });
-
-                document.querySelectorAll('.delete-button').forEach(button => {
-                    button.addEventListener('click', (event) => {
-                        event.preventDefault();
-                        const gameDirectory = event.target.getAttribute('data-game');
-                        deleteGame(gameDirectory);
-                    });
-                });
-            });
-
-            async function deleteGame(gameDirectory) {
-                const games = JSON.parse(localStorage.getItem('downloadedGames')) || [];
-                const updatedGames = games.filter(game => game.directory !== gameDirectory);
-                localStorage.setItem('downloadedGames', JSON.stringify(updatedGames));
-
-                const cache = await caches.open('game-cache');
-                const response = await fetch('/DNS---DefNotSeraph/storage/js/directories.json'); 
-                if (!response.ok) {
-                    throw new Error('Failed to fetch directory list');
-                }
-
-                const directoryList = await response.json();
-                const gameData = directoryList[gameDirectory];
-
-                if (gameData && gameData.files) {
-                    for (const file of gameData.files) {
-                        await cache.delete(file);
-                    }
-                    await cache.delete(gameData.thumbnail);
-                }
-
-                window.location.reload();
-            }
-      </script>
+      <script src="/DNS---DefNotSeraph/storage/js/offline.js"></script>
 
       <script>
         // cloaking
