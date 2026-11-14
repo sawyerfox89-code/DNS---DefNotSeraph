@@ -1,0 +1,105 @@
+<html lang="en">
+	<head>
+		<title>Dive | Seraph</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link rel="stylesheet" type="text/css" href="./style/main.css">
+		<link rel="shortcut icon" type="image/x-icon" href="../../images/ico.ico">
+	
+		<style>
+			/* Seraph: hide the developer panel, add a click-to-play screen */
+			.dg.ac { display: none !important; }
+			#seraphPlay { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center;
+				background: rgba(0,0,0,.55); color: #fff; font-family: sans-serif; text-align: center; cursor: pointer; }
+			#seraphPlay .box { padding: 26px 34px; border: 2px solid #fff; border-radius: 14px; background: rgba(0,0,0,.6); max-width: 520px; }
+			#seraphPlay h2 { margin: 0 0 10px; font-size: 32px; letter-spacing: 2px; }
+			#seraphPlay p { margin: 6px 0; font-size: 15px; opacity: .9; }
+			#seraphPlay .keys { margin-top: 14px; font-size: 13px; opacity: .8; line-height: 1.6; }
+		</style>
+	</head>
+<body>
+
+	<section id="startScreen">
+		<h1>
+			<p>
+				This showcase demonstrates a full-featured implementation of a bot AI for a simple shooter game.
+			</p>
+			<p>
+				Mouse and keyboard are required. It's also recommended to turn on audio speakers.
+			</p>
+		</h1>
+		<p>
+			<button id="start">Start</button>
+		</p>
+	</section>
+
+	<section id="loadingScreen">
+		<div class="spinner">
+			<div class="rect1"></div>
+			<div class="rect2"></div>
+			<div class="rect3"></div>
+			<div class="rect4"></div>
+			<div class="rect5"></div>
+		</div>
+	</section>
+
+	<section id="hudAmmo" class="uiContainer hidden">
+		<div>
+			<span id="roundsLeft"></span>
+			<span>|</span>
+			<span id="ammo"></span>
+		</div>
+	</section>
+
+	<section id="hudHealth" class="uiContainer hidden">
+		<div>
+			<span id="health"></span>
+		</div>
+	</section>
+
+	<section id="hudFragList" class="uiContainer hidden">
+		<div>
+			<ul id="fragList"></ul>
+		</div>
+	</section>
+
+	<script src="build/bundle.js"></script>
+
+	<div id="seraphPlay"><div class="box">
+		<h2 id="seraphPlayTitle">CLICK TO PLAY</h2>
+		<p>deathmatch against AI bots</p>
+		<div class="keys">WASD / arrows: move &middot; mouse: aim &middot; click: shoot<br>R: reload &middot; 1 / 2 / 3: switch weapon &middot; Esc: pause</div>
+	</div></div>
+	<script>
+		// Seraph: start straight in first person (the original opens in a developer overview)
+		(function () {
+			var play = document.getElementById('seraphPlay');
+			var title = document.getElementById('seraphPlayTitle');
+			var ready = false;
+			function fpsButton() {
+				var items = document.querySelectorAll('.dg li.function .property-name');
+				for (var i = 0; i < items.length; i++) if (/enable FPS controls/i.test(items[i].textContent)) return items[i].parentNode;
+				return null;
+			}
+			function loaded() {
+				var ls = document.getElementById('loadingScreen');
+				return fpsButton() && (!ls || ls.classList.contains('fade-out') || getComputedStyle(ls).display === 'none');
+			}
+			var wait = setInterval(function () {
+				if (loaded()) { clearInterval(wait); ready = true; play.style.display = 'flex'; }
+			}, 300);
+			play.addEventListener('click', function () {
+				var b = fpsButton();
+				if (!ready || !b) return;
+				b.click(); // same user click, so the browser allows mouse lock
+				play.style.display = 'none';
+			});
+			document.addEventListener('pointerlockchange', function () {
+				if (!ready) return;
+				if (!document.pointerLockElement) { title.textContent = 'PAUSED - CLICK TO RESUME'; play.style.display = 'flex'; }
+				else play.style.display = 'none';
+			});
+		})();
+	</script>
+</body>
+</html>
