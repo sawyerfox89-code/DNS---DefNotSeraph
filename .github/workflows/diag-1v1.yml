@@ -1,0 +1,27 @@
+name: diag-1v1
+on:
+  push:
+    branches: [diag-1v1]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check 1v1.lol build availability
+        run: |
+          U="https://justbuild.nyc3.cdn.digitaloceanspaces.com/CI/1v1/Prod/162/WebGL.json"
+          O="https://sawyerfox89-code.github.io"
+          echo "=== WebGL.json with site Origin ==="
+          curl -sS -D - -o body.json -H "Origin: $O" "$U" | sed -n '1,25p'
+          echo "=== body ==="; head -c 1500 body.json; echo
+          echo "=== referenced files ==="
+          for f in $(grep -oE '"[A-Za-z]+Url"\s*:\s*"[^"]+"' body.json | sed -E 's/.*:\s*"([^"]+)"/\1/'); do
+            case "$f" in http*) url="$f";; *) url="$(dirname "$U")/$f";; esac
+            printf '%s  ' "$f"; curl -sS -o /dev/null -I -w '%{http_code} %{size_download} %{content_type}\n' -H "Origin: $O" "$url"
+            curl -sS -I -H "Origin: $O" "$url" | grep -i "access-control" || echo "   (no CORS header)"
+          done
+          echo "=== nearby builds ==="
+          for n in 150 160 161 163 165 170 180 200 250 300; do
+            printf 'Prod/%s: ' $n; curl -sS -o /dev/null -w '%{http_code}\n' "https://justbuild.nyc3.cdn.digitaloceanspaces.com/CI/1v1/Prod/$n/WebGL.json"
+          done
+          echo "=== official site ==="
+          curl -sSL -A "Mozilla/5.0" https://1v1.lol/ | grep -oE '(justbuild[^"'"'"' ]+|gameJsonUrl[^;]+|createUnityInstance|UnityLoader\.instantiate|Build/[^"'"'"' ]+)' | sort -u | head -20
